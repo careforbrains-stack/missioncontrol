@@ -14,6 +14,7 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script type="text/babel">
 const{useState,useEffect,useRef}=React;
@@ -82,7 +83,7 @@ function Login({onLogin,passwords,team}){
 // === SIDEBAR ===
 function Sidebar({tab,setTab,me,team,logout}){
   const meD=team.find(t=>t.id===me);const isA=meD?.admin;
-  const items=[{id:'my',label:'My Work',n:'01',show:true},{id:'team',label:'Team Board',n:'02',show:true},{id:'assign',label:'Assign Work',n:'\u26A1',show:isA},{id:'calendar',label:'Calendar',n:'03',show:true},{id:'contacts',label:'Contacts',n:'04',show:true},{id:'sheets',label:'Sheets',n:'05',show:true},{id:'board',label:'Announcements',n:'06',show:true},{id:'settings',label:'Settings',n:'\u2014',show:isA}];
+  const items=[{id:'my',label:'My Work',n:'01',show:true},{id:'team',label:'Team Board',n:'02',show:true},{id:'assign',label:'Assign Work',n:'\u26A1',show:isA},{id:'calendar',label:'Calendar',n:'03',show:true},{id:'contacts',label:'Contacts',n:'04',show:true},{id:'sheets',label:'Sheets',n:'05',show:true},{id:'emails',label:'Emails',n:'07',show:true},{id:'board',label:'Announcements',n:'08',show:true},{id:'settings',label:'Settings',n:'\u2014',show:isA}];
   return(<div style={{width:240,background:C.cd,borderRight:"1px solid "+C.rl,position:"fixed",top:0,left:0,bottom:0,display:"flex",flexDirection:"column",zIndex:100}}>
     <div style={{padding:18,borderBottom:"1px solid "+C.rl,display:"flex",alignItems:"center",gap:10}}>
       <img src={LOGO} alt="" style={{width:30,height:30,borderRadius:8}}/><div><span style={{fontWeight:700,fontSize:13.5,display:"block"}}>Mission Control</span><span style={{fontSize:9.5,color:C.mt}}>CareForBrains</span></div>
@@ -253,6 +254,97 @@ function Contacts({db,team,me}){
   </div>);
 }
 
+// === EMAILS ===
+function Emails({db,hubData,team,me}){
+  const isA=team.find(t=>t.id===me)?.admin;
+  const[selSheet,setSelSheet]=useState('');
+  const[rows,setRows]=useState([]);const[cols,setCols]=useState([]);
+  const[emailCol,setEmailCol]=useState('');const[nameCol,setNameCol]=useState('');
+  const[checked,setChecked]=useState({});const[template,setTemplate]=useState('stem_accept');
+  const[sending,setSending]=useState(false);const[sent,setSent]=useState({});
+  const[customSubj,setCustomSubj]=useState('');const[customBody,setCustomBody]=useState('');
+  const[showPrev,setShowPrev]=useState(false);const[prevIdx,setPrevIdx]=useState(0);
+  const[loading,setLoading]=useState(false);
+  const[editCfg,setEditCfg]=useState(false);
+  const[cfgForm,setCfgForm]=useState({publicKey:'',serviceId:'',templateId:''});
+  const emailjsCfg=hubData.emailjs||{};
+  const sheets=hubData.sheets?Object.keys(hubData.sheets).filter(k=>k!=='_seed').map(k=>hubData.sheets[k]):[];
+  const sheetData=hubData.sheetData||{};
+  const TMPLS={
+    stem_accept:{name:'STEM Internship - Accepted',subj:'Welcome to the CareForBrains STEM Exploration Program!',body:'Hi {{name}},\n\nCongratulations! We are excited to welcome you to the CareForBrains STEM Exploration Program.\n\nHere are your next steps:\n1. Join our Discord server: [DISCORD_LINK]\n2. Fill out the onboarding form: [ONBOARDING_LINK]\n3. Attend orientation on [DATE]\n\nIf you have any questions, reply to this email.\n\nBest,\nThe CareForBrains STEM Team'},
+    stem_reject:{name:'STEM Internship - Not Selected',subj:'CareForBrains STEM Program Update',body:'Hi {{name}},\n\nThank you for your interest in the CareForBrains STEM Exploration Program. After careful review, we are unable to offer you a position at this time.\n\nWe encourage you to apply again and check out our other opportunities at careforbrains.org.\n\nBest,\nThe CareForBrains Team'},
+    volunteer_welcome:{name:'General Volunteer Welcome',subj:'Welcome to CareForBrains!',body:'Hi {{name}},\n\nWelcome to CareForBrains! We are thrilled to have you join our mission.\n\nGet started:\n1. Join our volunteer Discord: [DISCORD_LINK]\n2. Complete onboarding: [ONBOARDING_LINK]\n3. Check your chapter assignment\n\nThank you!\n\nBest,\nThe CareForBrains Team'},
+    chapter_response:{name:'Chapter Application Response',subj:'Your CareForBrains Chapter Application',body:'Hi {{name}},\n\nThank you for applying to start a CareForBrains chapter! We would love to move forward.\n\n1. Schedule a call: [CALENDLY_LINK]\n2. Review the Chapter Handbook: [HANDBOOK_LINK]\n\nBest,\nThe CareForBrains Team'},
+    custom:{name:'Custom Email',subj:'',body:''}
+  };
+  const loadSheet=(sid)=>{setSelSheet(sid);setChecked({});setSent({});const sd=sheetData[sid];if(sd&&Array.isArray(sd)&&sd.length>0){setCols(sd[0]);setRows(sd.slice(1));const ei=sd[0].findIndex(h=>h.toLowerCase().includes('email'));const ni=sd[0].findIndex(h=>h.toLowerCase().includes('name')&&!h.toLowerCase().includes('last'));if(ei>=0)setEmailCol(sd[0][ei]);if(ni>=0)setNameCol(sd[0][ni])}else{setCols([]);setRows([])}};
+  const syncSheet=async(s)=>{const m=s.url?.match(/\/d\/([a-zA-Z0-9-_]+)/);const key=hubData.sheetsApiKey;if(!m||!key)return;setLoading(true);try{const r=await fetch("https://sheets.googleapis.com/v4/spreadsheets/"+m[1]+"/values/A1:Z1000?key="+key);const j=await r.json();if(j.values){db.ref('hub/sheetData/'+s.id).set(j.values);setCols(j.values[0]);setRows(j.values.slice(1));const ei=j.values[0].findIndex(h=>h.toLowerCase().includes('email'));const ni=j.values[0].findIndex(h=>h.toLowerCase().includes('name')&&!h.toLowerCase().includes('last'));if(ei>=0)setEmailCol(j.values[0][ei]);if(ni>=0)setNameCol(j.values[0][ni])}}catch(e){console.error(e)}setLoading(false)};
+  const toggleAll=()=>{const all=rows.every((_,i)=>checked[i]);const n={};if(!all)rows.forEach((_,i)=>{n[i]=true});setChecked(n)};
+  const selRows=Object.keys(checked).filter(k=>checked[k]).map(k=>rows[parseInt(k)]);
+  const eIdx=cols.indexOf(emailCol);const nIdx=cols.indexOf(nameCol);
+  const fill=(tmpl,row)=>{let t=tmpl;const name=nIdx>=0?(row[nIdx]||''):'';t=t.replace(/\{\{name\}\}/g,name);cols.forEach((col,i)=>{t=t.replace(new RegExp('\\{\\{'+col.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\}\\}','g'),row[i]||'')});return t};
+  const cur=TMPLS[template]||TMPLS.custom;
+  const subj=template==='custom'?customSubj:cur.subj;
+  const body=template==='custom'?customBody:cur.body;
+  const sendEmails=async()=>{if(!emailjsCfg.publicKey||!emailjsCfg.serviceId){alert('Set up EmailJS config first');return}if(selRows.length===0)return;if(eIdx<0){alert('Select email column');return}setSending(true);const ns={...sent};const idxs=Object.keys(checked).filter(k=>checked[k]);for(let i=0;i<selRows.length;i++){const row=selRows[i];const email=row[eIdx];if(!email)continue;try{await emailjs.send(emailjsCfg.serviceId,emailjsCfg.templateId,{to_email:email,to_name:nIdx>=0?(row[nIdx]||''):'',subject:fill(subj,row),message:fill(body,row),from_name:'CareForBrains'},{publicKey:emailjsCfg.publicKey});ns[idxs[i]]='sent'}catch(e){console.error(e);ns[idxs[i]]='failed'}}setSent(ns);setSending(false)};
+  const saveCfg=()=>{db.ref('hub/emailjs').set(cfgForm);setEditCfg(false)};
+
+  return(<div>
+    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>07 &#8212; Emails</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Send Emails</h1></div>
+    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    {isA&&<Card style={{marginBottom:18}}><CardH right={!editCfg&&<button onClick={()=>{setCfgForm(emailjsCfg);setEditCfg(true)}} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.sc,fontFamily:"inherit"}}>{emailjsCfg.publicKey?'Edit':'Set up'}</button>}>EmailJS Config</CardH>
+      <div style={{padding:"14px 18px"}}>{editCfg?<div>
+        <div style={{background:C.bgA,borderRadius:8,padding:12,marginBottom:14,fontSize:12,color:C.sc,lineHeight:1.7}}>Go to <a href="https://www.emailjs.com" target="_blank" style={{color:C.tl}}>emailjs.com</a> &#8594; Sign up free &#8594; Add Gmail service &#8594; Create template with vars: to_name, subject, message &#8594; Copy IDs below</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
+          <div><Lbl>Public Key</Lbl><Inp value={cfgForm.publicKey||''} onChange={e=>setCfgForm({...cfgForm,publicKey:e.target.value})}/></div>
+          <div><Lbl>Service ID</Lbl><Inp value={cfgForm.serviceId||''} onChange={e=>setCfgForm({...cfgForm,serviceId:e.target.value})}/></div>
+          <div><Lbl>Template ID</Lbl><Inp value={cfgForm.templateId||''} onChange={e=>setCfgForm({...cfgForm,templateId:e.target.value})}/></div>
+        </div><div style={{display:"flex",gap:8}}><Btn primary onClick={saveCfg}>Save</Btn><Btn onClick={()=>setEditCfg(false)}>Cancel</Btn></div>
+      </div>:<span style={{fontSize:12.5,color:C.sc}}>{emailjsCfg.publicKey?<span>Connected <span style={{color:C.gn}}>&#9679;</span></span>:<span style={{color:C.mt}}>Not configured</span>}</span>}</div>
+    </Card>}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:18}}>
+      <Card><CardH>1. Data Source</CardH><div style={{padding:"14px 18px"}}>
+        <Lbl>Google Sheet</Lbl><div style={{display:"flex",gap:8}}><Sel value={selSheet} onChange={e=>loadSheet(e.target.value)}><option value="">Choose...</option>{sheets.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</Sel>
+        {selSheet&&sheets.find(s=>s.id===selSheet)?.url&&<Btn onClick={()=>syncSheet(sheets.find(s=>s.id===selSheet))} primary>{loading?'...':'Sync'}</Btn>}</div>
+        {cols.length>0&&<div style={{marginTop:14}}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <div><Lbl>Email Column</Lbl><Sel value={emailCol} onChange={e=>setEmailCol(e.target.value)}><option value="">Select...</option>{cols.map(c=><option key={c} value={c}>{c}</option>)}</Sel></div>
+          <div><Lbl>Name Column</Lbl><Sel value={nameCol} onChange={e=>setNameCol(e.target.value)}><option value="">Select...</option>{cols.map(c=><option key={c} value={c}>{c}</option>)}</Sel></div>
+        </div><div style={{marginTop:8,fontSize:11,color:C.gn,fontWeight:600}}>{cols.length} columns &#183; {rows.length} rows</div></div>}
+      </div></Card>
+      <Card><CardH>2. Template</CardH><div style={{padding:"14px 18px"}}>
+        <Lbl>Email Template</Lbl><Sel value={template} onChange={e=>setTemplate(e.target.value)}>{Object.entries(TMPLS).map(([k,v])=><option key={k} value={k}>{v.name}</option>)}</Sel>
+        {template==='custom'&&<div style={{marginTop:10}}><div style={{marginBottom:8}}><Lbl>Subject</Lbl><Inp value={customSubj} onChange={e=>setCustomSubj(e.target.value)}/></div><Lbl>Body</Lbl><textarea style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:7,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",minHeight:120,resize:"vertical"}} value={customBody} onChange={e=>setCustomBody(e.target.value)} placeholder="Use {{name}} for personalization..."/></div>}
+        {template!=='custom'&&<div style={{marginTop:10,background:C.bgA,borderRadius:8,padding:12}}><div style={{fontWeight:700,fontSize:12,marginBottom:4}}>Subject: {cur.subj}</div><div style={{fontSize:12,color:C.sc,whiteSpace:"pre-wrap",lineHeight:1.5,maxHeight:120,overflow:"auto"}}>{cur.body}</div></div>}
+        <div style={{marginTop:8,fontSize:10.5,color:C.mt}}>{'{{name}}'} and {'{{column_name}}'} auto-fill from sheet.</div>
+      </div></Card>
+    </div>
+    {cols.length>0&&rows.length>0&&<Card><CardH right={<div style={{display:"flex",alignItems:"center",gap:12}}>
+      <span style={{fontSize:12,color:C.sc}}>{selRows.length} selected</span>
+      {selRows.length>0&&<button onClick={()=>{setShowPrev(!showPrev);setPrevIdx(0)}} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.tl,fontWeight:600,fontFamily:"inherit"}}>{showPrev?'Hide':'Preview'}</button>}
+      <Btn primary onClick={sendEmails} disabled={sending||selRows.length===0}>{sending?'Sending...':'Send to '+selRows.length}</Btn>
+    </div>}>3. Select Recipients</CardH>
+      <div style={{padding:0,overflowX:"auto",maxHeight:500}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12.5}}>
+        <thead><tr><th style={{padding:"8px 12px",textAlign:"center",borderBottom:"2px solid "+C.rl,background:C.bgA,position:"sticky",top:0,width:40}}><input type="checkbox" onChange={toggleAll} checked={rows.length>0&&rows.every((_,i)=>checked[i])}/></th><th style={{padding:"8px 12px",textAlign:"center",borderBottom:"2px solid "+C.rl,background:C.bgA,position:"sticky",top:0,width:60,fontSize:10,fontWeight:700,color:C.sc}}>Status</th>
+          {cols.map((h,i)=><th key={i} style={{padding:"8px 12px",textAlign:"left",borderBottom:"2px solid "+C.rl,fontSize:10,fontWeight:700,textTransform:"uppercase",color:C.sc,position:"sticky",top:0,background:C.bgA,whiteSpace:"nowrap"}}>{h}{h===emailCol&&' \u2709'}{h===nameCol&&' \u263A'}</th>)}</tr></thead>
+        <tbody>{rows.map((row,i)=><tr key={i} style={{background:checked[i]?C.tg:"transparent"}}>
+          <td style={{padding:"7px 12px",borderBottom:"1px solid "+C.bgA,textAlign:"center"}}><input type="checkbox" checked={!!checked[i]} onChange={e=>{const n={...checked};if(e.target.checked)n[i]=true;else delete n[i];setChecked(n)}}/></td>
+          <td style={{padding:"7px 12px",borderBottom:"1px solid "+C.bgA,textAlign:"center"}}>{sent[i]==='sent'?<span style={{color:C.gn,fontWeight:700,fontSize:11}}>&#10003;</span>:sent[i]==='failed'?<span style={{color:C.rd,fontWeight:700,fontSize:11}}>&#10007;</span>:<span style={{color:C.mt}}>&#8212;</span>}</td>
+          {cols.map((_,j)=><td key={j} style={{padding:"7px 12px",borderBottom:"1px solid "+C.bgA,maxWidth:200,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{row[j]||''}</td>)}</tr>)}</tbody>
+      </table></div>
+    </Card>}
+    {showPrev&&selRows.length>0&&<Card style={{border:"2px solid "+C.tl,marginTop:14}}><CardH right={<div style={{display:"flex",gap:8}}>
+      <button onClick={()=>setPrevIdx(Math.max(0,prevIdx-1))} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:14,color:C.sc}}>&#8592;</button>
+      <span style={{fontSize:12,color:C.mt}}>{prevIdx+1}/{selRows.length}</span>
+      <button onClick={()=>setPrevIdx(Math.min(selRows.length-1,prevIdx+1))} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:14,color:C.sc}}>&#8594;</button>
+    </div>}>Preview</CardH><div style={{padding:"14px 18px"}}>{selRows[prevIdx]&&<div>
+      <div style={{fontSize:11,color:C.mt,marginBottom:4}}>To: <strong style={{color:C.fg}}>{eIdx>=0?selRows[prevIdx][eIdx]:'-'}</strong></div>
+      <div style={{fontSize:11,color:C.mt,marginBottom:8}}>Subject: <strong style={{color:C.fg}}>{fill(subj,selRows[prevIdx])}</strong></div>
+      <div style={{background:C.bgA,borderRadius:8,padding:14,fontSize:13,lineHeight:1.7,whiteSpace:"pre-wrap",color:C.sc}}>{fill(body,selRows[prevIdx])}</div>
+    </div>}</div></Card>}
+    {!selSheet&&<div style={{textAlign:"center",padding:"60px 20px",color:C.mt}}><div style={{fontFamily:F.sf,fontSize:20,fontStyle:"italic",marginBottom:8}}>Select a sheet to get started</div><div style={{fontSize:13}}>Link sheets in the Sheets tab first, then select one here.</div></div>}
+  </div>);
+}
+
 // === ANNOUNCEMENTS ===
 function Board({db,announcements,team,me}){
   const isA=team.find(t=>t.id===me)?.admin;const meD=team.find(t=>t.id===me);const[text,setText]=useState('');
@@ -331,13 +423,14 @@ function App(){
   if(!user)return<Login onLogin={id=>setUser({id})} passwords={passwords} team={team}/>;
 
   const me=user.id;const isA=team.find(t=>t.id===me)?.admin;
-  const titles={my:'My Work',team:'Team Board',assign:'Assign Work',calendar:'Calendar',contacts:'Contacts',sheets:'Sheets',board:'Announcements',settings:'Settings'};
+  const titles={my:'My Work',emails:'Emails',team:'Team Board',assign:'Assign Work',calendar:'Calendar',contacts:'Contacts',sheets:'Sheets',board:'Announcements',settings:'Settings'};
   const V=()=>{switch(tab){
     case 'my':return<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'team':return<TeamBoard db={db} tasks={tasks} team={team} me={me}/>;
     case 'assign':return isA?<Assign db={db} tasks={tasks} team={team} me={me}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'calendar':return<Cal db={db} events={events} team={team} me={me}/>;
     case 'contacts':return<Contacts db={db} team={team} me={me}/>;
+    case 'emails':return<Emails db={db} hubData={hubData} team={team} me={me}/>;
     case 'board':return<Board db={db} announcements={announcements} team={team} me={me}/>;
     case 'settings':return isA?<Settings db={db} passwords={passwords} team={team}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     default:return<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>}};
