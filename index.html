@@ -27,11 +27,10 @@ const TEAM=[
   {id:"zavier",name:"Zavier Hayat",role:"Director of STEM Exploration",img:IMG+"zavier.jpeg",color:"#38C0D4",phone:"",email:"",admin:false},
 ];
 const SEED={team:TEAM,tasks:{_seed:true},events:{_seed:true},sheets:{s1:{id:"s1",name:"Volunteer Signups",desc:"Applications",url:""},s2:{id:"s2",name:"Event Planning",desc:"Logistics",url:""},s3:{id:"s3",name:"PVSA Hours",desc:"Hours",url:""}},announcements:{a1:{id:"a1",author:"Tanmay",date:"2026-03-03",text:"Mission Control is live. Check your assignments.",ts:1}},passwords:{tanmay:"cfb2026",ezra:"cfb2026",eric:"cfb2026",raheesh:"cfb2026",zavier:"cfb2026"},sheetsApiKey:"",sheetData:{_seed:true}};
-const LK="cfb_mc_login",FK="cfb_mc_fb";
+const FIREBASE_CONFIG={apiKey:"AIzaSyCnddOaA0dV6HnHeaHWlYa9hlEGb6uF1N0",authDomain:"careforbrains-hub.firebaseapp.com",databaseURL:"https://careforbrains-hub-default-rtdb.firebaseio.com",projectId:"careforbrains-hub",storageBucket:"careforbrains-hub.firebasestorage.app",messagingSenderId:"174180979425",appId:"1:174180979425:web:12d81181b955ae5d705da0"};
+const LK="cfb_mc_login";
 const gL=()=>{try{return JSON.parse(localStorage.getItem(LK))}catch{return null}};
 const sL=d=>localStorage.setItem(LK,JSON.stringify(d));
-const gF=()=>{try{return JSON.parse(localStorage.getItem(FK))}catch{return null}};
-const sF=d=>localStorage.setItem(FK,JSON.stringify(d));
 const fn=n=>n?.split(' ')[0]||'';
 
 const C={bg:"#F8FAFC",bgA:"#EDF2F8",dk:"#091A26",fg:"#0B1A26",sc:"#3A5068",mt:"#7A8FA4",tl:"#1490B0",td:"#0C6B8E",tg:"rgba(20,144,176,0.12)",rl:"#CDDAE6",cd:"#FFF",cb:"#C8D8E6",rd:"#EF4444",gn:"#10B981"};
@@ -49,60 +48,6 @@ function CardH({children,right}){return<div style={{padding:"12px 18px",borderBo
 // === FIREBASE HELPERS ===
 // Convert Firebase objects (with keys) to arrays, filtering _seed markers
 function fbToArr(obj){if(!obj)return[];return Object.keys(obj).filter(k=>k!=='_seed').map(k=>({...obj[k],_fbKey:k}))}
-
-// === FIREBASE SETUP ===
-function FirebaseSetup(){
-  const[raw,setRaw]=useState('');
-  const[mode,setMode]=useState('paste');
-  const[cfg,setCfg]=useState({apiKey:'',databaseURL:'',authDomain:'',projectId:''});
-
-  const parseAndSave=()=>{
-    try{
-      let c=raw;
-      const match=c.match(/\{[\s\S]*apiKey[\s\S]*\}/);
-      if(match)c=match[0];
-      c=c.replace(/(\w+)\s*:/g,'"$1":').replace(/'/g,'"').replace(/,\s*\}/g,'}').replace(/\/\/.*/g,'');
-      const p=JSON.parse(c);
-      if(p.apiKey&&p.databaseURL){sF(p);window.location.reload()}
-      else alert('Missing apiKey or databaseURL')
-    }catch{alert('Could not parse. Copy the full firebaseConfig object.')}
-  };
-  const saveManual=()=>{if(!cfg.apiKey||!cfg.databaseURL){alert('API Key and Database URL required');return}sF(cfg);window.location.reload()};
-
-  return(<div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.sn}}>
-    <div style={{width:560,maxWidth:"92vw"}}>
-      <div style={{textAlign:"center",marginBottom:28}}>
-        <img src={LOGO} alt="" style={{width:48,height:48,borderRadius:12,marginBottom:10}}/>
-        <h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400}}>Mission Control Setup</h1>
-        <p style={{fontSize:13,color:C.mt,marginTop:6,lineHeight:1.6}}>Connect Firebase so the whole team shares one database in real time.</p>
-      </div>
-      <div style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:12,padding:28}}>
-        <div style={{background:C.bgA,borderRadius:8,padding:16,marginBottom:20,fontSize:12.5,color:C.sc,lineHeight:1.7}}>
-          <strong>One-time setup (3 min):</strong><br/>
-          1. Go to <a href="https://console.firebase.google.com" target="_blank" style={{color:C.tl}}>console.firebase.google.com</a><br/>
-          2. "Add project" &#8594; name it <code style={{background:"#fff",padding:"1px 5px",borderRadius:3}}>careforbrains-hub</code><br/>
-          3. Disable Analytics &#8594; Create<br/>
-          4. Build &#8594; Realtime Database &#8594; Create Database &#8594; <strong>test mode</strong><br/>
-          5. Project Settings (gear) &#8594; scroll &#8594; Web app (&lt;/&gt;)<br/>
-          6. Register app, copy the <code>firebaseConfig</code> object<br/>
-          7. Paste below
-        </div>
-        <div style={{display:"flex",gap:8,marginBottom:16}}>
-          {['paste','manual'].map(m=><button key={m} onClick={()=>setMode(m)} style={{padding:"6px 14px",borderRadius:6,fontSize:12,fontWeight:600,border:"1px solid "+C.rl,background:mode===m?C.dk:C.cd,color:mode===m?"#fff":C.fg,cursor:"pointer",fontFamily:"inherit"}}>{m==='paste'?'Paste Config':'Manual'}</button>)}
-        </div>
-        {mode==='paste'?<div>
-          <Lbl>Paste firebaseConfig</Lbl>
-          <textarea style={{width:"100%",padding:12,background:C.cd,border:"1px solid "+C.rl,borderRadius:7,color:C.fg,fontSize:12,fontFamily:"monospace",outline:"none",minHeight:140,resize:"vertical"}} value={raw} onChange={e=>setRaw(e.target.value)} placeholder='const firebaseConfig = {\n  apiKey: "AIza...",\n  databaseURL: "https://...",\n  ...\n};'/>
-          <Btn primary onClick={parseAndSave} style={{width:"100%",justifyContent:"center",marginTop:14,padding:12}}>Connect</Btn>
-        </div>:<div>
-          {[['API Key *','apiKey','AIzaSy...'],['Database URL *','databaseURL','https://xxx-default-rtdb.firebaseio.com'],['Auth Domain','authDomain','xxx.firebaseapp.com'],['Project ID','projectId','careforbrains-hub']].map(([l,k,ph])=><div key={k} style={{marginBottom:10}}><Lbl>{l}</Lbl><Inp value={cfg[k]} onChange={e=>setCfg({...cfg,[k]:e.target.value})} placeholder={ph}/></div>)}
-          <Btn primary onClick={saveManual} style={{width:"100%",justifyContent:"center",marginTop:8,padding:12}}>Connect</Btn>
-        </div>}
-      </div>
-      <div style={{textAlign:"center",marginTop:16,fontSize:10.5,color:C.mt}}>Each team member does this once on their device. Same config for everyone.</div>
-    </div>
-  </div>);
-}
 
 // === LOGIN ===
 function Login({onLogin,passwords,team}){
@@ -331,7 +276,7 @@ function Board({db,announcements,team,me}){
 function Settings({db,passwords,team}){
   const[pu,setPu]=useState('tanmay');const[np,setNp]=useState('');
   const chPw=()=>{if(!np)return;db.ref('hub/passwords/'+pu).set(np);setNp('');alert('Updated')};
-  const resetFb=()=>{if(!confirm('Disconnect Firebase from this device?'))return;localStorage.removeItem(FK);localStorage.removeItem(LK);window.location.reload()};
+  const resetFb=()=>{if(!confirm('Sign out everywhere on this device?'))return;localStorage.removeItem(LK);window.location.reload()};
   return(<div>
     <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>Settings</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Configuration</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
@@ -340,16 +285,16 @@ function Settings({db,passwords,team}){
       <div style={{flex:1}}><Lbl>New Password</Lbl><Inp type="password" value={np} onChange={e=>setNp(e.target.value)}/></div>
       <Btn primary onClick={chPw}>Update</Btn></div></div></Card>
     <Card><div style={{padding:"14px 18px"}}>
-      <div style={{fontWeight:700,fontSize:14,marginBottom:3,color:C.rd}}>Disconnect Firebase</div>
-      <div style={{fontSize:12,color:C.mt,marginBottom:8}}>Removes config from this device only. Cloud data stays.</div>
-      <Btn onClick={resetFb} style={{borderColor:C.rd,color:C.rd}}>Disconnect</Btn>
+      <div style={{fontWeight:700,fontSize:14,marginBottom:3,color:C.rd}}>Reset Device</div>
+      <div style={{fontSize:12,color:C.mt,marginBottom:8}}>Signs out on this device.</div>
+      <Btn onClick={resetFb} style={{borderColor:C.rd,color:C.rd}}>Reset</Btn>
     </div></Card>
   </div>);
 }
 
 // === MAIN APP ===
 function App(){
-  const[fbCfg]=useState(()=>gF());
+  const fbCfg=FIREBASE_CONFIG;
   const[hubData,setHubData]=useState(null);
   const[user,setUser]=useState(()=>gL());
   const[tab,setTab]=useState('my');
@@ -373,7 +318,7 @@ function App(){
 
   const logout=()=>{localStorage.removeItem(LK);setUser(null);setTab('my')};
 
-  if(!fbCfg)return<FirebaseSetup/>;
+  
   if(!hubData)return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.sn}}><div style={{textAlign:"center"}}><img src={LOGO} alt="" style={{width:40,height:40,borderRadius:10,marginBottom:10,opacity:0.5}}/><div style={{fontSize:13,color:C.mt}}>Connecting...</div></div></div>);
 
   const team=hubData.team||TEAM;
