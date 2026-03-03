@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CareForBrains — Mission Control</title>
+<link rel="icon" href="https://raw.githubusercontent.com/careforbrains-stack/careforbrains-website/main/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Plus Jakarta Sans',-apple-system,sans-serif; background:#F8FAFC; color:#0B1A26; }
+  #root { min-height:100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const IMG="https://raw.githubusercontent.com/careforbrains-stack/careforbrains-website/main/images/";
+const LOGO="https://raw.githubusercontent.com/careforbrains-stack/careforbrains-website/main/logo.png";
+const TEAM=[
+  {id:"tanmay",name:"Tanmay Vasudeva",role:"Founder & CEO",img:IMG+"tanmay.webp",color:"#1490B0",phone:"",email:"",admin:true},
+  {id:"ezra",name:"Ezra Weng",role:"Co-Founder & COO",img:IMG+"ezra.png",color:"#0C6B8E",phone:"",email:"",admin:true},
+  {id:"eric",name:"Eric Zang",role:"Director of Chapter Outreach",img:IMG+"eric.avif",color:"#1468B0",phone:"",email:"",admin:false},
+  {id:"raheesh",name:"Raheesh Basaria",role:"Director of Online Marketing",img:IMG+"raheesh.avif",color:"#3A5068",phone:"",email:"",admin:false},
+  {id:"zavier",name:"Zavier Hayat",role:"Director of STEM Exploration",img:IMG+"zavier.jpeg",color:"#38C0D4",phone:"",email:"",admin:false},
+];
+const SK="cfb4",LK="cfb4_login";
+const ld=()=>{try{return JSON.parse(localStorage.getItem(SK))}catch{return null}};
+const sv=d=>{try{localStorage.setItem(SK,JSON.stringify(d))}catch{}};
+const gL=()=>{try{return JSON.parse(localStorage.getItem(LK))}catch{return null}};
+const sL=d=>{try{localStorage.setItem(LK,JSON.stringify(d))}catch{}};
+const init=()=>ld()||{team:TEAM,tasks:[],events:[],sheets:[{id:"s1",name:"Volunteer Signups",desc:"Applications",url:""},{id:"s2",name:"Event Planning",desc:"Logistics",url:""},{id:"s3",name:"PVSA Hours",desc:"Hour tracking",url:""}],announcements:[{id:"a1",author:"Tanmay",date:"2026-03-03",text:"Hub is live. Add your contact info and check your assignments."}],passwords:{tanmay:"cfb2026",ezra:"cfb2026",eric:"cfb2026",raheesh:"cfb2026",zavier:"cfb2026"},sheetsApiKey:"",sheetData:{}};
+const fn=n=>n?.split(' ')[0]||'';
+
+const css=`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&display=swap');`;
+const C={bg:"#F8FAFC",bgA:"#EDF2F8",dk:"#091A26",fg:"#0B1A26",sc:"#3A5068",mt:"#7A8FA4",tl:"#1490B0",td:"#0C6B8E",tg:"rgba(20,144,176,0.12)",rl:"#CDDAE6",cd:"#FFF",cb:"#C8D8E6",rd:"#EF4444",gn:"#10B981"};
+const F={sf:"'Playfair Display',Georgia,serif",sn:"'Plus Jakarta Sans',-apple-system,sans-serif"};
+
+function Av({m,s=38}){const[e,setE]=useState(false);if(m?.img&&!e)return<img src={m.img} alt="" style={{width:s,height:s,borderRadius:8,objectFit:"cover",flexShrink:0,background:m.color}} onError={()=>setE(true)}/>;return<div style={{width:s,height:s,borderRadius:8,background:m?.color||C.tl,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:s*.38,flexShrink:0}}>{m?.name?.[0]||"?"}</div>}
+
+function Tag({t}){const m={high:{b:"#FEE2E2",c:C.rd},medium:{b:"#FEF3C7",c:"#D97706"},low:{b:"#DBEAFE",c:"#2563EB"},done:{b:"#D1FAE5",c:C.gn}};const v=m[t]||m.medium;return<span style={{display:"inline-flex",padding:"2px 8px",borderRadius:4,fontSize:9.5,fontWeight:700,background:v.b,color:v.c,textTransform:"uppercase",letterSpacing:"0.04em",fontFamily:"monospace"}}>{t}</span>}
+
+function Btn({primary,children,onClick,style:sx,...p}){return<button onClick={onClick} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"7px 16px",borderRadius:8,fontSize:12,fontWeight:600,cursor:"pointer",border:primary?"1px solid "+C.dk:"1px solid "+C.rl,background:primary?C.dk:C.cd,color:primary?"#F8FAFC":C.fg,transition:"all 0.15s",fontFamily:"inherit",...sx}} {...p}>{children}</button>}
+
+function Inp({...p}){return<input style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:7,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none"}} {...p}/>}
+
+function Login({onLogin,data}){
+  const[sel,setSel]=useState(null);
+  const[pass,setPass]=useState('');
+  const[err,setErr]=useState('');
+  const go=()=>{const pw=data.passwords||{};if(pw[sel]&&pass!==pw[sel]){setErr('Wrong password');setTimeout(()=>setErr(''),2e3);return}sL({id:sel,t:Date.now()});onLogin(sel)};
+  return(<div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.sn}}>
+    <style>{css}</style>
+    <div style={{width:440,maxWidth:"90vw"}}>
+      <div style={{textAlign:"center",marginBottom:32}}>
+        <img src={LOGO} alt="" style={{width:48,height:48,borderRadius:12,marginBottom:10}}/>
+        <h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400}}>CareForBrains</h1>
+        <p style={{fontSize:13,color:C.mt,marginTop:4}}>Team Hub</p>
+      </div>
+      <div style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:12,padding:28}}>
+        {!sel?<div>
+          <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.12em",color:C.mt,marginBottom:14}}>Sign in as</div>
+          {data.team.map(m=><button key={m.id} onClick={()=>setSel(m.id)} style={{display:"flex",alignItems:"center",gap:12,width:"100%",padding:"12px 14px",border:"1px solid "+C.rl,borderRadius:8,background:C.cd,cursor:"pointer",marginBottom:8,fontFamily:"inherit",textAlign:"left"}}>
+            <Av m={m} s={36}/>
+            <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14}}>{m.name}</div><div style={{fontSize:10.5,color:C.mt}}>{m.role}</div></div>
+            {m.admin&&<span style={{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:4,background:C.tg,color:C.tl,fontFamily:"monospace"}}>ADMIN</span>}
+          </button>)}
+        </div>:<div>
+          <button onClick={()=>{setSel(null);setPass('');setErr('')}} style={{fontSize:12,color:C.tl,background:"none",border:"none",cursor:"pointer",marginBottom:16,fontFamily:"inherit",fontWeight:600}}>&#8592; Back</button>
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
+            <Av m={data.team.find(t=>t.id===sel)} s={44}/>
+            <div><div style={{fontWeight:700,fontSize:16}}>{data.team.find(t=>t.id===sel)?.name}</div></div>
+          </div>
+          <div style={{marginBottom:14}}><label style={{display:"block",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginBottom:5}}>Password</label><input type="password" style={{width:"100%",padding:"11px 14px",background:C.cd,border:"1px solid "+C.rl,borderRadius:8,color:C.fg,fontSize:14,fontFamily:"inherit",outline:"none"}} value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==='Enter'&&go()} autoFocus/></div>
+          {err&&<div style={{color:C.rd,fontSize:12,fontWeight:600,marginBottom:10}}>{err}</div>}
+          <button onClick={go} style={{width:"100%",padding:"12px",borderRadius:8,background:C.dk,color:"#F8FAFC",fontWeight:700,fontSize:13,border:"none",cursor:"pointer",fontFamily:"inherit"}}>Sign In</button>
+          <div style={{fontSize:11,color:C.mt,textAlign:"center",marginTop:12}}>Default: <code style={{background:C.bgA,padding:"2px 6px",borderRadius:3}}>cfb2026</code></div>
+        </div>}
+      </div>
+    </div>
+  </div>);
+}
+
+function Sidebar({tab,setTab,me,data,logout}){
+  const isA=data.team.find(t=>t.id===me)?.admin;
+  const meD=data.team.find(t=>t.id===me);
+  const items=[{id:'my',label:'My Work',n:'01',show:true},{id:'team',label:'Team Board',n:'02',show:true},{id:'assign',label:'Assign Work',n:'03',show:isA},{id:'calendar',label:'Calendar',n:'04',show:true},{id:'contacts',label:'Contacts',n:'05',show:true},{id:'sheets',label:'Sheets',n:'06',show:true},{id:'board',label:'Announcements',n:'07',show:true},{id:'settings',label:'Settings',n:'\u2014',show:isA}];
+  return(<div style={{width:240,background:C.cd,borderRight:"1px solid "+C.rl,position:"fixed",top:0,left:0,bottom:0,display:"flex",flexDirection:"column",zIndex:100}}>
+    <div style={{padding:"18px",borderBottom:"1px solid "+C.rl,display:"flex",alignItems:"center",gap:10}}>
+      <img src={LOGO} alt="" style={{width:30,height:30,borderRadius:8}}/>
+      <div><span style={{fontWeight:700,fontSize:13.5,letterSpacing:"-0.3px",display:"block"}}>CareForBrains</span><span style={{fontSize:9.5,fontWeight:500,color:C.mt}}>Team Hub</span></div>
+    </div>
+    <div style={{padding:"14px 18px 8px",borderBottom:"1px solid "+C.rl,display:"flex",alignItems:"center",gap:10}}>
+      <Av m={meD} s={32}/>
+      <div><div style={{fontWeight:700,fontSize:12.5}}>{fn(meD?.name)}</div><div style={{fontSize:9.5,color:C.tl,fontWeight:600,fontFamily:"monospace"}}>{isA?'ADMIN':'MEMBER'}</div></div>
+    </div>
+    <div style={{fontSize:9.5,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.12em",color:C.mt,padding:"14px 18px 4px"}}>Workspace</div>
+    <nav style={{flex:1,overflowY:"auto",padding:"4px 0"}}>
+      {items.filter(i=>i.show).map(i=><button key={i.id} onClick={()=>setTab(i.id)} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 18px",cursor:"pointer",fontSize:13,fontWeight:tab===i.id?700:500,color:tab===i.id?C.tl:C.sc,background:tab===i.id?C.tg:"transparent",borderLeft:tab===i.id?"2.5px solid "+C.tl:"2.5px solid transparent",border:"none",width:"100%",textAlign:"left",fontFamily:"inherit"}}><span style={{fontSize:10,color:C.mt,minWidth:18,fontFamily:"monospace"}}>{i.n}</span>{i.label}</button>)}
+    </nav>
+    <div style={{padding:"10px 18px",borderTop:"1px solid "+C.rl}}><button onClick={logout} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,fontWeight:500,color:C.mt,fontFamily:"inherit"}}>Sign out &#8594;</button></div>
+    <div style={{padding:"10px 18px",borderTop:"1px solid "+C.rl,fontSize:9.5,color:C.mt,fontFamily:"monospace"}}>852+ volunteers &middot; 22 chapters</div>
+  </div>);
+}
+
+function MyWork({data,setData,me}){
+  const meD=data.team.find(t=>t.id===me);
+  const my=(data.tasks||[]).filter(t=>t.assignee===me);
+  const pending=my.filter(t=>!t.done).sort((a,b)=>{const p={high:0,medium:1,low:2};return(p[a.priority]||1)-(p[b.priority]||1)});
+  const done=my.filter(t=>t.done);
+  const myEv=(data.events||[]).filter(e=>e.assignee===me&&new Date(e.date)>=new Date());
+  const toggle=id=>{const tasks=(data.tasks||[]).map(t=>t.id===id?{...t,done:!t.done,doneDate:!t.done?new Date().toISOString().split('T')[0]:null}:t);const d={...data,tasks};setData(d);sv(d)};
+  const hr=new Date().getHours();
+  return(<div>
+    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>01 &mdash; My Work</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Good {hr<12?"morning":hr<18?"afternoon":"evening"}, {fn(meD?.name)}</h1></div>
+    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:22}}>
+      <div style={{border:"1px solid "+C.cb,borderRadius:10,padding:22,background:C.cd}}><div style={{fontFamily:F.sf,fontSize:34,fontWeight:400,lineHeight:1}}>{pending.length}</div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginTop:6}}>Open Tasks</div></div>
+      <div style={{border:"1px solid "+C.cb,borderRadius:10,padding:22,background:C.cd}}><div style={{fontFamily:F.sf,fontSize:34,fontWeight:400,lineHeight:1}}>{done.length}</div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginTop:6}}>Completed</div></div>
+      <div style={{border:"1px solid "+C.cb,borderRadius:10,padding:22,background:C.cd}}><div style={{fontFamily:F.sf,fontSize:34,fontWeight:400,lineHeight:1}}>{myEv.length}</div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginTop:6}}>Upcoming</div></div>
+    </div>
+    <div style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:10,overflow:"hidden",marginBottom:14}}>
+      <div style={{padding:"12px 18px",borderBottom:"1px solid "+C.bgA,display:"flex",justifyContent:"space-between"}}><span style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>Your Assignments</span><span style={{fontFamily:"monospace",fontSize:11,color:C.mt}}>{pending.length} open</span></div>
+      <div style={{padding:"14px 18px"}}>
+        {pending.length===0&&done.length===0&&<div style={{textAlign:"center",padding:36,color:C.mt,fontFamily:F.sf,fontStyle:"italic",fontSize:14}}>No assignments yet</div>}
+        {pending.map(t=>{const by=data.team.find(m=>m.id===t.assignedBy);return(
+          <div key={t.id} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"12px 0",borderBottom:"1px solid "+C.bgA}}>
+            <div onClick={()=>toggle(t.id)} style={{width:18,height:18,borderRadius:4,border:"1.5px solid "+C.rl,cursor:"pointer",flexShrink:0,marginTop:2}}/>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600,fontSize:14,lineHeight:1.4}}>{t.text}</div>
+              {t.notes&&<div style={{fontSize:12.5,color:C.sc,marginTop:3,lineHeight:1.5}}>{t.notes}</div>}
+              <div style={{display:"flex",alignItems:"center",gap:8,marginTop:6}}>
+                <Tag t={t.priority}/>
+                {t.due&&<span style={{fontSize:10,fontFamily:"monospace",color:new Date(t.due)<new Date()?C.rd:C.mt}}>Due {t.due}</span>}
+                {by&&<span style={{fontSize:10,color:C.mt}}>from {fn(by.name)}</span>}
+              </div>
+            </div>
+          </div>)})}
+        {done.length>0&&<><div style={{fontFamily:"monospace",fontSize:10,color:C.mt,letterSpacing:"0.1em",marginTop:14,marginBottom:6}}>COMPLETED ({done.length})</div>
+          {done.slice(0,5).map(t=><div key={t.id} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",opacity:0.4}}>
+            <div onClick={()=>toggle(t.id)} style={{width:18,height:18,borderRadius:4,background:C.gn,border:"1.5px solid "+C.gn,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:10,fontWeight:700}}>&#10003;</div>
+            <span style={{flex:1,textDecoration:"line-through",color:C.mt,fontSize:13}}>{t.text}</span>
+          </div>)}</>}
+      </div>
+    </div>
+  </div>);
+}
+
+function TeamBoard({data,setData,me}){
+  const[view,setView]=useState(null);
+  const isA=data.team.find(t=>t.id===me)?.admin;
+  const toggle=id=>{const tasks=(data.tasks||[]).map(t=>t.id===id?{...t,done:!t.done,doneDate:!t.done?new Date().toISOString().split('T')[0]:null}:t);const d={...data,tasks};setData(d);sv(d)};
+  const del=id=>{if(!isA)return;const d={...data,tasks:(data.tasks||[]).filter(t=>t.id!==id)};setData(d);sv(d)};
+  return(<div>
+    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>02 &mdash; Team Board</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Everyone's Work</h1></div>
+    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <div style={{display:"grid",gridTemplateColumns:"repeat("+Math.min(data.team.length,3)+",1fr)",gap:14,marginBottom:22}}>
+      {data.team.map(m=>{const ts=(data.tasks||[]).filter(t=>t.assignee===m.id);const op=ts.filter(t=>!t.done).length;const dn=ts.filter(t=>t.done).length;const od=ts.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;
+        return(<div key={m.id} onClick={()=>setView(view===m.id?null:m.id)} style={{background:C.cd,border:m.id===me?"2px solid "+C.tl:view===m.id?"2px solid "+C.td:"1px solid "+C.cb,borderRadius:10,cursor:"pointer",overflow:"hidden",padding:"16px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}><Av m={m} s={34}/><div><div style={{fontWeight:700,fontSize:13}}>{fn(m.name)}</div><div style={{fontSize:9.5,color:C.mt,fontFamily:"monospace"}}>{m.admin?'ADMIN':fn(m.role.split('of ')[1]||m.role)}</div></div></div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:22,fontWeight:700,fontFamily:F.sf,color:op>0?C.fg:C.mt}}>{op}</span><span style={{fontSize:10,color:C.mt}}>open</span>
+            <span style={{color:C.mt}}>&middot;</span>
+            <span style={{fontSize:14,fontWeight:600,color:C.gn}}>{dn}</span><span style={{fontSize:10,color:C.mt}}>done</span>
+            {od>0&&<><span style={{color:C.mt}}>&middot;</span><span style={{fontSize:12,fontWeight:700,color:C.rd}}>{od} overdue</span></>}
+          </div>
+        </div>)})}
+    </div>
+    {view&&(()=>{const m=data.team.find(t=>t.id===view);const ts=(data.tasks||[]).filter(t=>t.assignee===view).sort((a,b)=>a.done-b.done);return(
+      <div style={{background:C.cd,border:"2px solid "+C.tl,borderRadius:10,overflow:"hidden"}}>
+        <div style={{padding:"12px 18px",borderBottom:"1px solid "+C.bgA,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}><Av m={m} s={28}/><span style={{fontWeight:700,fontSize:14}}>{m.name}</span><span style={{fontSize:10,color:C.mt}}>&mdash; {m.role}</span></div>
+          <button onClick={()=>setView(null)} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.sc,fontFamily:"inherit"}}>Close</button>
+        </div>
+        <div style={{padding:"14px 18px"}}>
+          {ts.length===0?<div style={{textAlign:"center",padding:36,color:C.mt,fontFamily:F.sf,fontStyle:"italic"}}>No assignments</div>:
+          ts.map(t=><div key={t.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid "+C.bgA,opacity:t.done?0.4:1}}>
+            <div onClick={()=>toggle(t.id)} style={{width:18,height:18,borderRadius:4,border:"1.5px solid "+(t.done?C.gn:C.rl),background:t.done?C.gn:"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:10}}>{t.done?"\u2713":""}</div>
+            <div style={{flex:1}}><span style={{fontWeight:600,fontSize:13.5,textDecoration:t.done?"line-through":"none",color:t.done?C.mt:C.fg}}>{t.text}</span>{t.notes&&<div style={{fontSize:12,color:C.sc,marginTop:2}}>{t.notes}</div>}</div>
+            <Tag t={t.done?'done':t.priority}/>
+            {t.due&&<span style={{fontSize:10,fontFamily:"monospace",color:C.mt}}>{t.due}</span>}
+            {isA&&<button onClick={()=>del(t.id)} style={{background:"none",border:"none",cursor:"pointer",color:C.rd,fontSize:14}}>&#215;</button>}
+          </div>)}
+        </div>
+      </div>
+    )})()}
+  </div>);
+}
+
+function Assign({data,setData,me}){
+  const[form,setForm]=useState({assignee:'eric',text:'',notes:'',priority:'medium',due:''});
+  const[bulk,setBulk]=useState(false);
+  const assign=()=>{if(!form.text.trim())return;const targets=bulk?data.team.filter(t=>!t.admin).map(t=>t.id):[form.assignee];const nw=targets.map(a=>({id:Date.now().toString()+a,assignee:a,text:form.text.trim(),notes:form.notes.trim(),priority:form.priority,due:form.due,done:false,assignedBy:me,created:new Date().toISOString().split('T')[0]}));const d={...data,tasks:[...(data.tasks||[]),...nw]};setData(d);sv(d);setForm({assignee:'eric',text:'',notes:'',priority:'medium',due:''})};
+  return(<div>
+    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>03 &mdash; Assign Work</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Delegate Tasks</h1></div>
+    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:22}}>
+      <div style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:10,overflow:"hidden"}}>
+        <div style={{padding:"12px 18px",borderBottom:"1px solid "+C.bgA}}><span style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>New Assignment</span></div>
+        <div style={{padding:"14px 18px"}}>
+          <div style={{marginBottom:12}}>
+            <label style={{display:"block",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginBottom:5}}>Assign to</label>
+            <label style={{display:"flex",alignItems:"center",gap:4,fontSize:12,color:C.sc,cursor:"pointer",marginBottom:8}}><input type="checkbox" checked={bulk} onChange={e=>setBulk(e.target.checked)}/> Assign to all members</label>
+            {!bulk&&<select style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:7,color:C.fg,fontSize:13,fontFamily:"inherit"}} value={form.assignee} onChange={e=>setForm({...form,assignee:e.target.value})}>
+              {data.team.map(t=><option key={t.id} value={t.id}>{t.name} &mdash; {t.role}</option>)}
+            </select>}
+          </div>
+          <div style={{marginBottom:12}}><label style={{display:"block",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginBottom:5}}>Task</label><Inp value={form.text} onChange={e=>setForm({...form,text:e.target.value})} placeholder="What needs to be done?" onKeyDown={e=>e.key==='Enter'&&assign()}/></div>
+          <div style={{marginBottom:12}}><label style={{display:"block",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginBottom:5}}>Notes</label><textarea style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:7,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",minHeight:60,resize:"vertical"}} value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})} placeholder="Links, context, instructions..."/></div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+            <div><label style={{display:"block",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginBottom:5}}>Priority</label><select style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:7,fontSize:13,fontFamily:"inherit"}} value={form.priority} onChange={e=>setForm({...form,priority:e.target.value})}><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+            <div><label style={{display:"block",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginBottom:5}}>Due Date</label><input type="date" style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:7,fontSize:13,fontFamily:"inherit"}} value={form.due} onChange={e=>setForm({...form,due:e.target.value})}/></div>
+          </div>
+          <Btn primary onClick={assign} style={{width:"100%",justifyContent:"center",padding:"11px"}}>{bulk?"Assign to all members":"Assign to "+fn(data.team.find(t=>t.id===form.assignee)?.name)}</Btn>
+        </div>
+      </div>
+      <div>
+        <div style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:10,overflow:"hidden",marginBottom:14}}>
+          <div style={{padding:"12px 18px",borderBottom:"1px solid "+C.bgA}}><span style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>Workload Overview</span></div>
+          <div style={{padding:"14px 18px"}}>{data.team.map(m=>{const ts=(data.tasks||[]).filter(t=>t.assignee===m.id);const op=ts.filter(t=>!t.done).length;const od=ts.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;return(
+            <div key={m.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid "+C.bgA}}>
+              <Av m={m} s={32}/><div style={{flex:1}}><div style={{fontWeight:700,fontSize:13}}>{fn(m.name)}</div><div style={{fontSize:10,color:C.mt}}>{m.role}</div></div>
+              <div style={{textAlign:"right"}}><span style={{fontSize:16,fontWeight:700,fontFamily:F.sf}}>{op}</span><span style={{fontSize:10,color:C.mt,marginLeft:4}}>open</span>{od>0&&<div style={{fontSize:10,color:C.rd,fontWeight:600}}>{od} overdue</div>}</div>
+            </div>)})}</div>
+        </div>
+        <div style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:10,overflow:"hidden"}}>
+          <div style={{padding:"12px 18px",borderBottom:"1px solid "+C.bgA}}><span style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>Recent</span></div>
+          <div style={{padding:"14px 18px"}}>{(data.tasks||[]).filter(t=>t.assignedBy===me).slice(-8).reverse().map(t=>{const m=data.team.find(x=>x.id===t.assignee);return(
+            <div key={t.id} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0",borderBottom:"1px solid "+C.bgA,opacity:t.done?0.4:1}}>
+              {m&&<Av m={m} s={22}/>}<span style={{fontWeight:600,fontSize:12,flex:1}}>{fn(m?.name)}: {t.text}</span><Tag t={t.done?'done':t.priority}/>
+            </div>)})}{(data.tasks||[]).filter(t=>t.assignedBy===me).length===0&&<div style={{textAlign:"center",padding:20,color:C.mt,fontSize:12}}>No assignments yet</div>}</div>
+        </div>
+      </div>
+    </div>
+  </div>);
+}
+
+function Cal({data,setData,me}){
+  const isA=data.team.find(t=>t.id===me)?.admin;
+  const[cur,setCur]=useState(new Date());
+  const[modal,setModal]=useState(false);
+  const[form,setForm]=useState({title:'',date:'',assignee:me,notes:''});
+  const[sel,setSel]=useState(null);
+  const y=cur.getFullYear(),m=cur.getMonth(),f=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate(),pd=new Date(y,m,0).getDate();
+  const today=new Date();const mos=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const cells=[];for(let i=f-1;i>=0;i--)cells.push({d:pd-i,c:false});for(let i=1;i<=dim;i++)cells.push({d:i,c:true});while(cells.length<42)cells.push({d:cells.length-f-dim+1,c:false});
+  const ds=d=>`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const evOn=s=>(data.events||[]).filter(e=>e.date===s);
+  const isTd=(d,c)=>c&&d===today.getDate()&&m===today.getMonth()&&y===today.getFullYear();
+  const add=()=>{if(!form.title||!form.date)return;const d={...data,events:[...(data.events||[]),{...form,id:Date.now().toString()}]};setData(d);sv(d);setForm({title:'',date:'',assignee:me,notes:''});setModal(false)};
+  const del=id=>{const d={...data,events:(data.events||[]).filter(e=>e.id!==id)};setData(d);sv(d)};
+  return(<div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}><div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>04 &mdash; Calendar</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Team Calendar</h1></div>{isA&&<Btn primary onClick={()=>setModal(true)}>+ Add Event</Btn>}</div>
+    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+      <button onClick={()=>setCur(new Date(y,m-1))} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.sc,fontFamily:"inherit"}}>&larr; Prev</button>
+      <span style={{fontFamily:F.sf,fontSize:19}}>{mos[m]} {y}</span>
+      <button onClick={()=>setCur(new Date(y,m+1))} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.sc,fontFamily:"inherit"}}>Next &rarr;</button>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:1,background:C.rl,border:"1px solid "+C.rl,borderRadius:8,overflow:"hidden",marginBottom:22}}>
+      {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=><div key={d} style={{background:C.bgA,padding:8,textAlign:"center",fontFamily:"monospace",fontSize:10,textTransform:"uppercase",color:C.mt}}>{d}</div>)}
+      {cells.map((c,i)=>{const s=c.c?ds(c.d):'';const ev=evOn(s);return(<div key={i} onClick={()=>c.c&&setSel(s)} style={{background:isTd(c.d,c.c)?C.bgA:C.cd,minHeight:64,padding:"6px 8px",cursor:"pointer",fontSize:12,color:!c.c?C.mt:C.fg}}>
+        <div style={{fontFamily:"monospace",fontSize:11,fontWeight:isTd(c.d,c.c)?800:"inherit"}}>{c.d}</div>
+        {ev.slice(0,2).map(e=><div key={e.id} style={{padding:"1px 4px",fontSize:9,fontWeight:600,borderRadius:3,background:C.tg,color:C.td,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.title}</div>)}
+      </div>)})}
+    </div>
+    {sel&&<div style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:10,overflow:"hidden",marginBottom:14}}>
+      <div style={{padding:"12px 18px",borderBottom:"1px solid "+C.bgA,display:"flex",justifyContent:"space-between"}}><span style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>{sel}</span><button onClick={()=>setSel(null)} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.sc,fontFamily:"inherit"}}>Close</button></div>
+      <div style={{padding:"14px 18px"}}>{evOn(sel).length===0?<div style={{textAlign:"center",padding:20,color:C.mt}}>No events</div>:evOn(sel).map(e=><div key={e.id} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",borderBottom:"1px solid "+C.bgA}}>
+        <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14}}>{e.title}</div><div style={{fontSize:10,color:C.mt,fontFamily:"monospace"}}>{data.team.find(t=>t.id===e.assignee)?.name}</div></div>
+        {isA&&<button onClick={()=>del(e.id)} style={{background:"none",border:"none",cursor:"pointer",color:C.rd,fontSize:12,fontFamily:"inherit"}}>Remove</button>}
+      </div>)}</div>
+    </div>}
+    {modal&&<div style={{position:"fixed",inset:0,background:"rgba(9,26,38,0.45)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200}} onClick={e=>e.target===e.currentTarget&&setModal(false)}>
+      <div style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:12,width:500,maxWidth:"92vw"}}>
+        <div style={{padding:"18px 24px",borderBottom:"1px solid "+C.rl,display:"flex",justifyContent:"space-between"}}><h2 style={{fontFamily:F.sf,fontSize:19,fontWeight:400}}>New Event</h2><button onClick={()=>setModal(false)} style={{background:"none",border:"none",cursor:"pointer",fontSize:16,color:C.mt}}>&times;</button></div>
+        <div style={{padding:"18px 24px"}}>
+          <div style={{marginBottom:12}}><label style={{display:"block",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginBottom:5}}>Title</label><Inp value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/></div>
+          <div style={{marginBottom:12}}><label style={{display:"block",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginBottom:5}}>Date</label><input type="date" style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:7,fontSize:13,fontFamily:"inherit"}} value={form.date} onChange={e=>setForm({...form,date:e.target.value})}/></div>
+          <div style={{marginBottom:12}}><label style={{display:"block",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginBottom:5}}>For</label><select style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:7,fontSize:13,fontFamily:"inherit"}} value={form.assignee} onChange={e=>setForm({...form,assignee:e.target.value})}>{data.team.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></div>
+        </div>
+        <div style={{padding:"14px 24px",borderTop:"1px solid "+C.rl,display:"flex",justifyContent:"flex-end",gap:8}}><Btn onClick={()=>setModal(false)}>Cancel</Btn><Btn primary onClick={add}>Add</Btn></div>
+      </div>
+    </div>}
+  </div>);
+}
+
+function Contacts({data,setData,me}){
+  const isA=data.team.find(t=>t.id===me)?.admin;
+  const[ed,setEd]=useState(null);const[form,setForm]=useState({});
+  const startEdit=m=>{setEd(m.id);setForm({phone:m.phone,email:m.email})};
+  const saveEdit=id=>{const d={...data,team:data.team.map(m=>m.id===id?{...m,...form}:m)};setData(d);sv(d);setEd(null)};
+  const copy=t=>navigator.clipboard?.writeText(t);
+  return(<div>
+    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>05 &mdash; Contacts</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Team Directory</h1></div>
+    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <div style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:10,overflow:"hidden"}}>
+      <div style={{padding:"14px 18px"}}>{data.team.map(m=><div key={m.id} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 0",borderBottom:"1px solid "+C.bgA}}>
+        <Av m={m}/>
+        <div style={{flex:1}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontWeight:700,fontSize:14}}>{m.name}</span>{m.admin&&<span style={{fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:3,background:C.tg,color:C.tl,fontFamily:"monospace"}}>ADMIN</span>}</div>
+          <div style={{fontSize:10.5,color:C.mt,fontFamily:"monospace"}}>{m.role}</div>
+          {ed===m.id?<div style={{marginTop:8,display:"flex",flexDirection:"column",gap:6,maxWidth:300}}>
+            <Inp placeholder="Phone" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/>
+            <Inp placeholder="Email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/>
+            <div style={{display:"flex",gap:6}}><Btn primary onClick={()=>saveEdit(m.id)}>Save</Btn><Btn onClick={()=>setEd(null)}>Cancel</Btn></div>
+          </div>:<div style={{display:"flex",gap:14,marginTop:4,fontSize:12,color:C.sc}}>
+            {m.phone&&<span style={{cursor:"pointer"}} onClick={()=>copy(m.phone)}>&#9742; {m.phone}</span>}
+            {m.email&&<span style={{cursor:"pointer"}} onClick={()=>copy(m.email)}>&#9993; {m.email}</span>}
+            {!m.phone&&!m.email&&<span style={{color:C.mt,fontStyle:"italic"}}>No contact info</span>}
+          </div>}
+        </div>
+        <div style={{display:"flex",gap:4}}>
+          {(isA||m.id===me)&&ed!==m.id&&<button onClick={()=>startEdit(m)} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.sc,fontFamily:"inherit"}}>Edit</button>}
+          {m.phone&&<a href={"sms:"+m.phone} style={{fontSize:12,color:C.sc,textDecoration:"none"}}>Text</a>}
+          {m.email&&<a href={"mailto:"+m.email} style={{fontSize:12,color:C.sc,textDecoration:"none"}}>Email</a>}
+        </div>
+      </div>)}</div>
+    </div>
+  </div>);
+}
+
+function Sheets({data,setData,me}){
+  const isA=data.team.find(t=>t.id===me)?.admin;
+  const[ed,setEd]=useState(null);const[url,setUrl]=useState('');const[showAdd,setShowAdd]=useState(false);const[newS,setNewS]=useState({name:'',desc:'',url:''});const[loading,setLoading]=useState({});const[apiKey,setApiKey]=useState(data.sheetsApiKey||'');const[editKey,setEditKey]=useState(false);
+  const extractId=u=>{const m=u?.match(/\/d\/([a-zA-Z0-9-_]+)/);return m?m[1]:null};
+  const saveKey=()=>{const d={...data,sheetsApiKey:apiKey};setData(d);sv(d);setEditKey(false)};
+  const fetchSheet=async s=>{const sid=extractId(s.url);if(!sid||!data.sheetsApiKey)return;setLoading(l=>({...l,[s.id]:true}));try{const r=await fetch("https://sheets.googleapis.com/v4/spreadsheets/"+sid+"/values/A1:Z1000?key="+data.sheetsApiKey);const j=await r.json();if(j.values){const d={...data,sheetData:{...(data.sheetData||{}),[s.id]:j.values}};setData(d);sv(d)}}catch(e){}setLoading(l=>({...l,[s.id]:false}))};
+  const saveUrl=id=>{const d={...data,sheets:data.sheets.map(s=>s.id===id?{...s,url}:s)};setData(d);sv(d);setEd(null)};
+  const addSheet=()=>{if(!newS.name.trim())return;const d={...data,sheets:[...data.sheets,{...newS,id:'s_'+Date.now()}]};setData(d);sv(d);setNewS({name:'',desc:'',url:''});setShowAdd(false)};
+  const rmSheet=id=>{const d={...data,sheets:data.sheets.filter(s=>s.id!==id)};setData(d);sv(d)};
+  return(<div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}><div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>06 &mdash; Sheets</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Google Sheets</h1></div>{isA&&<Btn primary onClick={()=>setShowAdd(true)}>+ Add</Btn>}</div>
+    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    {isA&&<div style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:10,overflow:"hidden",marginBottom:18}}>
+      <div style={{padding:"12px 18px",borderBottom:"1px solid "+C.bgA,display:"flex",justifyContent:"space-between"}}><span style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>API Key</span>{!editKey&&<button onClick={()=>setEditKey(true)} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.sc,fontFamily:"inherit"}}>{data.sheetsApiKey?'Change':'Set'}</button>}</div>
+      <div style={{padding:"14px 18px"}}>{editKey?<div style={{display:"flex",gap:8}}><Inp type="password" placeholder="AIzaSy..." value={apiKey} onChange={e=>setApiKey(e.target.value)}/><Btn primary onClick={saveKey}>Save</Btn><Btn onClick={()=>setEditKey(false)}>Cancel</Btn></div>:<span style={{fontSize:12.5,color:C.sc}}>{data.sheetsApiKey?<>Key set <span style={{color:C.gn}}>&#9679;</span></>:<span style={{color:C.mt}}>No key set</span>}</span>}</div>
+    </div>}
+    {data.sheets.map(s=>{const rows=(data.sheetData||{})[s.id];return(<div key={s.id} style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:10,overflow:"hidden",marginBottom:18}}>
+      <div style={{padding:"12px 18px",borderBottom:"1px solid "+C.bgA,display:"flex",alignItems:"center",justifyContent:"space-between",background:C.bgA}}>
+        <div><div style={{fontFamily:F.sf,fontSize:16,fontWeight:400}}>{s.name}</div>{s.desc&&<div style={{fontSize:11,color:C.mt,fontFamily:"monospace"}}>{s.desc}</div>}</div>
+        <div style={{display:"flex",gap:6}}>
+          {s.url&&data.sheetsApiKey&&<Btn primary onClick={()=>fetchSheet(s)} disabled={loading[s.id]}>{loading[s.id]?'...':'Sync'}</Btn>}
+          {isA&&<Btn onClick={()=>{setEd(s.id);setUrl(s.url)}}>{s.url?'URL':'Link'}</Btn>}
+          {s.url&&<a href={s.url} target="_blank" rel="noopener" style={{display:"inline-flex",alignItems:"center",padding:"7px 16px",borderRadius:8,fontSize:12,fontWeight:600,border:"1px solid "+C.rl,background:C.cd,color:C.fg,textDecoration:"none"}}>Open</a>}
+          {isA&&<button onClick={()=>rmSheet(s.id)} style={{background:"none",border:"none",cursor:"pointer",color:C.rd,fontSize:14}}>&#215;</button>}
+        </div>
+      </div>
+      {ed===s.id&&<div style={{padding:"10px 18px",background:C.bg,borderBottom:"1px solid "+C.bgA,display:"flex",gap:8}}><Inp placeholder="https://docs.google.com/spreadsheets/d/..." value={url} onChange={e=>setUrl(e.target.value)}/><Btn primary onClick={()=>saveUrl(s.id)}>Save</Btn><Btn onClick={()=>setEd(null)}>Cancel</Btn></div>}
+      {rows?<div style={{overflowX:"auto",maxHeight:400}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12.5}}>
+        <thead><tr>{rows[0].map((h,i)=><th key={i} style={{padding:"8px 12px",textAlign:"left",borderBottom:"2px solid "+C.rl,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc,position:"sticky",top:0,background:C.bgA,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
+        <tbody>{rows.slice(1).map((row,i)=><tr key={i}>{rows[0].map((_,j)=><td key={j} style={{padding:"7px 12px",borderBottom:"1px solid "+C.bgA,maxWidth:200,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{row[j]||''}</td>)}</tr>)}</tbody>
+      </table></div>:<div style={{padding:36,textAlign:"center",color:C.mt,fontSize:13}}>{!s.url?'Not linked':!data.sheetsApiKey?'API key needed':'Click Sync'}</div>}
+    </div>)})}
+    {showAdd&&<div style={{position:"fixed",inset:0,background:"rgba(9,26,38,0.45)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200}} onClick={e=>e.target===e.currentTarget&&setShowAdd(false)}><div style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:12,width:500,maxWidth:"92vw"}}>
+      <div style={{padding:"18px 24px",borderBottom:"1px solid "+C.rl}}><h2 style={{fontFamily:F.sf,fontSize:19,fontWeight:400}}>Add Sheet</h2></div>
+      <div style={{padding:"18px 24px"}}>{[["Name","name"],["Description","desc"],["URL","url"]].map(([l,k])=><div key={k} style={{marginBottom:12}}><label style={{display:"block",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginBottom:5}}>{l}</label><Inp value={newS[k]} onChange={e=>setNewS({...newS,[k]:e.target.value})}/></div>)}</div>
+      <div style={{padding:"14px 24px",borderTop:"1px solid "+C.rl,display:"flex",justifyContent:"flex-end",gap:8}}><Btn onClick={()=>setShowAdd(false)}>Cancel</Btn><Btn primary onClick={addSheet}>Add</Btn></div>
+    </div></div>}
+  </div>);
+}
+
+function Board({data,setData,me}){
+  const isA=data.team.find(t=>t.id===me)?.admin;
+  const meD=data.team.find(t=>t.id===me);
+  const[text,setText]=useState('');
+  const post=()=>{if(!text.trim())return;const d={...data,announcements:[{id:'a_'+Date.now(),author:fn(meD?.name),date:new Date().toISOString().split('T')[0],text:text.trim()},...data.announcements]};setData(d);sv(d);setText('')};
+  const del=id=>{const d={...data,announcements:data.announcements.filter(a=>a.id!==id)};setData(d);sv(d)};
+  return(<div>
+    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>07 &mdash; Announcements</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Board</h1></div>
+    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <div style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:10,overflow:"hidden",marginBottom:18}}>
+      <div style={{padding:"14px 18px"}}>
+        <div style={{display:"flex",gap:8}}><textarea style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:7,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",minHeight:44,resize:"vertical"}} placeholder="Share an update..." value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();post()}}}/><Btn primary onClick={post} style={{alignSelf:"flex-end"}}>Post</Btn></div>
+      </div>
+    </div>
+    <div style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:10,overflow:"hidden"}}>
+      <div style={{padding:"14px 18px"}}>{data.announcements.length===0?<div style={{textAlign:"center",padding:36,color:C.mt,fontFamily:F.sf,fontStyle:"italic"}}>No announcements</div>:data.announcements.map(a=><div key={a.id} style={{padding:"12px 0",borderBottom:"1px solid "+C.bgA,position:"relative"}}>
+        <div style={{fontFamily:"monospace",fontSize:10,color:C.mt}}>{a.date}</div>
+        <div style={{fontWeight:700,fontSize:13}}>{a.author}</div>
+        <div style={{fontSize:14,lineHeight:1.6,marginTop:3,color:C.sc}}>{a.text}</div>
+        {isA&&<button onClick={()=>del(a.id)} style={{position:"absolute",top:12,right:0,background:"none",border:"none",cursor:"pointer",color:C.mt,fontSize:14}}>&#215;</button>}
+      </div>)}</div>
+    </div>
+  </div>);
+}
+
+function Settings({data,setData}){
+  const[pu,setPu]=useState('tanmay');const[np,setNp]=useState('');
+  const exp=()=>{const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='cfb-hub.json';a.click()};
+  const imp=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);setData(d);sv(d);alert('Done')}catch{alert('Invalid')}};r.readAsText(f)};
+  const reset=()=>{if(!confirm('Reset ALL data?'))return;localStorage.removeItem(SK);localStorage.removeItem(LK);window.location.reload()};
+  const chPw=()=>{if(!np)return;const d={...data,passwords:{...(data.passwords||{}),[pu]:np}};setData(d);sv(d);setNp('');alert('Updated')};
+  return(<div>
+    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>Settings</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Configuration</h1></div>
+    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <div style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:10,overflow:"hidden",marginBottom:18}}>
+      <div style={{padding:"12px 18px",borderBottom:"1px solid "+C.bgA}}><span style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>Passwords</span></div>
+      <div style={{padding:"14px 18px"}}><div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
+        <div><label style={{display:"block",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginBottom:5}}>Member</label><select style={{width:160,padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:7,fontSize:13,fontFamily:"inherit"}} value={pu} onChange={e=>setPu(e.target.value)}>{data.team.map(m=><option key={m.id} value={m.id}>{fn(m.name)}</option>)}</select></div>
+        <div style={{flex:1}}><label style={{display:"block",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginBottom:5}}>New Password</label><Inp type="password" value={np} onChange={e=>setNp(e.target.value)}/></div>
+        <Btn primary onClick={chPw}>Update</Btn>
+      </div></div>
+    </div>
+    <div style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:10,overflow:"hidden"}}>
+      <div style={{padding:"14px 18px",display:"flex",flexDirection:"column",gap:16}}>
+        <div><div style={{fontWeight:700,fontSize:14,marginBottom:3}}>Export</div><Btn onClick={exp}>Export JSON</Btn></div>
+        <hr style={{border:"none",borderTop:"1px solid "+C.rl}}/>
+        <div><div style={{fontWeight:700,fontSize:14,marginBottom:3}}>Import</div><input type="file" accept=".json" onChange={imp} style={{fontSize:12}}/></div>
+        <hr style={{border:"none",borderTop:"1px solid "+C.rl}}/>
+        <div><div style={{fontWeight:700,fontSize:14,marginBottom:3,color:C.rd}}>Reset</div><Btn onClick={reset} style={{borderColor:C.rd,color:C.rd}}>Reset All</Btn></div>
+      </div>
+    </div>
+  </div>);
+}
+
+function App(){
+  const[data,setData]=useState(init);
+  const[user,setUser]=useState(()=>gL());
+  const[tab,setTab]=useState('my');
+  const[time,setTime]=useState(new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}));
+  useEffect(()=>{const i=setInterval(()=>setTime(new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})),6e4);return()=>clearInterval(i)},[]);
+  const logout=()=>{localStorage.removeItem(LK);setUser(null);setTab('my')};
+  if(!user)return<Login onLogin={id=>setUser({id,t:Date.now()})} data={data}/>;
+  const me=user.id;const isA=data.team.find(t=>t.id===me)?.admin;
+  const titles={my:'My Work',team:'Team Board',assign:'Assign Work',calendar:'Calendar',contacts:'Contacts',sheets:'Sheets',board:'Announcements',settings:'Settings'};
+  const V=()=>{switch(tab){case 'my':return<MyWork data={data} setData={setData} me={me}/>;case 'team':return<TeamBoard data={data} setData={setData} me={me}/>;case 'assign':return isA?<Assign data={data} setData={setData} me={me}/>:<MyWork data={data} setData={setData} me={me}/>;case 'calendar':return<Cal data={data} setData={setData} me={me}/>;case 'contacts':return<Contacts data={data} setData={setData} me={me}/>;case 'sheets':return<Sheets data={data} setData={setData} me={me}/>;case 'board':return<Board data={data} setData={setData} me={me}/>;case 'settings':return isA?<Settings data={data} setData={setData}/>:<MyWork data={data} setData={setData} me={me}/>;default:return<MyWork data={data} setData={setData} me={me}/>}};
+  return(<div style={{display:"flex",minHeight:"100vh",fontFamily:F.sn,background:C.bg,color:C.fg}}>
+    <style>{css}</style>
+    <Sidebar tab={tab} setTab={setTab} me={me} data={data} logout={logout}/>
+    <div style={{marginLeft:240,flex:1,minHeight:"100vh"}}>
+      <div style={{position:"sticky",top:0,background:"rgba(248,250,252,0.88)",backdropFilter:"blur(16px)",borderBottom:"1px solid "+C.rl,padding:"12px 36px",display:"flex",alignItems:"center",justifyContent:"space-between",zIndex:50}}>
+        <span style={{fontFamily:F.sf,fontSize:19,fontWeight:400}}>{titles[tab]}</span>
+        <span style={{fontSize:11,color:C.mt,fontFamily:"monospace"}}>{time}</span>
+      </div>
+      <div style={{padding:"28px 36px",maxWidth:1100}}><V/></div>
+    </div>
+  </div>);
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
+</body>
+</html>
