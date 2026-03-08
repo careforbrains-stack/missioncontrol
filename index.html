@@ -493,7 +493,7 @@ function Sheets({db,hubData,team,me}){
             </div>:<div style={{overflowX:"auto",maxHeight:620}}>
               <table style={{width:"100%",borderCollapse:"collapse",fontSize:12.5}}>
                 <thead><tr>{headers.map((h,i)=><th key={i} style={{padding:"10px 12px",textAlign:"left",borderBottom:"2px solid "+C.rl,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc,position:"sticky",top:0,background:C.bgA,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
-                <tbody>{rows.slice(0,250).map((row,i)=><tr key={i}>{headers.map((_,j)=><td key={j} style={{padding:"9px 12px",borderBottom:"1px solid "+C.bgA,maxWidth:260,verticalAlign:"top",color:C.sc"}}>{row[j]||''}</td>)}</tr>)}</tbody>
+                <tbody>{rows.slice(0,250).map((row,i)=><tr key={i}>{headers.map((_,j)=><td key={j} style={{padding:"9px 12px",borderBottom:"1px solid "+C.bgA,maxWidth:260,verticalAlign:"top",color:C.sc}}>{row[j]||''}</td>)}</tr>)}</tbody>
               </table>
               {rows.length>250&&<div style={{padding:"12px 14px",fontSize:11,color:C.mt,borderTop:"1px solid "+C.bgA}}>Showing first 250 rows in Mission Control. Open Google Sheets for the full sheet.</div>}
             </div>}
