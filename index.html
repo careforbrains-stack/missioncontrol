@@ -99,6 +99,14 @@ const EMAIL_ADMINS=["tanmay","ezra"];
 const canUseEmails=id=>EMAIL_ADMINS.includes(id);
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const okEmail=v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((v||'').trim());
+const getSheetId=url=>(url||'').match(/\/d\/([a-zA-Z0-9-_]+)/)?.[1]||'';
+async function fetchSheetValues(url,key){
+  const sid=getSheetId(url);
+  if(!sid||!key)return null;
+  const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}/values/A1:ZZ5000?key=${key}`);
+  const j=await r.json();
+  return j.values||null;
+}
 
 const C={bg:"#F8FAFC",bgA:"#EDF2F8",dk:"#091A26",fg:"#0B1A26",sc:"#3A5068",mt:"#7A8FA4",tl:"#1490B0",td:"#0C6B8E",tg:"rgba(20,144,176,0.12)",rl:"#CDDAE6",cd:"#FFF",cb:"#C8D8E6",rd:"#EF4444",gn:"#10B981"};
 const F={sf:"'Playfair Display',Georgia,serif",sn:"'Plus Jakarta Sans',-apple-system,sans-serif"};
@@ -341,6 +349,161 @@ function Contacts({db,team,me}){
       </div>
       {(isA||m.id===me)&&ed!==m.id&&<button onClick={()=>startEdit(m)} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.sc,fontFamily:"inherit"}}>Edit</button>}
     </div>)}</div></Card>
+  </div>);
+}
+
+// === SHEETS ===
+function Sheets({db,hubData,team,me}){
+  const isA=team.find(t=>t.id===me)?.admin;
+  const sheets=fbToArr(hubData.sheets).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const sheetData=hubData.sheetData||{};
+  const[active,setActive]=useState('');
+  const[loading,setLoading]=useState('');
+  const[editKey,setEditKey]=useState(false);
+  const[apiKey,setApiKey]=useState(hubData.sheetsApiKey||'');
+  const[editing,setEditing]=useState(null);
+  const[form,setForm]=useState({name:'',desc:'',url:''});
+
+  useEffect(()=>setApiKey(hubData.sheetsApiKey||''),[hubData.sheetsApiKey]);
+  useEffect(()=>{
+    if(!sheets.length){setActive('');return}
+    const valid=sheets.some(s=>(s._fbKey||s.id)===active);
+    if(!valid)setActive(sheets[0]._fbKey||sheets[0].id);
+  },[hubData.sheets,active]);
+
+  const activeSheet=sheets.find(s=>(s._fbKey||s.id)===active)||null;
+  const activeVals=activeSheet?sheetData[activeSheet.id]:null;
+  const headers=Array.isArray(activeVals)&&activeVals.length?activeVals[0]:[];
+  const rows=Array.isArray(activeVals)&&activeVals.length>1?activeVals.slice(1):[];
+  const totalRows=Object.values(sheetData).filter(Array.isArray).reduce((sum,v)=>sum+Math.max((v?.length||0)-1,0),0);
+  const linkedCount=sheets.length;
+  const readyCount=sheets.filter(s=>s.url&&sheetData[s.id]?.length).length;
+
+  const resetForm=()=>{setEditing(null);setForm({name:'',desc:'',url:''})};
+  const saveKey=()=>db.ref('hub/sheetsApiKey').set(apiKey||'');
+  const startEdit=s=>{setEditing(s._fbKey);setForm({name:s.name||'',desc:s.desc||'',url:s.url||''})};
+  const saveSheet=()=>{
+    if(!form.name.trim())return;
+    if(editing){
+      const cur=sheets.find(s=>s._fbKey===editing);
+      db.ref('hub/sheets/'+editing).set({id:cur?.id||editing,name:form.name.trim(),desc:form.desc.trim(),url:form.url.trim()});
+    }else{
+      const ref=db.ref('hub/sheets').push();
+      ref.set({id:ref.key,name:form.name.trim(),desc:form.desc.trim(),url:form.url.trim()});
+      setActive(ref.key);
+    }
+    resetForm();
+  };
+  const removeSheet=s=>{
+    if(!confirm(`Remove ${s.name}?`))return;
+    db.ref('hub/sheets/'+s._fbKey).remove();
+    if(s.id)db.ref('hub/sheetData/'+s.id).remove();
+    if((s._fbKey||s.id)===active)setActive('');
+    if(editing===s._fbKey)resetForm();
+  };
+  const syncOne=async s=>{
+    if(!hubData.sheetsApiKey){alert('Add the Google Sheets API key first');return}
+    if(!getSheetId(s.url)){alert('Paste a valid Google Sheets URL first');return}
+    setLoading(s._fbKey||s.id);
+    try{
+      const vals=await fetchSheetValues(s.url,hubData.sheetsApiKey);
+      if(vals){db.ref('hub/sheetData/'+s.id).set(vals);setActive(s._fbKey||s.id)}
+      else alert('No values found for that sheet');
+    }catch(e){console.error(e);alert('Sync failed. Check the API key and sharing settings.')}
+    setLoading('');
+  };
+  const syncAll=async()=>{
+    if(!hubData.sheetsApiKey){alert('Add the Google Sheets API key first');return}
+    const targets=sheets.filter(s=>getSheetId(s.url));
+    if(!targets.length)return;
+    setLoading('all');
+    for(let i=0;i<targets.length;i++){
+      const s=targets[i];
+      try{
+        const vals=await fetchSheetValues(s.url,hubData.sheetsApiKey);
+        if(vals)db.ref('hub/sheetData/'+s.id).set(vals);
+      }catch(e){console.error(e)}
+    }
+    setLoading('');
+  };
+
+  return(<div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:16,flexWrap:"wrap"}}>
+      <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>05 &#8212; Sheets</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Data Room</h1></div>
+      <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+        <div style={{fontSize:11,color:C.mt,fontFamily:"monospace"}}>{linkedCount} linked &#183; {readyCount} cached</div>
+        {isA&&<Btn onClick={syncAll} primary disabled={loading==='all'||!sheets.length}>{loading==='all'?'Syncing...':'Sync All'}</Btn>}
+      </div>
+    </div>
+    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:14,marginBottom:18}}>
+      {[[linkedCount,"Linked Sheets"],[totalRows,"Cached Rows"],[sheets.filter(s=>!!s.url).length,"Ready to Sync"]].map(([n,l],i)=><div key={i} className="stat-card page-enter" style={{border:"1px solid "+C.cb}}><div style={{fontFamily:F.sf,fontSize:34,fontWeight:400,lineHeight:1}}>{n}</div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginTop:6}}>{l}</div></div>)}
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:isA?"340px minmax(0,1fr)":"300px minmax(0,1fr)",gap:16,alignItems:"start"}}>
+      <div>
+        {isA&&<Card><CardH right={<button onClick={()=>setEditKey(!editKey)} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.sc,fontFamily:"inherit"}}>{editKey?'Close':'Edit'}</button>}>Sheets API Key</CardH>
+          <div style={{padding:"14px 18px"}}>
+            <div style={{fontSize:12.5,color:C.sc,marginBottom:10}}>{hubData.sheetsApiKey?'Configured and ready for sync.':'Paste a Google Sheets API key to enable syncing.'}</div>
+            {editKey&&<>
+              <Lbl>API Key</Lbl>
+              <Inp value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="AIza..."/>
+              <div style={{display:"flex",gap:8,marginTop:10}}><Btn primary onClick={saveKey}>Save Key</Btn><Btn onClick={()=>setApiKey(hubData.sheetsApiKey||'')}>Reset</Btn></div>
+            </>}
+          </div>
+        </Card>}
+        <Card><CardH>Sheet Library</CardH>
+          <div style={{padding:"10px 12px"}}>
+            {sheets.length===0&&<div style={{padding:18,textAlign:"center",color:C.mt}}>No sheets linked yet</div>}
+            {sheets.map(s=>{const isActive=(s._fbKey||s.id)===active;const cached=sheetData[s.id];const rowCount=Math.max((cached?.length||0)-1,0);return(<div key={s._fbKey} onClick={()=>setActive(s._fbKey||s.id)} style={{padding:"12px 12px",border:isActive?"1.5px solid "+C.tl:"1px solid "+C.bgA,borderRadius:12,background:isActive?C.tg:"transparent",cursor:"pointer",marginBottom:8}}>
+              <div style={{display:"flex",justifyContent:"space-between",gap:8,alignItems:"flex-start"}}><div style={{flex:1}}><div style={{fontWeight:700,fontSize:13.5}}>{s.name}</div><div style={{fontSize:11,color:C.sc,marginTop:2}}>{s.desc||'No description yet'}</div></div><span style={{fontSize:10,fontFamily:"monospace",color:rowCount?C.gn:C.mt}}>{rowCount||0} rows</span></div>
+              <div style={{display:"flex",gap:8,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
+                {s.url?<a href={s.url} target="_blank" rel="noreferrer" style={{fontSize:11,color:C.tl,textDecoration:"none"}}>Open Sheet</a>:<span style={{fontSize:11,color:C.mt}}>No URL</span>}
+                {isA&&<button onClick={e=>{e.stopPropagation();syncOne(s)}} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:C.sc,fontFamily:"inherit"}}>{loading===(s._fbKey||s.id)?'Syncing...':'Sync'}</button>}
+                {isA&&<button onClick={e=>{e.stopPropagation();startEdit(s)}} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:C.sc,fontFamily:"inherit"}}>Edit</button>}
+                {isA&&<button onClick={e=>{e.stopPropagation();removeSheet(s)}} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:C.rd,fontFamily:"inherit"}}>Remove</button>}
+              </div>
+            </div>)})}
+          </div>
+        </Card>
+        {isA&&<Card><CardH>{editing?'Edit Sheet':'Add Sheet'}</CardH>
+          <div style={{padding:"14px 18px"}}>
+            <div style={{marginBottom:10}}><Lbl>Name</Lbl><Inp value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Volunteer Signups"/></div>
+            <div style={{marginBottom:10}}><Lbl>Description</Lbl><Inp value={form.desc} onChange={e=>setForm({...form,desc:e.target.value})} placeholder="Applications, hours, chapters..."/></div>
+            <div style={{marginBottom:12}}><Lbl>Google Sheet URL</Lbl><Inp value={form.url} onChange={e=>setForm({...form,url:e.target.value})} placeholder="https://docs.google.com/spreadsheets/d/..."/></div>
+            <div style={{display:"flex",gap:8}}><Btn primary onClick={saveSheet}>{editing?'Save Changes':'Add Sheet'}</Btn>{(editing||form.name||form.desc||form.url)&&<Btn onClick={resetForm}>Cancel</Btn>}</div>
+          </div>
+        </Card>}
+      </div>
+      <div>
+        {activeSheet?<>
+          <Card><CardH right={<div style={{display:"flex",gap:8,alignItems:"center"}}>{activeSheet.url&&<a href={activeSheet.url} target="_blank" rel="noreferrer" style={{fontSize:11,color:C.tl,textDecoration:"none"}}>Open in Google Sheets</a>}{isA&&<Btn onClick={()=>syncOne(activeSheet)} primary disabled={loading===(activeSheet._fbKey||activeSheet.id)}>{loading===(activeSheet._fbKey||activeSheet.id)?'Syncing...':'Sync Now'}</Btn>}</div>}>{activeSheet.name}</CardH>
+            <div style={{padding:"16px 18px"}}>
+              <div style={{fontSize:13,color:C.sc,marginBottom:10}}>{activeSheet.desc||'No description yet.'}</div>
+              <div style={{display:"flex",gap:18,flexWrap:"wrap",fontSize:11,color:C.mt,fontFamily:"monospace"}}>
+                <span>{headers.length||0} columns</span>
+                <span>{rows.length||0} rows cached</span>
+                <span>{getSheetId(activeSheet.url)?'sheet linked':'missing URL'}</span>
+              </div>
+            </div>
+          </Card>
+          <Card><CardH right={<span style={{fontSize:11,color:C.mt,fontFamily:"monospace"}}>{rows.length} records</span>}>Preview</CardH>
+            {!headers.length?<div style={{padding:"44px 24px",textAlign:"center",color:C.mt}}>
+              <div style={{fontFamily:F.sf,fontSize:20,fontStyle:"italic",marginBottom:8}}>No cached data yet</div>
+              <div style={{fontSize:13}}>Sync this sheet to pull live rows from Google Sheets.</div>
+            </div>:<div style={{overflowX:"auto",maxHeight:620}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12.5}}>
+                <thead><tr>{headers.map((h,i)=><th key={i} style={{padding:"10px 12px",textAlign:"left",borderBottom:"2px solid "+C.rl,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc,position:"sticky",top:0,background:C.bgA,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
+                <tbody>{rows.slice(0,250).map((row,i)=><tr key={i}>{headers.map((_,j)=><td key={j} style={{padding:"9px 12px",borderBottom:"1px solid "+C.bgA,maxWidth:260,verticalAlign:"top",color:C.sc"}}>{row[j]||''}</td>)}</tr>)}</tbody>
+              </table>
+              {rows.length>250&&<div style={{padding:"12px 14px",fontSize:11,color:C.mt,borderTop:"1px solid "+C.bgA}}>Showing first 250 rows in Mission Control. Open Google Sheets for the full sheet.</div>}
+            </div>}
+          </Card>
+        </>:<Card><div style={{padding:"48px 24px",textAlign:"center",color:C.mt}}>
+          <div style={{fontFamily:F.sf,fontSize:22,fontStyle:"italic",marginBottom:8}}>No sheet selected</div>
+          <div style={{fontSize:13}}>Pick a sheet from the library or add a new one.</div>
+        </div></Card>}
+      </div>
+    </div>
   </div>);
 }
 
@@ -596,6 +759,7 @@ function App(){
     case 'assign':return isA?<Assign db={db} tasks={tasks} team={team} me={me}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'calendar':return<Cal db={db} events={events} tasks={tasks} team={team} me={me}/>;
     case 'contacts':return<Contacts db={db} team={team} me={me}/>;
+    case 'sheets':return<Sheets db={db} hubData={hubData} team={team} me={me}/>;
     case 'emails':return canEmail?<Emails db={db} hubData={hubData} team={team} me={me}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'board':return<Board db={db} announcements={announcements} team={team} me={me}/>;
     case 'settings':return isA?<Settings db={db} passwords={passwords} team={team}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
@@ -612,7 +776,7 @@ function App(){
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <span className="live-pill" style={{fontSize:10,color:C.gn,fontWeight:700}}><span className="live-pill-dot"></span>LIVE</span>
           <span style={{fontSize:11,color:C.mt,fontFamily:"monospace"}}>{time}</span></div></div>
-      <div style={{padding:"28px 36px",maxWidth:1100}}><div key={safeTab} className="page-enter section-shell"><V/></div></div>
+      <div style={{padding:"28px 36px 40px",width:"100%",maxWidth:"none"}}><div key={safeTab} className="page-enter section-shell"><V/></div></div>
     </div>
   </div>);
 }
