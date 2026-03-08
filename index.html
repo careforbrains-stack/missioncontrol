@@ -89,7 +89,7 @@ function normEmailCfg(cfg){
   }
   return{defaultProfile:"general",profiles:{general:{...base.profiles.general,...cfg},stem:{...base.profiles.stem}}};
 }
-const SEED={team:TEAM,tasks:{_seed:true},events:{_seed:true},sheets:{s1:{id:"s1",name:"Volunteer Signups",desc:"Applications",url:""},s2:{id:"s2",name:"Event Planning",desc:"Logistics",url:""},s3:{id:"s3",name:"PVSA Hours",desc:"Hours",url:""}},announcements:{a1:{id:"a1",author:"Tanmay",date:"2026-03-03",text:"Mission Control is live. Check your assignments.",ts:1}},passwords:{tanmay:"cfb2026",ezra:"cfb2026",eric:"cfb2026",raheesh:"cfb2026",zavier:"cfb2026"},sheetsApiKey:"",sheetData:{_seed:true},emailCampaigns:{_seed:true},emailjs:mkEmailCfg()};
+const SEED={team:TEAM,tasks:{_seed:true},events:{_seed:true},sheets:{s1:{id:"s1",name:"Volunteer Signups",desc:"Applications",url:"",source:"general",autoSync:true},s2:{id:"s2",name:"Event Planning",desc:"Logistics",url:"",source:"general",autoSync:true},s3:{id:"s3",name:"PVSA Hours",desc:"Hours",url:"",source:"general",autoSync:true}},announcements:{a1:{id:"a1",author:"Tanmay",date:"2026-03-03",text:"Mission Control is live. Check your assignments.",ts:1}},passwords:{tanmay:"cfb2026",ezra:"cfb2026",eric:"cfb2026",raheesh:"cfb2026",zavier:"cfb2026"},sheetsApiKey:"",sheetData:{_seed:true},sheetMeta:{_seed:true},emailCampaigns:{_seed:true},emailjs:mkEmailCfg()};
 const FIREBASE_CONFIG={apiKey:"AIzaSyCnddOaA0dV6HnHeaHWlYa9hlEGb6uF1N0",authDomain:"careforbrains-hub.firebaseapp.com",databaseURL:"https://careforbrains-hub-default-rtdb.firebaseio.com",projectId:"careforbrains-hub",storageBucket:"careforbrains-hub.firebasestorage.app",messagingSenderId:"174180979425",appId:"1:174180979425:web:12d81181b955ae5d705da0"};
 const LK="cfb_mc_login";
 const gL=()=>{try{return JSON.parse(localStorage.getItem(LK))}catch{return null}};
@@ -105,11 +105,23 @@ async function fetchSheetValues(url,key){
   if(!sid||!key)return null;
   const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}/values/A1:ZZ5000?key=${key}`);
   const j=await r.json();
+  if(!r.ok)throw new Error(j?.error?.message||'Google Sheets request failed');
   return j.values||null;
 }
 
 const C={bg:"#F8FAFC",bgA:"#EDF2F8",dk:"#091A26",fg:"#0B1A26",sc:"#3A5068",mt:"#7A8FA4",tl:"#1490B0",td:"#0C6B8E",tg:"rgba(20,144,176,0.12)",rl:"#CDDAE6",cd:"#FFF",cb:"#C8D8E6",rd:"#EF4444",gn:"#10B981"};
 const F={sf:"'Playfair Display',Georgia,serif",sn:"'Plus Jakarta Sans',-apple-system,sans-serif"};
+const SHEET_SOURCES={general:{id:"general",label:"CareForBrains",tag:"GENERAL"},stem:{id:"stem",label:"STEM",tag:"STEM"}};
+const SHEET_AUTO_SYNC_MS=1000*60*15;
+const normSheetEntry=s=>({...s,source:s?.source||"general",autoSync:s?.autoSync!==false});
+const fmtSyncTime=ts=>{
+  if(!ts)return'Never synced';
+  const diff=Date.now()-ts;
+  if(diff<60000)return'Just now';
+  if(diff<3600000)return`${Math.round(diff/60000)}m ago`;
+  if(diff<86400000)return`${Math.round(diff/3600000)}h ago`;
+  return new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+};
 
 function Av({m,s=38}){const[e,setE]=useState(false);if(m?.img&&!e)return React.createElement('img',{src:m.img,alt:'',style:{width:s,height:s,borderRadius:8,objectFit:'cover',flexShrink:0,background:m.color},onError:()=>setE(true)});return<div style={{width:s,height:s,borderRadius:8,background:m?.color||C.tl,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:s*.38,flexShrink:0}}>{m?.name?.[0]||"?"}</div>}
 function Tag({t}){const m={high:{b:"#FEE2E2",c:C.rd},medium:{b:"#FEF3C7",c:"#D97706"},low:{b:"#DBEAFE",c:"#2563EB"},done:{b:"#D1FAE5",c:C.gn}};const v=m[t]||m.medium;return<span style={{display:"inline-flex",padding:"2px 8px",borderRadius:4,fontSize:9.5,fontWeight:700,background:v.b,color:v.c,textTransform:"uppercase",letterSpacing:"0.04em",fontFamily:"monospace"}}>{t}</span>}
@@ -355,14 +367,17 @@ function Contacts({db,team,me}){
 // === SHEETS ===
 function Sheets({db,hubData,team,me}){
   const isA=team.find(t=>t.id===me)?.admin;
-  const sheets=fbToArr(hubData.sheets).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const sheets=fbToArr(hubData.sheets).map(normSheetEntry).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   const sheetData=hubData.sheetData||{};
+  const sheetMeta=hubData.sheetMeta||{};
   const[active,setActive]=useState('');
   const[loading,setLoading]=useState('');
   const[editKey,setEditKey]=useState(false);
   const[apiKey,setApiKey]=useState(hubData.sheetsApiKey||'');
   const[editing,setEditing]=useState(null);
-  const[form,setForm]=useState({name:'',desc:'',url:''});
+  const[sourceFilter,setSourceFilter]=useState('all');
+  const[form,setForm]=useState({name:'',desc:'',url:'',source:'general',autoSync:true});
+  const autoSyncRef=useRef({});
 
   useEffect(()=>setApiKey(hubData.sheetsApiKey||''),[hubData.sheetsApiKey]);
   useEffect(()=>{
@@ -370,80 +385,144 @@ function Sheets({db,hubData,team,me}){
     const valid=sheets.some(s=>(s._fbKey||s.id)===active);
     if(!valid)setActive(sheets[0]._fbKey||sheets[0].id);
   },[hubData.sheets,active]);
+  useEffect(()=>{
+    if(sourceFilter==='all')return;
+    const visible=sheets.filter(s=>s.source===sourceFilter);
+    if(!visible.length)return;
+    if(!visible.some(s=>(s._fbKey||s.id)===active))setActive(visible[0]._fbKey||visible[0].id);
+  },[sourceFilter,hubData.sheets,active]);
 
-  const activeSheet=sheets.find(s=>(s._fbKey||s.id)===active)||null;
+  const filteredSheets=sourceFilter==='all'?sheets:sheets.filter(s=>s.source===sourceFilter);
+  const activePool=sourceFilter==='all'?sheets:filteredSheets;
+  const activeSheet=activePool.find(s=>(s._fbKey||s.id)===active)||activePool[0]||null;
   const activeVals=activeSheet?sheetData[activeSheet.id]:null;
+  const activeMeta=activeSheet?(sheetMeta[activeSheet.id]||{}):{};
   const headers=Array.isArray(activeVals)&&activeVals.length?activeVals[0]:[];
   const rows=Array.isArray(activeVals)&&activeVals.length>1?activeVals.slice(1):[];
   const totalRows=Object.values(sheetData).filter(Array.isArray).reduce((sum,v)=>sum+Math.max((v?.length||0)-1,0),0);
   const linkedCount=sheets.length;
   const readyCount=sheets.filter(s=>s.url&&sheetData[s.id]?.length).length;
+  const autoCount=sheets.filter(s=>s.autoSync).length;
+  const sourceCount=new Set(sheets.map(s=>s.source||'general')).size;
 
-  const resetForm=()=>{setEditing(null);setForm({name:'',desc:'',url:''})};
+  const resetForm=()=>{setEditing(null);setForm({name:'',desc:'',url:'',source:'general',autoSync:true})};
   const saveKey=()=>db.ref('hub/sheetsApiKey').set(apiKey||'');
-  const startEdit=s=>{setEditing(s._fbKey);setForm({name:s.name||'',desc:s.desc||'',url:s.url||''})};
-  const saveSheet=()=>{
+  const startEdit=s=>{const sheet=normSheetEntry(s);setEditing(s._fbKey);setForm({name:sheet.name||'',desc:sheet.desc||'',url:sheet.url||'',source:sheet.source||'general',autoSync:sheet.autoSync!==false})};
+  const syncOne=async(s,{silent=false}={})=>{
+    const sheet=normSheetEntry(s);
+    if(!hubData.sheetsApiKey){if(!silent)alert('Add the Google Sheets API key first');return null}
+    if(!getSheetId(sheet.url)){if(!silent)alert('Paste a valid Google Sheets URL first');return null}
+    const loadKey=sheet._fbKey||sheet.id;
+    const startedAt=Date.now();
+    autoSyncRef.current[sheet.id]=startedAt;
+    if(!silent)setLoading(loadKey);
+    await db.ref('hub/sheetMeta/'+sheet.id).update({lastTriedAt:startedAt,status:'syncing',lastError:'',source:sheet.source||'general'});
+    try{
+      const vals=await fetchSheetValues(sheet.url,hubData.sheetsApiKey);
+      if(!vals||!vals.length)throw new Error('No values returned for that sheet');
+      await db.ref('hub/sheetData/'+sheet.id).set(vals);
+      await db.ref('hub/sheetMeta/'+sheet.id).update({lastTriedAt:startedAt,lastSyncedAt:Date.now(),status:'ready',lastError:'',rowCount:Math.max(vals.length-1,0),colCount:(vals[0]||[]).length,source:sheet.source||'general'});
+      if(!silent)setActive(loadKey);
+      return vals;
+    }catch(e){
+      await db.ref('hub/sheetMeta/'+sheet.id).update({lastTriedAt:startedAt,status:'error',lastError:e?.message||'Sync failed',source:sheet.source||'general'});
+      if(!silent)alert(`Sync failed for ${sheet.name}. Check the API key and sheet sharing settings.`);
+      throw e;
+    }finally{
+      if(!silent)setLoading('');
+    }
+  };
+  useEffect(()=>{
+    if(!isA||!hubData.sheetsApiKey||!sheets.length)return;
+    const now=Date.now();
+    const targets=sheets.filter(s=>{
+      if(!s.autoSync||!getSheetId(s.url))return false;
+      const meta=sheetMeta[s.id]||{};
+      const cachedRows=(sheetData[s.id]?.length||0)>1;
+      const lastSynced=meta.lastSyncedAt||0;
+      const lastTried=meta.lastTriedAt||0;
+      const pending=meta.status==='syncing'||(autoSyncRef.current[s.id]&&now-autoSyncRef.current[s.id]<45000);
+      if(pending)return false;
+      if(!cachedRows)return true;
+      if(lastSynced&&now-lastSynced>SHEET_AUTO_SYNC_MS)return true;
+      if(meta.status==='error'&&(!lastTried||now-lastTried>SHEET_AUTO_SYNC_MS))return true;
+      return false;
+    });
+    if(!targets.length)return;
+    let cancelled=false;
+    (async()=>{
+      for(const sheet of targets){
+        if(cancelled)break;
+        try{await syncOne(sheet,{silent:true})}catch(e){console.error(e)}
+      }
+    })();
+    return()=>{cancelled=true};
+  },[isA,hubData.sheetsApiKey,hubData.sheets,hubData.sheetData,hubData.sheetMeta]);
+  const saveSheet=async()=>{
     if(!form.name.trim())return;
+    const payload={name:form.name.trim(),desc:form.desc.trim(),url:form.url.trim(),source:form.source||'general',autoSync:form.autoSync!==false};
+    let fbKey='';
+    let sheetId='';
     if(editing){
       const cur=sheets.find(s=>s._fbKey===editing);
-      db.ref('hub/sheets/'+editing).set({id:cur?.id||editing,name:form.name.trim(),desc:form.desc.trim(),url:form.url.trim()});
+      fbKey=editing;
+      sheetId=cur?.id||editing;
+      await db.ref('hub/sheets/'+editing).set({id:sheetId,...payload});
     }else{
       const ref=db.ref('hub/sheets').push();
-      ref.set({id:ref.key,name:form.name.trim(),desc:form.desc.trim(),url:form.url.trim()});
-      setActive(ref.key);
+      fbKey=ref.key;
+      sheetId=ref.key;
+      await ref.set({id:ref.key,...payload});
     }
+    setActive(fbKey);
     resetForm();
+    if(payload.autoSync&&hubData.sheetsApiKey&&getSheetId(payload.url)){
+      try{await syncOne({...payload,id:sheetId,_fbKey:fbKey},{silent:false})}catch(e){console.error(e)}
+    }
   };
   const removeSheet=s=>{
     if(!confirm(`Remove ${s.name}?`))return;
     db.ref('hub/sheets/'+s._fbKey).remove();
     if(s.id)db.ref('hub/sheetData/'+s.id).remove();
+    if(s.id)db.ref('hub/sheetMeta/'+s.id).remove();
     if((s._fbKey||s.id)===active)setActive('');
     if(editing===s._fbKey)resetForm();
-  };
-  const syncOne=async s=>{
-    if(!hubData.sheetsApiKey){alert('Add the Google Sheets API key first');return}
-    if(!getSheetId(s.url)){alert('Paste a valid Google Sheets URL first');return}
-    setLoading(s._fbKey||s.id);
-    try{
-      const vals=await fetchSheetValues(s.url,hubData.sheetsApiKey);
-      if(vals){db.ref('hub/sheetData/'+s.id).set(vals);setActive(s._fbKey||s.id)}
-      else alert('No values found for that sheet');
-    }catch(e){console.error(e);alert('Sync failed. Check the API key and sharing settings.')}
-    setLoading('');
   };
   const syncAll=async()=>{
     if(!hubData.sheetsApiKey){alert('Add the Google Sheets API key first');return}
     const targets=sheets.filter(s=>getSheetId(s.url));
     if(!targets.length)return;
     setLoading('all');
-    for(let i=0;i<targets.length;i++){
-      const s=targets[i];
-      try{
-        const vals=await fetchSheetValues(s.url,hubData.sheetsApiKey);
-        if(vals)db.ref('hub/sheetData/'+s.id).set(vals);
-      }catch(e){console.error(e)}
+    for(const sheet of targets){
+      try{await syncOne(sheet,{silent:true})}catch(e){console.error(e)}
     }
     setLoading('');
+  };
+  const statusPill=meta=>{
+    const status=meta?.status||'idle';
+    const tone=status==='ready'?{bg:"rgba(16,185,129,0.12)",fg:C.gn}:status==='error'?{bg:"rgba(239,68,68,0.12)",fg:C.rd}:status==='syncing'?{bg:"rgba(20,144,176,0.12)",fg:C.tl}:{bg:C.bgA,fg:C.mt};
+    const label=status==='ready'?'LIVE':status==='error'?'ERROR':status==='syncing'?'SYNCING':'IDLE';
+    return<span style={{padding:"4px 8px",borderRadius:999,fontSize:10,fontFamily:"monospace",fontWeight:700,background:tone.bg,color:tone.fg}}>{label}</span>;
   };
 
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:16,flexWrap:"wrap"}}>
       <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>05 &#8212; Sheets</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Data Room</h1></div>
       <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-        <div style={{fontSize:11,color:C.mt,fontFamily:"monospace"}}>{linkedCount} linked &#183; {readyCount} cached</div>
+        <div style={{fontSize:11,color:C.mt,fontFamily:"monospace"}}>{linkedCount} linked &#183; {readyCount} cached &#183; {autoCount} auto-sync</div>
         {isA&&<Btn onClick={syncAll} primary disabled={loading==='all'||!sheets.length}>{loading==='all'?'Syncing...':'Sync All'}</Btn>}
       </div>
     </div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:14,marginBottom:18}}>
-      {[[linkedCount,"Linked Sheets"],[totalRows,"Cached Rows"],[sheets.filter(s=>!!s.url).length,"Ready to Sync"]].map(([n,l],i)=><div key={i} className="stat-card page-enter" style={{border:"1px solid "+C.cb}}><div style={{fontFamily:F.sf,fontSize:34,fontWeight:400,lineHeight:1}}>{n}</div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginTop:6}}>{l}</div></div>)}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:14,marginBottom:18}}>
+      {[[linkedCount,"Linked Sheets"],[totalRows,"Cached Rows"],[autoCount,"Auto Sync"],[sourceCount,"Source Pools"]].map(([n,l],i)=><div key={i} className="stat-card page-enter" style={{border:"1px solid "+C.cb}}><div style={{fontFamily:F.sf,fontSize:34,fontWeight:400,lineHeight:1}}>{n}</div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginTop:6}}>{l}</div></div>)}
     </div>
     <div style={{display:"grid",gridTemplateColumns:isA?"340px minmax(0,1fr)":"300px minmax(0,1fr)",gap:16,alignItems:"start"}}>
       <div>
         {isA&&<Card><CardH right={<button onClick={()=>setEditKey(!editKey)} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.sc,fontFamily:"inherit"}}>{editKey?'Close':'Edit'}</button>}>Sheets API Key</CardH>
           <div style={{padding:"14px 18px"}}>
             <div style={{fontSize:12.5,color:C.sc,marginBottom:10}}>{hubData.sheetsApiKey?'Configured and ready for sync.':'Paste a Google Sheets API key to enable syncing.'}</div>
+            <div style={{fontSize:11,color:C.mt,lineHeight:1.6,marginBottom:editKey?10:0}}>Mission Control can track sheets from both Google accounts. The source label is just for organization; sync depends on the URL and sheet access, not which account owns it.</div>
             {editKey&&<>
               <Lbl>API Key</Lbl>
               <Inp value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="AIza..."/>
@@ -451,17 +530,18 @@ function Sheets({db,hubData,team,me}){
             </>}
           </div>
         </Card>}
-        <Card><CardH>Sheet Library</CardH>
+        <Card><CardH right={<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{[{id:'all',label:'All'},{id:'general',label:'CareForBrains'},{id:'stem',label:'STEM'}].map(opt=><button key={opt.id} onClick={()=>setSourceFilter(opt.id)} style={{background:sourceFilter===opt.id?C.dk:C.cd,border:"1px solid "+(sourceFilter===opt.id?C.dk:C.rl),color:sourceFilter===opt.id?"#fff":C.sc,borderRadius:999,padding:"4px 9px",fontSize:10.5,cursor:"pointer",fontFamily:"inherit"}}>{opt.label}</button>)}</div>}>Sheet Library</CardH>
           <div style={{padding:"10px 12px"}}>
-            {sheets.length===0&&<div style={{padding:18,textAlign:"center",color:C.mt}}>No sheets linked yet</div>}
-            {sheets.map(s=>{const isActive=(s._fbKey||s.id)===active;const cached=sheetData[s.id];const rowCount=Math.max((cached?.length||0)-1,0);return(<div key={s._fbKey} onClick={()=>setActive(s._fbKey||s.id)} style={{padding:"12px 12px",border:isActive?"1.5px solid "+C.tl:"1px solid "+C.bgA,borderRadius:12,background:isActive?C.tg:"transparent",cursor:"pointer",marginBottom:8}}>
-              <div style={{display:"flex",justifyContent:"space-between",gap:8,alignItems:"flex-start"}}><div style={{flex:1}}><div style={{fontWeight:700,fontSize:13.5}}>{s.name}</div><div style={{fontSize:11,color:C.sc,marginTop:2}}>{s.desc||'No description yet'}</div></div><span style={{fontSize:10,fontFamily:"monospace",color:rowCount?C.gn:C.mt}}>{rowCount||0} rows</span></div>
+            {filteredSheets.length===0&&<div style={{padding:18,textAlign:"center",color:C.mt}}>No sheets linked in this source yet</div>}
+            {filteredSheets.map(s=>{const isActive=(s._fbKey||s.id)===active;const cached=sheetData[s.id];const meta=sheetMeta[s.id]||{};const rowCount=Math.max((cached?.length||0)-1,0);const source=SHEET_SOURCES[s.source]||SHEET_SOURCES.general;return(<div key={s._fbKey} onClick={()=>setActive(s._fbKey||s.id)} style={{padding:"12px 12px",border:isActive?"1.5px solid "+C.tl:"1px solid "+C.bgA,borderRadius:12,background:isActive?C.tg:"transparent",cursor:"pointer",marginBottom:8}}>
+              <div style={{display:"flex",justifyContent:"space-between",gap:8,alignItems:"flex-start"}}><div style={{flex:1}}><div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}><div style={{fontWeight:700,fontSize:13.5}}>{s.name}</div><span style={{padding:"2px 7px",borderRadius:999,fontSize:9.5,fontFamily:"monospace",fontWeight:700,background:s.source==='stem'?"rgba(12,107,142,0.12)":C.bgA,color:s.source==='stem'?C.td:C.sc}}>{source.tag}</span>{statusPill(meta)}</div><div style={{fontSize:11,color:C.sc,marginTop:4}}>{s.desc||'No description yet'}</div></div><span style={{fontSize:10,fontFamily:"monospace",color:rowCount?C.gn:C.mt}}>{rowCount||0} rows</span></div>
               <div style={{display:"flex",gap:8,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
                 {s.url?<a href={s.url} target="_blank" rel="noreferrer" style={{fontSize:11,color:C.tl,textDecoration:"none"}}>Open Sheet</a>:<span style={{fontSize:11,color:C.mt}}>No URL</span>}
                 {isA&&<button onClick={e=>{e.stopPropagation();syncOne(s)}} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:C.sc,fontFamily:"inherit"}}>{loading===(s._fbKey||s.id)?'Syncing...':'Sync'}</button>}
                 {isA&&<button onClick={e=>{e.stopPropagation();startEdit(s)}} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:C.sc,fontFamily:"inherit"}}>Edit</button>}
                 {isA&&<button onClick={e=>{e.stopPropagation();removeSheet(s)}} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:C.rd,fontFamily:"inherit"}}>Remove</button>}
               </div>
+              <div style={{marginTop:6,fontSize:10.5,color:C.mt,fontFamily:"monospace"}}>{s.autoSync?'auto-sync on':'manual sync'} &#183; {fmtSyncTime(meta.lastSyncedAt)}</div>
             </div>)})}
           </div>
         </Card>
@@ -469,27 +549,36 @@ function Sheets({db,hubData,team,me}){
           <div style={{padding:"14px 18px"}}>
             <div style={{marginBottom:10}}><Lbl>Name</Lbl><Inp value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Volunteer Signups"/></div>
             <div style={{marginBottom:10}}><Lbl>Description</Lbl><Inp value={form.desc} onChange={e=>setForm({...form,desc:e.target.value})} placeholder="Applications, hours, chapters..."/></div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+              <div><Lbl>Source Account</Lbl><Sel value={form.source} onChange={e=>setForm({...form,source:e.target.value})}>{Object.values(SHEET_SOURCES).map(src=><option key={src.id} value={src.id}>{src.label}</option>)}</Sel></div>
+              <div><Lbl>Sync Mode</Lbl><Sel value={form.autoSync?'auto':'manual'} onChange={e=>setForm({...form,autoSync:e.target.value==='auto'})}><option value="auto">Auto Sync</option><option value="manual">Manual Only</option></Sel></div>
+            </div>
             <div style={{marginBottom:12}}><Lbl>Google Sheet URL</Lbl><Inp value={form.url} onChange={e=>setForm({...form,url:e.target.value})} placeholder="https://docs.google.com/spreadsheets/d/..."/></div>
+            <div style={{fontSize:11,color:C.mt,lineHeight:1.6,marginBottom:12}}>When auto-sync is on, Mission Control pulls rows as soon as the sheet is saved and refreshes stale caches on load.</div>
             <div style={{display:"flex",gap:8}}><Btn primary onClick={saveSheet}>{editing?'Save Changes':'Add Sheet'}</Btn>{(editing||form.name||form.desc||form.url)&&<Btn onClick={resetForm}>Cancel</Btn>}</div>
           </div>
         </Card>}
       </div>
       <div>
         {activeSheet?<>
-          <Card><CardH right={<div style={{display:"flex",gap:8,alignItems:"center"}}>{activeSheet.url&&<a href={activeSheet.url} target="_blank" rel="noreferrer" style={{fontSize:11,color:C.tl,textDecoration:"none"}}>Open in Google Sheets</a>}{isA&&<Btn onClick={()=>syncOne(activeSheet)} primary disabled={loading===(activeSheet._fbKey||activeSheet.id)}>{loading===(activeSheet._fbKey||activeSheet.id)?'Syncing...':'Sync Now'}</Btn>}</div>}>{activeSheet.name}</CardH>
+          <Card><CardH right={<div style={{display:"flex",gap:8,alignItems:"center"}}>{statusPill(activeMeta)}{activeSheet.url&&<a href={activeSheet.url} target="_blank" rel="noreferrer" style={{fontSize:11,color:C.tl,textDecoration:"none"}}>Open in Google Sheets</a>}{isA&&<Btn onClick={()=>syncOne(activeSheet)} primary disabled={loading===(activeSheet._fbKey||activeSheet.id)}>{loading===(activeSheet._fbKey||activeSheet.id)?'Syncing...':'Sync Now'}</Btn>}</div>}>{activeSheet.name}</CardH>
             <div style={{padding:"16px 18px"}}>
               <div style={{fontSize:13,color:C.sc,marginBottom:10}}>{activeSheet.desc||'No description yet.'}</div>
               <div style={{display:"flex",gap:18,flexWrap:"wrap",fontSize:11,color:C.mt,fontFamily:"monospace"}}>
+                <span>{(SHEET_SOURCES[activeSheet.source]||SHEET_SOURCES.general).label}</span>
                 <span>{headers.length||0} columns</span>
                 <span>{rows.length||0} rows cached</span>
+                <span>{activeSheet.autoSync?'auto sync':'manual sync'}</span>
                 <span>{getSheetId(activeSheet.url)?'sheet linked':'missing URL'}</span>
+                <span>{fmtSyncTime(activeMeta.lastSyncedAt)}</span>
               </div>
+              {activeMeta.lastError&&<div style={{marginTop:10,padding:"10px 12px",borderRadius:10,background:"rgba(239,68,68,0.08)",color:C.rd,fontSize:12.5}}>{activeMeta.lastError}</div>}
             </div>
           </Card>
           <Card><CardH right={<span style={{fontSize:11,color:C.mt,fontFamily:"monospace"}}>{rows.length} records</span>}>Preview</CardH>
             {!headers.length?<div style={{padding:"44px 24px",textAlign:"center",color:C.mt}}>
               <div style={{fontFamily:F.sf,fontSize:20,fontStyle:"italic",marginBottom:8}}>No cached data yet</div>
-              <div style={{fontSize:13}}>Sync this sheet to pull live rows from Google Sheets.</div>
+              <div style={{fontSize:13}}>{activeSheet.autoSync?'This sheet will populate automatically after sync is available.':'Sync this sheet to pull live rows from Google Sheets.'}</div>
             </div>:<div style={{overflowX:"auto",maxHeight:620}}>
               <table style={{width:"100%",borderCollapse:"collapse",fontSize:12.5}}>
                 <thead><tr>{headers.map((h,i)=><th key={i} style={{padding:"10px 12px",textAlign:"left",borderBottom:"2px solid "+C.rl,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc,position:"sticky",top:0,background:C.bgA,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
@@ -524,7 +613,7 @@ function Emails({db,hubData,team,me}){
   const[senderId,setSenderId]=useState(emailCfg.defaultProfile||'general');
   const[search,setSearch]=useState('');
   const[sendStats,setSendStats]=useState({done:0,total:0});
-  const sheets=hubData.sheets?Object.keys(hubData.sheets).filter(k=>k!=='_seed').map(k=>hubData.sheets[k]):[];
+  const sheets=hubData.sheets?Object.keys(hubData.sheets).filter(k=>k!=='_seed').map(k=>normSheetEntry(hubData.sheets[k])):[];
   const sheetData=hubData.sheetData||{};
   const campaigns=fbToArr(hubData.emailCampaigns).sort((a,b)=>(b.createdTs||0)-(a.createdTs||0));
   const TMPLS={
@@ -536,8 +625,9 @@ function Emails({db,hubData,team,me}){
   };
   useEffect(()=>{if(!emailCfg.profiles[senderId])setSenderId(emailCfg.defaultProfile||'general')},[hubData.emailjs,senderId]);
   const applySheetData=vals=>{if(vals&&Array.isArray(vals)&&vals.length>0){const headers=vals[0]||[];setCols(headers);setRows(vals.slice(1));const ei=headers.findIndex(h=>h.toLowerCase().includes('email'));const ni=headers.findIndex(h=>h.toLowerCase().includes('name')&&!h.toLowerCase().includes('last'));setEmailCol(ei>=0?headers[ei]:'');setNameCol(ni>=0?headers[ni]:'')}else{setCols([]);setRows([]);setEmailCol('');setNameCol('')}};
-  const loadSheet=sid=>{setSelSheet(sid);setChecked({});setSent({});setShowPrev(false);setPrevIdx(0);setSearch('');applySheetData(sheetData[sid])};
-  const syncSheet=async s=>{const m=s.url?.match(/\/d\/([a-zA-Z0-9-_]+)/);const key=hubData.sheetsApiKey;if(!m||!key)return;setLoading(true);try{const r=await fetch("https://sheets.googleapis.com/v4/spreadsheets/"+m[1]+"/values/A1:ZZ5000?key="+key);const j=await r.json();if(j.values){db.ref('hub/sheetData/'+s.id).set(j.values);applySheetData(j.values)}}catch(e){console.error(e)}setLoading(false)};
+  useEffect(()=>{if(selSheet)applySheetData(sheetData[selSheet])},[hubData.sheetData,selSheet]);
+  const loadSheet=sid=>{setSelSheet(sid);setChecked({});setSent({});setShowPrev(false);setPrevIdx(0);setSearch('');applySheetData(sheetData[sid]);const s=sheets.find(v=>v.id===sid);if((!sheetData[sid]||!sheetData[sid]?.length)&&s?.url&&hubData.sheetsApiKey)syncSheet(s)};
+  const syncSheet=async s=>{const key=hubData.sheetsApiKey;if(!getSheetId(s.url)||!key)return;setLoading(true);try{const vals=await fetchSheetValues(s.url,key);if(vals){db.ref('hub/sheetData/'+s.id).set(vals);applySheetData(vals)}}catch(e){console.error(e);alert('Could not pull that sheet. Check the API key and sharing settings.')}setLoading(false)};
   const eIdx=cols.indexOf(emailCol);const nIdx=cols.indexOf(nameCol);
   const fill=(tmpl,row)=>{let t=tmpl;const name=nIdx>=0?(row[nIdx]||''):'';t=t.replace(/\{\{name\}\}/g,name);cols.forEach((col,i)=>{t=t.replace(new RegExp('\\{\\{'+col.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\}\\}','g'),row[i]||'')});return t};
   const cur=TMPLS[template]||TMPLS.custom;
@@ -619,7 +709,7 @@ function Emails({db,hubData,team,me}){
     </Card>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:18}}>
       <Card><CardH>1. Data Source</CardH><div style={{padding:"14px 18px"}}>
-        <Lbl>Google Sheet</Lbl><div style={{display:"flex",gap:8}}><Sel value={selSheet} onChange={e=>loadSheet(e.target.value)}><option value="">Choose...</option>{sheets.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</Sel>
+        <Lbl>Google Sheet</Lbl><div style={{display:"flex",gap:8}}><Sel value={selSheet} onChange={e=>loadSheet(e.target.value)}><option value="">Choose...</option>{sheets.map(s=><option key={s.id} value={s.id}>{(SHEET_SOURCES[s.source]||SHEET_SOURCES.general).tag} - {s.name}</option>)}</Sel>
         {selSheet&&sheets.find(s=>s.id===selSheet)?.url&&<Btn onClick={()=>syncSheet(sheets.find(s=>s.id===selSheet))} primary>{loading?'...':'Sync'}</Btn>}</div>
         {cols.length>0&&<div style={{marginTop:14}}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
           <div><Lbl>Email Column</Lbl><Sel value={emailCol} onChange={e=>setEmailCol(e.target.value)}><option value="">Select...</option>{cols.map(c=><option key={c} value={c}>{c}</option>)}</Sel></div>
