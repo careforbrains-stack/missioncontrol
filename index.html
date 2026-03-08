@@ -420,6 +420,7 @@ function Sheets({db,hubData,team,me}){
   const autoCount=sheets.filter(s=>s.autoSync).length;
   const sourceCount=new Set(sheets.map(s=>s.source||'general')).size;
   const setNoticeBar=(tone,text)=>setNotice({tone,text});
+  const actionPill=(tone='default')=>({display:"inline-flex",alignItems:"center",justifyContent:"center",minHeight:26,padding:"5px 10px",borderRadius:999,border:"1px solid "+(tone==='danger'?"rgba(239,68,68,0.18)":tone==='primary'?"rgba(20,144,176,0.22)":C.rl),background:tone==='danger'?"rgba(239,68,68,0.06)":tone==='primary'?"rgba(20,144,176,0.08)":C.cd,color:tone==='danger'?C.rd:tone==='primary'?C.tl:C.sc,fontSize:11,fontWeight:600,fontFamily:"inherit",cursor:"pointer",textDecoration:"none",position:"relative",zIndex:2});
 
   const resetForm=()=>{setEditing(null);setForm({name:'',desc:'',url:'',source:'general',autoSync:true})};
   const saveKey=()=>db.ref('hub/sheetsApiKey').set(apiKey||'');
@@ -552,16 +553,16 @@ function Sheets({db,hubData,team,me}){
             </>}
           </div>
         </Card>}
-        <Card><CardH right={<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{[{id:'all',label:'All'},{id:'general',label:'CareForBrains'},{id:'stem',label:'STEM'}].map(opt=><button key={opt.id} onClick={()=>setSourceFilter(opt.id)} style={{background:sourceFilter===opt.id?C.dk:C.cd,border:"1px solid "+(sourceFilter===opt.id?C.dk:C.rl),color:sourceFilter===opt.id?"#fff":C.sc,borderRadius:999,padding:"4px 9px",fontSize:10.5,cursor:"pointer",fontFamily:"inherit"}}>{opt.label}</button>)}</div>}>Sheet Library</CardH>
+        <Card><CardH right={<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{[{id:'all',label:'All'},{id:'general',label:'CareForBrains'},{id:'stem',label:'STEM'}].map(opt=><button key={opt.id} onClick={()=>setSourceFilter(opt.id)} style={{...actionPill(sourceFilter===opt.id?'primary':'default'),background:sourceFilter===opt.id?C.dk:C.cd,border:"1px solid "+(sourceFilter===opt.id?C.dk:C.rl),color:sourceFilter===opt.id?"#fff":C.sc,minHeight:28,padding:"5px 12px",fontSize:10.5}}>{opt.label}</button>)}</div>}>Sheet Library</CardH>
           <div style={{padding:"10px 12px"}}>
             {filteredSheets.length===0&&<div style={{padding:18,textAlign:"center",color:C.mt}}>No sheets linked in this source yet</div>}
             {filteredSheets.map(s=>{const isActive=(s._fbKey||s.id)===active;const cached=sheetData[s.id];const meta=sheetMeta[s.id]||{};const rowCount=Math.max((cached?.length||0)-1,0);const source=SHEET_SOURCES[s.source]||SHEET_SOURCES.general;return(<div key={s._fbKey} onClick={()=>setActive(s._fbKey||s.id)} style={{padding:"12px 12px",border:"1px solid "+(isActive?C.tl:C.bgA),boxShadow:isActive?"0 0 0 1px rgba(20,144,176,0.12)":"none",borderRadius:12,background:isActive?C.tg:"transparent",cursor:"pointer",marginBottom:8}}>
               <div style={{display:"flex",justifyContent:"space-between",gap:8,alignItems:"flex-start"}}><div style={{flex:1}}><div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}><div style={{fontWeight:700,fontSize:13.5}}>{s.name}</div><span style={{padding:"2px 7px",borderRadius:999,fontSize:9.5,fontFamily:"monospace",fontWeight:700,background:s.source==='stem'?"rgba(12,107,142,0.12)":C.bgA,color:s.source==='stem'?C.td:C.sc}}>{source.tag}</span>{statusPill(meta)}</div><div style={{fontSize:11,color:C.sc,marginTop:4}}>{s.desc||'No description yet'}</div></div><span style={{fontSize:10,fontFamily:"monospace",color:rowCount?C.gn:C.mt}}>{rowCount||0} rows</span></div>
-              <div style={{display:"flex",gap:8,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
-                {s.url?<a href={s.url} target="_blank" rel="noreferrer" style={{fontSize:11,color:C.tl,textDecoration:"none"}}>Open Sheet</a>:<span style={{fontSize:11,color:C.mt}}>No URL</span>}
-                {isA&&<button onClick={e=>{e.stopPropagation();syncOne(s)}} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:C.sc,fontFamily:"inherit"}}>{loading===(s._fbKey||s.id)?'Syncing...':'Sync'}</button>}
-                {isA&&<button onClick={e=>{e.stopPropagation();startEdit(s)}} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:C.sc,fontFamily:"inherit"}}>Edit</button>}
-                {isA&&<button onClick={e=>{e.stopPropagation();removeSheet(s)}} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:C.rd,fontFamily:"inherit"}}>Remove</button>}
+              <div style={{display:"flex",gap:8,alignItems:"center",marginTop:10,flexWrap:"wrap",position:"relative",zIndex:2}}>
+                {s.url?<a href={s.url} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} style={actionPill('primary')}>Open Sheet</a>:<span style={{fontSize:11,color:C.mt}}>No URL</span>}
+                {isA&&<button onClick={e=>{e.stopPropagation();syncOne(s)}} style={actionPill()}>{loading===(s._fbKey||s.id)?'Syncing...':'Sync'}</button>}
+                {isA&&<button onClick={e=>{e.stopPropagation();startEdit(s)}} style={actionPill()}>Edit</button>}
+                {isA&&<button onClick={e=>{e.stopPropagation();removeSheet(s)}} style={actionPill('danger')}>Remove</button>}
               </div>
               <div style={{marginTop:6,fontSize:10.5,color:C.mt,fontFamily:"monospace"}}>{s.autoSync?'auto-sync on':'manual sync'} &#183; {fmtSyncTime(meta.lastSyncedAt)}</div>
             </div>)})}
