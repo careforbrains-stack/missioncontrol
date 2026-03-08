@@ -261,14 +261,21 @@ function Assign({db,tasks,team,me}){
 }
 
 // === CALENDAR ===
-function Cal({db,events,team,me}){
+function Cal({db,events,tasks,team,me}){
   const isA=team.find(t=>t.id===me)?.admin;const[cur,setCur]=useState(new Date());const[modal,setModal]=useState(false);const[form,setForm]=useState({title:'',date:'',assignee:me,notes:''});const[sel,setSel]=useState(null);
   const y=cur.getFullYear(),mo=cur.getMonth(),f=new Date(y,mo,1).getDay(),dim=new Date(y,mo+1,0).getDate(),pd=new Date(y,mo,0).getDate();const today=new Date();const mos=['January','February','March','April','May','June','July','August','September','October','November','December'];
   const cells=[];for(let i=f-1;i>=0;i--)cells.push({d:pd-i,c:false});for(let i=1;i<=dim;i++)cells.push({d:i,c:true});while(cells.length<42)cells.push({d:cells.length-f-dim+1,c:false});
   const ds=d=>`${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-  const evOn=s=>events.filter(e=>e.date===s);const isTd=(d,c)=>c&&d===today.getDate()&&mo===today.getMonth()&&y===today.getFullYear();
+  const tasksOn=s=>tasks.filter(t=>t.due===s);
+  const itemsOn=s=>{
+    const eventItems=events.filter(e=>e.date===s).map(e=>({...e,kind:'event'}));
+    const taskItems=tasksOn(s).map(t=>({...t,kind:'task'}));
+    return[...taskItems,...eventItems];
+  };
+  const isTd=(d,c)=>c&&d===today.getDate()&&mo===today.getMonth()&&y===today.getFullYear();
   const add=()=>{if(!form.title||!form.date)return;const ref=db.ref('hub/events').push();ref.set({...form,id:ref.key});setForm({title:'',date:'',assignee:me,notes:''});setModal(false)};
   const del=e=>db.ref('hub/events/'+e._fbKey).remove();
+  const taskTone=t=>t.done?{b:"#D1FAE5",c:C.gn}:t.priority==='high'?{b:"#FEE2E2",c:C.rd}:t.priority==='low'?{b:"#DBEAFE",c:"#2563EB"}:{b:"#FEF3C7",c:"#D97706"};
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}><div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>03 &#8212; Calendar</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Calendar</h1></div>{isA&&<Btn primary onClick={()=>setModal(true)}>+ Event</Btn>}</div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
@@ -278,15 +285,32 @@ function Cal({db,events,team,me}){
       <button onClick={()=>setCur(new Date(y,mo+1))} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:14,color:C.sc}}>&#8594;</button></div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:1,background:C.rl,border:"1px solid "+C.rl,borderRadius:8,overflow:"hidden",marginBottom:22}}>
       {['S','M','T','W','T','F','S'].map((d,i)=><div key={i} style={{background:C.bgA,padding:8,textAlign:"center",fontFamily:"monospace",fontSize:10,color:C.mt}}>{d}</div>)}
-      {cells.map((c,i)=>{const s=c.c?ds(c.d):'';const ev=evOn(s);return(<div key={i} onClick={()=>c.c&&setSel(s)} style={{background:isTd(c.d,c.c)?C.bgA:C.cd,minHeight:58,padding:"5px 6px",cursor:"pointer",fontSize:12,color:!c.c?C.mt:C.fg}}>
+      {cells.map((c,i)=>{const s=c.c?ds(c.d):'';const items=itemsOn(s);return(<div key={i} onClick={()=>c.c&&setSel(s)} style={{background:isTd(c.d,c.c)?C.bgA:C.cd,minHeight:74,padding:"5px 6px",cursor:"pointer",fontSize:12,color:!c.c?C.mt:C.fg}}>
         <div style={{fontFamily:"monospace",fontSize:11,fontWeight:isTd(c.d,c.c)?800:"inherit"}}>{c.d}</div>
-        {ev.slice(0,2).map(e=><div key={e._fbKey} style={{padding:"1px 3px",fontSize:8.5,fontWeight:600,borderRadius:3,background:C.tg,color:C.td,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.title}</div>)}
+        {items.slice(0,3).map(item=>item.kind==='task'
+          ?<div key={`t-${item._fbKey}`} style={{padding:"1px 4px",fontSize:8.5,fontWeight:700,borderRadius:4,background:taskTone(item).b,color:taskTone(item).c,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fn(team.find(t=>t.id===item.assignee)?.name)}: {item.text}</div>
+          :<div key={`e-${item._fbKey}`} style={{padding:"1px 4px",fontSize:8.5,fontWeight:600,borderRadius:4,background:C.tg,color:C.td,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.title}</div>
+        )}
+        {items.length>3&&<div style={{marginTop:2,fontSize:8.5,fontFamily:"monospace",color:C.mt}}>+{items.length-3} more</div>}
       </div>)})}
     </div>
     {sel&&<Card><div style={{padding:"12px 18px",borderBottom:"1px solid "+C.bgA,display:"flex",justifyContent:"space-between"}}><span style={{fontWeight:700,color:C.sc}}>{sel}</span><button onClick={()=>setSel(null)} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.sc,fontFamily:"inherit"}}>Close</button></div>
-      <div style={{padding:"14px 18px"}}>{evOn(sel).length===0?<div style={{textAlign:"center",padding:20,color:C.mt}}>No events</div>:evOn(sel).map(e=><div key={e._fbKey} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid "+C.bgA}}>
-        <div><div style={{fontWeight:700}}>{e.title}</div><div style={{fontSize:10,color:C.mt}}>{team.find(t=>t.id===e.assignee)?.name}</div></div>
-        {isA&&<button onClick={()=>del(e)} style={{background:"none",border:"none",cursor:"pointer",color:C.rd,fontSize:12,fontFamily:"inherit"}}>Remove</button>}</div>)}</div></Card>}
+      <div style={{padding:"14px 18px"}}>
+        {tasksOn(sel).length===0&&events.filter(e=>e.date===sel).length===0&&<div style={{textAlign:"center",padding:20,color:C.mt}}>No events or due tasks</div>}
+        {tasksOn(sel).length>0&&<>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.mt,marginBottom:6}}>Due Tasks</div>
+          {tasksOn(sel).sort((a,b)=>(a.done?1:0)-(b.done?1:0)).map(t=>{const assignee=team.find(m=>m.id===t.assignee);const by=team.find(m=>m.id===t.assignedBy);return(<div key={t._fbKey} style={{display:"flex",justifyContent:"space-between",gap:12,padding:"9px 0",borderBottom:"1px solid "+C.bgA,opacity:t.done?0.58:1}}>
+            <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13.5,textDecoration:t.done?"line-through":"none"}}>{t.text}</div>{t.notes&&<div style={{fontSize:12,color:C.sc,marginTop:2}}>{t.notes}</div>}<div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:5}}><span style={{fontSize:10,color:C.mt}}>{assignee?.name||t.assignee}</span>{by&&<span style={{fontSize:10,color:C.mt}}>from {fn(by.name)}</span>}</div></div>
+            <Tag t={t.done?'done':t.priority}/>
+          </div>)})}
+        </>}
+        {events.filter(e=>e.date===sel).length>0&&<>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.mt,marginTop:tasksOn(sel).length?14:0,marginBottom:6}}>Events</div>
+          {events.filter(e=>e.date===sel).map(e=><div key={e._fbKey} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid "+C.bgA}}>
+            <div><div style={{fontWeight:700}}>{e.title}</div><div style={{fontSize:10,color:C.mt}}>{team.find(t=>t.id===e.assignee)?.name}</div></div>
+            {isA&&<button onClick={()=>del(e)} style={{background:"none",border:"none",cursor:"pointer",color:C.rd,fontSize:12,fontFamily:"inherit"}}>Remove</button>}</div>)}
+        </>}
+      </div></Card>}
     {modal&&<div style={{position:"fixed",inset:0,background:"rgba(9,26,38,0.45)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200}} onClick={e=>e.target===e.currentTarget&&setModal(false)}>
       <div style={{background:C.cd,borderRadius:12,width:460,maxWidth:"92vw",border:"1px solid "+C.cb}}>
         <div style={{padding:"18px 24px",borderBottom:"1px solid "+C.rl}}><h2 style={{fontFamily:F.sf,fontSize:19,fontWeight:400}}>New Event</h2></div>
@@ -570,7 +594,7 @@ function App(){
     case 'my':return<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'team':return<TeamBoard db={db} tasks={tasks} team={team} me={me}/>;
     case 'assign':return isA?<Assign db={db} tasks={tasks} team={team} me={me}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
-    case 'calendar':return<Cal db={db} events={events} team={team} me={me}/>;
+    case 'calendar':return<Cal db={db} events={events} tasks={tasks} team={team} me={me}/>;
     case 'contacts':return<Contacts db={db} team={team} me={me}/>;
     case 'emails':return canEmail?<Emails db={db} hubData={hubData} team={team} me={me}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'board':return<Board db={db} announcements={announcements} team={team} me={me}/>;
