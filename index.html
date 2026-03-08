@@ -103,10 +103,19 @@ const getSheetId=url=>(url||'').match(/\/d\/([a-zA-Z0-9-_]+)/)?.[1]||'';
 async function fetchSheetValues(url,key){
   const sid=getSheetId(url);
   if(!sid||!key)return null;
-  const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}/values/A1:ZZ5000?key=${key}`);
-  const j=await r.json();
-  if(!r.ok)throw new Error(j?.error?.message||'Google Sheets request failed');
-  return j.values||null;
+  const ctrl=new AbortController();
+  const timeout=setTimeout(()=>ctrl.abort(),15000);
+  try{
+    const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}/values/A1:ZZ5000?key=${key}`,{signal:ctrl.signal});
+    const j=await r.json();
+    if(!r.ok)throw new Error(j?.error?.message||'Google Sheets request failed');
+    return j.values||null;
+  }catch(e){
+    if(e?.name==='AbortError')throw new Error('Google Sheets request timed out');
+    throw e;
+  }finally{
+    clearTimeout(timeout);
+  }
 }
 
 const C={bg:"#F8FAFC",bgA:"#EDF2F8",dk:"#091A26",fg:"#0B1A26",sc:"#3A5068",mt:"#7A8FA4",tl:"#1490B0",td:"#0C6B8E",tg:"rgba(20,144,176,0.12)",rl:"#CDDAE6",cd:"#FFF",cb:"#C8D8E6",rd:"#EF4444",gn:"#10B981"};
@@ -377,9 +386,15 @@ function Sheets({db,hubData,team,me}){
   const[editing,setEditing]=useState(null);
   const[sourceFilter,setSourceFilter]=useState('all');
   const[form,setForm]=useState({name:'',desc:'',url:'',source:'general',autoSync:true});
+  const[notice,setNotice]=useState(null);
   const autoSyncRef=useRef({});
 
   useEffect(()=>setApiKey(hubData.sheetsApiKey||''),[hubData.sheetsApiKey]);
+  useEffect(()=>{
+    if(!notice)return;
+    const timer=setTimeout(()=>setNotice(null),notice.tone==='success'?3400:5200);
+    return()=>clearTimeout(timer);
+  },[notice]);
   useEffect(()=>{
     if(!sheets.length){setActive('');return}
     const valid=sheets.some(s=>(s._fbKey||s.id)===active);
@@ -404,29 +419,32 @@ function Sheets({db,hubData,team,me}){
   const readyCount=sheets.filter(s=>s.url&&sheetData[s.id]?.length).length;
   const autoCount=sheets.filter(s=>s.autoSync).length;
   const sourceCount=new Set(sheets.map(s=>s.source||'general')).size;
+  const setNoticeBar=(tone,text)=>setNotice({tone,text});
 
   const resetForm=()=>{setEditing(null);setForm({name:'',desc:'',url:'',source:'general',autoSync:true})};
   const saveKey=()=>db.ref('hub/sheetsApiKey').set(apiKey||'');
   const startEdit=s=>{const sheet=normSheetEntry(s);setEditing(s._fbKey);setForm({name:sheet.name||'',desc:sheet.desc||'',url:sheet.url||'',source:sheet.source||'general',autoSync:sheet.autoSync!==false})};
   const syncOne=async(s,{silent=false}={})=>{
     const sheet=normSheetEntry(s);
-    if(!hubData.sheetsApiKey){if(!silent)alert('Add the Google Sheets API key first');return null}
-    if(!getSheetId(sheet.url)){if(!silent)alert('Paste a valid Google Sheets URL first');return null}
+    if(!hubData.sheetsApiKey){if(!silent)setNoticeBar('error','Add the Google Sheets API key first.');return null}
+    if(!getSheetId(sheet.url)){if(!silent)setNoticeBar('error','Paste a valid Google Sheets URL first.');return null}
     const loadKey=sheet._fbKey||sheet.id;
     const startedAt=Date.now();
     autoSyncRef.current[sheet.id]=startedAt;
     if(!silent)setLoading(loadKey);
-    await db.ref('hub/sheetMeta/'+sheet.id).update({lastTriedAt:startedAt,status:'syncing',lastError:'',source:sheet.source||'general'});
     try{
+      if(!silent)setNoticeBar('info',`Syncing ${sheet.name}...`);
+      await db.ref('hub/sheetMeta/'+sheet.id).update({lastTriedAt:startedAt,status:'syncing',lastError:'',source:sheet.source||'general'});
       const vals=await fetchSheetValues(sheet.url,hubData.sheetsApiKey);
       if(!vals||!vals.length)throw new Error('No values returned for that sheet');
       await db.ref('hub/sheetData/'+sheet.id).set(vals);
       await db.ref('hub/sheetMeta/'+sheet.id).update({lastTriedAt:startedAt,lastSyncedAt:Date.now(),status:'ready',lastError:'',rowCount:Math.max(vals.length-1,0),colCount:(vals[0]||[]).length,source:sheet.source||'general'});
       if(!silent)setActive(loadKey);
+      if(!silent)setNoticeBar('success',`${sheet.name} synced successfully.`);
       return vals;
     }catch(e){
       await db.ref('hub/sheetMeta/'+sheet.id).update({lastTriedAt:startedAt,status:'error',lastError:e?.message||'Sync failed',source:sheet.source||'general'});
-      if(!silent)alert(`Sync failed for ${sheet.name}. Check the API key and sheet sharing settings.`);
+      if(!silent)setNoticeBar('error',e?.message?`Sync failed: ${e.message}`:`Sync failed for ${sheet.name}.`);
       throw e;
     }finally{
       if(!silent)setLoading('');
@@ -489,14 +507,17 @@ function Sheets({db,hubData,team,me}){
     if(editing===s._fbKey)resetForm();
   };
   const syncAll=async()=>{
-    if(!hubData.sheetsApiKey){alert('Add the Google Sheets API key first');return}
+    if(!hubData.sheetsApiKey){setNoticeBar('error','Add the Google Sheets API key first.');return}
     const targets=sheets.filter(s=>getSheetId(s.url));
     if(!targets.length)return;
     setLoading('all');
+    setNoticeBar('info',`Syncing ${targets.length} sheet${targets.length===1?'':'s'}...`);
+    let ok=0;
     for(const sheet of targets){
-      try{await syncOne(sheet,{silent:true})}catch(e){console.error(e)}
+      try{await syncOne(sheet,{silent:true});ok+=1}catch(e){console.error(e)}
     }
     setLoading('');
+    setNoticeBar(ok===targets.length?'success':'error',ok===targets.length?`Synced ${ok} sheet${ok===1?'':'s'}.`:`Synced ${ok} of ${targets.length} sheets. Check any remaining errors below.`);
   };
   const statusPill=meta=>{
     const status=meta?.status||'idle';
@@ -514,6 +535,7 @@ function Sheets({db,hubData,team,me}){
       </div>
     </div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    {notice&&<div style={{marginBottom:16,padding:"12px 14px",borderRadius:12,border:"1px solid "+(notice.tone==='error'?'rgba(239,68,68,0.2)':notice.tone==='success'?'rgba(16,185,129,0.2)':'rgba(20,144,176,0.2)'),background:notice.tone==='error'?'rgba(239,68,68,0.08)':notice.tone==='success'?'rgba(16,185,129,0.08)':'rgba(20,144,176,0.08)',color:notice.tone==='error'?C.rd:notice.tone==='success'?C.gn:C.td,fontSize:12.5,fontWeight:600}}>{notice.text}</div>}
     <div style={{display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:14,marginBottom:18}}>
       {[[linkedCount,"Linked Sheets"],[totalRows,"Cached Rows"],[autoCount,"Auto Sync"],[sourceCount,"Source Pools"]].map(([n,l],i)=><div key={i} className="stat-card page-enter" style={{border:"1px solid "+C.cb}}><div style={{fontFamily:F.sf,fontSize:34,fontWeight:400,lineHeight:1}}>{n}</div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginTop:6}}>{l}</div></div>)}
     </div>
