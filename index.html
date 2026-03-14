@@ -139,7 +139,7 @@ function Btn({primary,children,onClick,style:sx,className='',...p}){return<butto
 function Inp({className='',...p}){return<input className={`mission-field ${className}`.trim()} style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:10,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",...(p.style||{})}} {...p}/>}
 function Sel({style:sx,className='',...p}){return<select className={`mission-field ${className}`.trim()} style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:10,color:C.fg,fontSize:13,fontFamily:"inherit",...(sx||{})}} {...p}/>}
 function Lbl({children}){return<label style={{display:"block",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginBottom:5}}>{children}</label>}
-function Card({children,style:sx,className=''}){return<div className={`mission-card page-enter ${className}`.trim()} style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:16,overflow:"hidden",marginBottom:14,...(sx||{})}}>{children}</div>}
+function Card({children,style:sx,className=''}){return<div className={`mission-card ${className}`.trim()} style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:16,overflow:"hidden",marginBottom:14,...(sx||{})}}>{children}</div>}
 function CardH({children,right}){return<div style={{padding:"12px 18px",borderBottom:"1px solid "+C.bgA,display:"flex",alignItems:"center",justifyContent:"space-between"}}><span style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>{children}</span>{right}</div>}
 
 // === FIREBASE HELPERS ===
@@ -206,7 +206,7 @@ function MyWork({db,tasks,events,team,me}){
     <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>01 &#8212; My Work</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Good {hr<12?"morning":hr<18?"afternoon":"evening"}, {fn(meD?.name)}</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
     <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:22}}>
-      {[[pending.length,"Open Tasks"],[done.length,"Completed"],[myEv.length,"Upcoming"]].map(([n,l],i)=><div key={i} className="stat-card page-enter" style={{border:"1px solid "+C.cb}}><div style={{fontFamily:F.sf,fontSize:34,fontWeight:400,lineHeight:1}}>{n}</div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginTop:6}}>{l}</div></div>)}
+      {[[pending.length,"Open Tasks"],[done.length,"Completed"],[myEv.length,"Upcoming"]].map(([n,l],i)=><div key={i} className="stat-card" style={{border:"1px solid "+C.cb}}><div style={{fontFamily:F.sf,fontSize:34,fontWeight:400,lineHeight:1}}>{n}</div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginTop:6}}>{l}</div></div>)}
     </div>
     <Card>
       <CardH right={<span style={{fontFamily:"monospace",fontSize:11,color:C.mt}}>{pending.length} open</span>}>Your Assignments</CardH>
@@ -240,7 +240,7 @@ function TeamBoard({db,tasks,team,me}){
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
     <div style={{display:"grid",gridTemplateColumns:"repeat("+Math.min(team.length,3)+",1fr)",gap:14,marginBottom:22}}>
       {team.map(m=>{const ts=tasks.filter(t=>t.assignee===m.id);const op=ts.filter(t=>!t.done).length;const dn=ts.filter(t=>t.done).length;const od=ts.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;
-        return(<div key={m.id} className="team-tile page-enter" onClick={()=>setView(view===m.id?null:m.id)} style={{background:C.cd,border:"1px solid "+(m.id===me?C.tl:view===m.id?C.td:C.cb),boxShadow:m.id===me?"0 0 0 1px "+C.tl:view===m.id?"0 0 0 1px "+C.td:"none",cursor:"pointer",padding:16}}>
+        return(<div key={m.id} className="team-tile" onClick={()=>setView(view===m.id?null:m.id)} style={{background:C.cd,border:"1px solid "+(m.id===me?C.tl:view===m.id?C.td:C.cb),boxShadow:m.id===me?"0 0 0 1px "+C.tl:view===m.id?"0 0 0 1px "+C.td:"none",cursor:"pointer",padding:16}}>
           <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}><Av m={m} s={34}/><div><div style={{fontWeight:700,fontSize:13}}>{fn(m.name)}</div><div style={{fontSize:9.5,color:C.mt,fontFamily:"monospace"}}>{m.admin?'ADMIN':fn(m.role.split('of ')[1]||m.role)}</div></div></div>
           <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:22,fontWeight:700,fontFamily:F.sf,color:op>0?C.fg:C.mt}}>{op}</span><span style={{fontSize:10,color:C.mt}}>open</span><span style={{color:C.mt}}>&#183;</span><span style={{fontSize:14,fontWeight:600,color:C.gn}}>{dn}</span><span style={{fontSize:10,color:C.mt}}>done</span>
             {od>0&&<><span style={{color:C.mt}}>&#183;</span><span style={{fontSize:12,fontWeight:700,color:C.rd}}>{od} overdue</span></>}</div></div>)})}
@@ -517,7 +517,7 @@ function Sheets({db,hubData,team,me}){
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
     {notice&&<div style={{marginBottom:16,padding:"12px 14px",borderRadius:12,border:"1px solid "+(notice.tone==='error'?'rgba(239,68,68,0.2)':notice.tone==='success'?'rgba(16,185,129,0.2)':'rgba(20,144,176,0.2)'),background:notice.tone==='error'?'rgba(239,68,68,0.08)':notice.tone==='success'?'rgba(16,185,129,0.08)':'rgba(20,144,176,0.08)',color:notice.tone==='error'?C.rd:notice.tone==='success'?C.gn:C.td,fontSize:12.5,fontWeight:600}}>{notice.text}</div>}
     <div style={{display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:14,marginBottom:18}}>
-      {[[linkedCount,"Linked Sheets"],[totalRows,"Cached Rows"],[autoCount,"Auto Sync"],[sourceCount,"Source Pools"]].map(([n,l],i)=><div key={i} className="stat-card page-enter" style={{border:"1px solid "+C.cb}}><div style={{fontFamily:F.sf,fontSize:34,fontWeight:400,lineHeight:1}}>{n}</div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginTop:6}}>{l}</div></div>)}
+      {[[linkedCount,"Linked Sheets"],[totalRows,"Cached Rows"],[autoCount,"Auto Sync"],[sourceCount,"Source Pools"]].map(([n,l],i)=><div key={i} className="stat-card" style={{border:"1px solid "+C.cb}}><div style={{fontFamily:F.sf,fontSize:34,fontWeight:400,lineHeight:1}}>{n}</div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginTop:6}}>{l}</div></div>)}
     </div>
     <div style={{display:"grid",gridTemplateColumns:isA?"340px minmax(0,1fr)":"300px minmax(0,1fr)",gap:16,alignItems:"start"}}>
       <div>
