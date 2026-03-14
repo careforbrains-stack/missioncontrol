@@ -60,6 +60,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://accounts.google.com/gsi/client"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script type="text/babel">
 const{useState,useEffect,useRef}=React;
@@ -88,6 +89,7 @@ function normEmailCfg(cfg){
 }
 const SEED={team:TEAM,tasks:{_seed:true},events:{_seed:true},sheets:{s1:{id:"s1",name:"Volunteer Signups",desc:"Applications",url:"",source:"general",autoSync:true},s2:{id:"s2",name:"Event Planning",desc:"Logistics",url:"",source:"general",autoSync:true},s3:{id:"s3",name:"PVSA Hours",desc:"Hours",url:"",source:"general",autoSync:true}},announcements:{a1:{id:"a1",author:"Tanmay",date:"2026-03-03",text:"Mission Control is live. Check your assignments.",ts:1}},passwords:{tanmay:"cfb2026",ezra:"cfb2026",eric:"cfb2026",raheesh:"cfb2026",zavier:"cfb2026"},sheetsApiKey:"",sheetData:{_seed:true},sheetMeta:{_seed:true},emailCampaigns:{_seed:true},emailjs:mkEmailCfg()};
 const FIREBASE_CONFIG={apiKey:"AIzaSyCnddOaA0dV6HnHeaHWlYa9hlEGb6uF1N0",authDomain:"careforbrains-hub.firebaseapp.com",databaseURL:"https://careforbrains-hub-default-rtdb.firebaseio.com",projectId:"careforbrains-hub",storageBucket:"careforbrains-hub.firebasestorage.app",messagingSenderId:"174180979425",appId:"1:174180979425:web:12d81181b955ae5d705da0"};
+const GOOGLE_CLIENT_ID="397561140806-e8pj4l1m6jpdcrm8d8jtb76qk11oq37p.apps.googleusercontent.com";
 const LK="cfb_mc_login";
 const gL=()=>{try{return JSON.parse(localStorage.getItem(LK))}catch{return null}};
 const sL=d=>localStorage.setItem(LK,JSON.stringify(d));
@@ -386,6 +388,46 @@ function Sheets({db,hubData,team,me}){
   const[notice,setNotice]=useState(null);
   const autoSyncRef=useRef({});
   const bootSyncRef=useRef({});
+  const[gToken,setGToken]=useState(null);
+  const[editCell,setEditCell]=useState(null);
+  const[editVal,setEditVal]=useState('');
+  const tokenClientRef=useRef(null);
+
+  const connectGoogle=()=>{
+    if(!window.google?.accounts?.oauth2){alert('Google auth not loaded');return}
+    if(!tokenClientRef.current){
+      tokenClientRef.current=window.google.accounts.oauth2.initTokenClient({
+        client_id:GOOGLE_CLIENT_ID,
+        scope:'https://www.googleapis.com/auth/spreadsheets',
+        callback:(resp)=>{if(resp.access_token){setGToken(resp.access_token);setNoticeBar('success','Google connected — you can now edit cells')}else{setNoticeBar('error','Google sign-in failed')}}
+      });
+    }
+    tokenClientRef.current.requestAccessToken();
+  };
+
+  const saveCell=async(rowIdx,colIdx,value)=>{
+    if(!activeSheet||!gToken)return;
+    const sid=getSheetId(activeSheet.url);
+    if(!sid)return;
+    const colToLetter=(c)=>{let s='';while(c>=0){s=String.fromCharCode(65+(c%26))+s;c=Math.floor(c/26)-1}return s};
+    const col=colToLetter(colIdx);
+    const range=col+(rowIdx+2);
+    try{
+      const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}/values/${range}?valueInputOption=USER_ENTERED`,{
+        method:'PUT',
+        headers:{'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},
+        body:JSON.stringify({range,values:[[value]]})
+      });
+      if(!r.ok){const e=await r.json();throw new Error(e?.error?.message||'Write failed')}
+      const cached=[...(activeVals||[])];
+      if(cached[rowIdx+1])cached[rowIdx+1][colIdx]=value;
+      db.ref('hub/sheetData/'+activeSheet.id).set(cached);
+      setEditCell(null);
+    }catch(e){
+      if(e.message?.includes('401')||e.message?.includes('expired')){setGToken(null);setNoticeBar('error','Session expired — click Connect Google again')}
+      else setNoticeBar('error','Edit failed: '+e.message);
+    }
+  };
 
   useEffect(()=>setApiKey(hubData.sheetsApiKey||''),[hubData.sheetsApiKey]);
   useEffect(()=>{
@@ -508,6 +550,7 @@ function Sheets({db,hubData,team,me}){
       <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
         <div style={{fontSize:11,color:C.mt,fontFamily:"monospace"}}>{linkedCount} linked &#183; {readyCount} cached &#183; {autoCount} auto-sync</div>
         {isA&&<Btn onClick={syncAll} primary disabled={loading==='all'||!sheets.length}>{loading==='all'?'Syncing...':'Sync All'}</Btn>}
+        {!gToken?<Btn onClick={connectGoogle}>Connect Google</Btn>:<span style={{fontSize:11,color:C.gn,fontWeight:600}}>&#9679; Google connected</span>}
       </div>
     </div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
@@ -573,14 +616,18 @@ function Sheets({db,hubData,team,me}){
               {activeMeta.lastError&&<div style={{marginTop:10,padding:"10px 12px",borderRadius:10,background:"rgba(239,68,68,0.08)",color:C.rd,fontSize:12.5}}>{activeMeta.lastError}</div>}
             </div>
           </Card>
-          <Card><CardH right={<span style={{fontSize:11,color:C.mt,fontFamily:"monospace"}}>{rows.length} records</span>}>Preview</CardH>
+          <Card><CardH right={<div style={{display:"flex",alignItems:"center",gap:12}}>{gToken&&<span style={{fontSize:10,color:C.tl}}>double-click to edit</span>}<span style={{fontSize:11,color:C.mt,fontFamily:"monospace"}}>{rows.length} records</span></div>}>Preview</CardH>
             {!headers.length?<div style={{padding:"44px 24px",textAlign:"center",color:C.mt}}>
               <div style={{fontFamily:F.sf,fontSize:20,fontStyle:"italic",marginBottom:8}}>No cached data yet</div>
               <div style={{fontSize:13}}>{activeSheet.autoSync?'This sheet will populate automatically after sync is available.':'Sync this sheet to pull live rows from Google Sheets.'}</div>
             </div>:<div style={{overflowX:"auto",maxHeight:620}}>
               <table style={{width:"100%",borderCollapse:"collapse",fontSize:12.5}}>
                 <thead><tr>{headers.map((h,i)=><th key={i} style={{padding:"10px 12px",textAlign:"left",borderBottom:"2px solid "+C.rl,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc,position:"sticky",top:0,background:C.bgA,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
-                <tbody>{rows.slice(0,250).map((row,i)=><tr key={i}>{headers.map((_,j)=><td key={j} style={{padding:"9px 12px",borderBottom:"1px solid "+C.bgA,maxWidth:260,verticalAlign:"top",color:C.sc}}>{row[j]||''}</td>)}</tr>)}</tbody>
+                <tbody>{rows.slice(0,250).map((row,i)=><tr key={i}>{headers.map((_,j)=>{
+                  const isEditing=editCell&&editCell.r===i&&editCell.c===j;
+                  return<td key={j} onDoubleClick={()=>{if(gToken){setEditCell({r:i,c:j});setEditVal(row[j]||'')}}} style={{padding:isEditing?"4px 4px":"9px 12px",borderBottom:"1px solid "+C.bgA,maxWidth:260,verticalAlign:"top",color:C.sc,cursor:gToken?"text":"default",background:isEditing?"#EBF5FF":"transparent"}}>
+                    {isEditing?<input autoFocus value={editVal} onChange={e=>setEditVal(e.target.value)} onBlur={()=>saveCell(i,j,editVal)} onKeyDown={e=>{if(e.key==='Enter')saveCell(i,j,editVal);if(e.key==='Escape')setEditCell(null)}} style={{width:"100%",padding:"5px 8px",border:"2px solid #579BFC",borderRadius:6,fontSize:12.5,fontFamily:"inherit",outline:"none",background:"#fff"}}/>:(row[j]||'')}
+                  </td>})}</tr>)}</tbody>
               </table>
               {rows.length>250&&<div style={{padding:"12px 14px",fontSize:11,color:C.mt,borderTop:"1px solid "+C.bgA}}>Showing first 250 rows in Mission Control. Open Google Sheets for the full sheet.</div>}
             </div>}
