@@ -453,42 +453,9 @@ function Sheets({db,hubData,team,me}){
       if(!silent)setLoading('');
     }
   };
-  // Recover stale "syncing" states (tab closed/network drop mid-sync) so buttons never look stuck forever.
-  const staleSyncFixedRef=useRef({});
-  useEffect(()=>{
-    if(!isA||!sheets.length)return;
-    const now=Date.now();
-    sheets.forEach(s=>{
-      const meta=sheetMeta[s.id]||{};
-      if(meta.status==='syncing'&&meta.lastTriedAt&&now-meta.lastTriedAt>45000&&!staleSyncFixedRef.current[s.id]){
-        staleSyncFixedRef.current[s.id]=true;
-        db.ref('hub/sheetMeta/'+s.id).update({status:'error',lastError:meta.lastError||'Previous sync timed out. Try Sync again.'});
-      }
-    });
-  },[isA,hubData.sheetMeta,hubData.sheets]);
+  // Auto-sync and stale recovery removed — caused render loops by writing to Firebase on every mount.
+  // Users click Sync manually instead.
 
-  // One-shot auto populate for empty/stale sheets; avoids background loop churn that can break interaction.
-  useEffect(()=>{
-    if(!isA||!hubData.sheetsApiKey||!sheets.length)return;
-    const now=Date.now();
-    const targets=sheets.filter(s=>{
-      if(!s.autoSync||!getSheetId(s.url)||bootSyncRef.current[s.id])return false;
-      const meta=sheetMeta[s.id]||{};
-      const hasRows=(sheetData[s.id]?.length||0)>1;
-      const stale=meta.lastSyncedAt?now-meta.lastSyncedAt>SHEET_AUTO_SYNC_MS:false;
-      return !hasRows||stale;
-    });
-    if(!targets.length)return;
-    let cancelled=false;
-    (async()=>{
-      for(const sheet of targets){
-        if(cancelled)break;
-        bootSyncRef.current[sheet.id]=true;
-        try{await syncOne(sheet,{silent:true})}catch(e){console.error(e)}
-      }
-    })();
-    return()=>{cancelled=true};
-  },[isA,hubData.sheetsApiKey,syncSignature]);
   const saveSheet=async()=>{
     if(!form.name.trim())return;
     const payload={name:form.name.trim(),desc:form.desc.trim(),url:form.url.trim(),source:form.source||'general',autoSync:form.autoSync!==false};
