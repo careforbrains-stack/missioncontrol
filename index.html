@@ -97,7 +97,7 @@ const gL=()=>{try{return JSON.parse(localStorage.getItem(LK))}catch{return null}
 const sL=d=>localStorage.setItem(LK,JSON.stringify(d));
 const fn=n=>n?.split(' ')[0]||'';
 const EMAIL_ADMINS=["tanmay","ezra"];
-const canUseEmails=id=>EMAIL_ADMINS.includes(id);
+const canUseEmails=id=>true;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const okEmail=v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((v||'').trim());
 const getSheetId=url=>(url||'').match(/\/d\/([a-zA-Z0-9-_]+)/)?.[1]||'';
@@ -399,15 +399,14 @@ function Sheets({db,hubData,team,me}){
   },[notice]);
   useEffect(()=>{
     if(!sheets.length){setActive('');return}
-    const valid=sheets.some(s=>(s._fbKey||s.id)===active);
-    if(!valid)setActive(sheets[0]._fbKey||sheets[0].id);
-  },[hubData.sheets,active]);
+    setActive(prev=>{const valid=sheets.some(s=>(s._fbKey||s.id)===prev);return valid?prev:(sheets[0]._fbKey||sheets[0].id)});
+  },[hubData.sheets]);
   useEffect(()=>{
     if(sourceFilter==='all')return;
     const visible=sheets.filter(s=>s.source===sourceFilter);
     if(!visible.length)return;
-    if(!visible.some(s=>(s._fbKey||s.id)===active))setActive(visible[0]._fbKey||visible[0].id);
-  },[sourceFilter,hubData.sheets,active]);
+    setActive(prev=>{if(visible.some(s=>(s._fbKey||s.id)===prev))return prev;return visible[0]._fbKey||visible[0].id});
+  },[sourceFilter,hubData.sheets]);
 
   const filteredSheets=sourceFilter==='all'?sheets:sheets.filter(s=>s.source===sourceFilter);
   const activePool=sourceFilter==='all'?sheets:filteredSheets;
@@ -455,12 +454,14 @@ function Sheets({db,hubData,team,me}){
     }
   };
   // Recover stale "syncing" states (tab closed/network drop mid-sync) so buttons never look stuck forever.
+  const staleSyncFixedRef=useRef({});
   useEffect(()=>{
     if(!isA||!sheets.length)return;
     const now=Date.now();
     sheets.forEach(s=>{
       const meta=sheetMeta[s.id]||{};
-      if(meta.status==='syncing'&&meta.lastTriedAt&&now-meta.lastTriedAt>45000){
+      if(meta.status==='syncing'&&meta.lastTriedAt&&now-meta.lastTriedAt>45000&&!staleSyncFixedRef.current[s.id]){
+        staleSyncFixedRef.current[s.id]=true;
         db.ref('hub/sheetMeta/'+s.id).update({status:'error',lastError:meta.lastError||'Previous sync timed out. Try Sync again.'});
       }
     });
