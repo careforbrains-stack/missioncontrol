@@ -428,12 +428,27 @@ function Sheets({db,hubData,team,me}){
     return[...pri,...rest].slice(0,7);
   },[cleanHeaders.join(',')]);
 
+  // Re-sync a sheet using OAuth token so row indices match Google Sheets exactly
+  const resyncWithToken=async(token)=>{
+    for(const s of sheets){
+      const sid=getSheetId(s.url);if(!sid)continue;
+      try{
+        const r=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+sid+'/values/A1:ZZ5000',{
+          headers:{'Authorization':'Bearer '+token}
+        });
+        if(!r.ok)continue;
+        const j=await r.json();
+        if(j.values)db.ref('hub/sheetData/'+s.id).set(j.values);
+      }catch(e){console.error(e)}
+    }
+  };
+
   const connectGoogle=()=>{
     if(!window.google?.accounts?.oauth2)return;
     if(!tokenClientRef.current){
       tokenClientRef.current=window.google.accounts.oauth2.initTokenClient({
         client_id:GOOGLE_CLIENT_ID,scope:'https://www.googleapis.com/auth/spreadsheets',
-        callback:resp=>{if(resp.access_token)setGToken(resp.access_token)}
+        callback:resp=>{if(resp.access_token){setGToken(resp.access_token);resyncWithToken(resp.access_token)}}
       });
     }
     tokenClientRef.current.requestAccessToken();
