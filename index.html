@@ -681,169 +681,364 @@ function Sheets({db,hubData,team,me}){
 }
 
 // === EMAILS ===
+const EMAIL_TEMPLATES={
+  vol_welcome:{
+    name:'Volunteer Welcome',
+    icon:'\u2728',
+    subject:'Welcome to the CareForBrains Volunteer Program!',
+    body:`Hi {{name}},
+
+Welcome to the CareForBrains Volunteering Program! We're excited to have you on board.
+
+This is a virtual, self-paced program where you'll:
+- Explore important mental health topics
+- Spread awareness in your community
+- Learn about self-care strategies and mental health services
+
+If you're in the U.S., you may also be eligible for the Presidential Volunteer Service Award (PVSA).
+
+NEW: E-Card Volunteering Opportunity
+Create mental health e-cards using Canva — each card counts as 30 minutes of volunteer work with no limit on how many you can make. These cards will be added to our Heart Care Mental Health Kits for underserved youth.
+
+IMPORTANT — Join these platforms to stay connected:
+- Discord (mandatory): https://discord.gg/careforbrains
+- Canvas (mandatory): Check your email for the enrollment link
+
+All updates and resources are shared exclusively through Discord and Canvas. Missing these may result in missing important deadlines.
+
+Questions? Email us at careforbrains@gmail.com
+
+Best,
+Tanmay Vasudeva
+Founder, CareForBrains`
+  },
+  vol_done:{
+    name:'Volunteer Completion',
+    icon:'\uD83C\uDF93',
+    subject:'Congratulations on completing the CareForBrains Volunteer Program!',
+    hasCert:true,
+    body:`Hi {{name}},
+
+Thank you for your hard work and dedication. Your contributions have been invaluable, and we truly appreciate everything you've done.
+
+Since you have completed the program, you qualify for the Free Option, which includes:
+- A CareForBrains Certificate of Achievement
+- Verified volunteer hours for school and personal records
+- Signed forms for educational and professional purposes
+
+MEMBERSHIP OPTION ($36 one-time fee) includes everything above PLUS:
+- One free PVSA award at any level (Bronze, Silver, or Gold) including certificate and medallion
+- A personalized letter of recommendation
+- Access to future exclusive benefits and services
+
+If you'd like to upgrade, visit: [MEMBERSHIP_LINK]
+Please allow 1-2 business days for processing.
+
+Your certificate is attached to this email.
+
+Once again, thank you for your incredible commitment!
+
+Best regards,
+Tanmay Vasudeva
+Founder, CareForBrains`
+  },
+  ecard_done:{
+    name:'E-Card Completion',
+    icon:'\uD83C\uDFA8',
+    subject:'Thank you for your E-Card contributions!',
+    hasCert:true,
+    body:`Hi {{name}},
+
+Thank you for your hard work and dedication to the CareForBrains E-Card Program. Your contributions have been invaluable.
+
+Since you have completed {{cards}} cards, you qualify for the Free Option, which includes:
+- A CareForBrains Certificate of Achievement
+- Verified volunteer hours ({{hours}} hours) for school and personal records
+- Signed forms for educational and professional purposes
+
+MEMBERSHIP OPTION ($36 one-time fee) includes everything above PLUS:
+- One free PVSA award at any level (Bronze, Silver, or Gold)
+- A personalized letter of recommendation
+- Access to future exclusive benefits
+
+Upgrade here: [MEMBERSHIP_LINK]
+
+Your certificate is attached to this email.
+
+Best regards,
+Tanmay Vasudeva
+Founder, CareForBrains`
+  },
+  chapter_welcome:{
+    name:'Chapter Application Response',
+    icon:'\uD83C\uDF10',
+    subject:'Your CareForBrains Chapter Application',
+    body:`Hi {{name}},
+
+Thank you for applying to start a CareForBrains chapter! We've reviewed your application and would love to move forward.
+
+Next steps:
+1. Join our Chapter Directors Discord channel
+2. Attend the next Chapter Director meeting
+3. Set up your chapter's Instagram account
+4. Review the Chapter Handbook
+
+We'll be in touch with meeting details and resources shortly.
+
+Welcome to the CareForBrains family!
+
+Best,
+Tanmay Vasudeva
+Founder, CareForBrains`
+  },
+  custom:{
+    name:'Custom Email',
+    icon:'\u270F\uFE0F',
+    subject:'',
+    body:''
+  }
+};
+
+// Certificate generator - returns a data URL of the certificate image
+function generateCertSVG(name,hours,program,date){
+  return`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 800" width="1100" height="800">
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&amp;family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&amp;family=Plus+Jakarta+Sans:wght@400;600;700&amp;display=swap');
+  </style>
+</defs>
+<rect width="1100" height="800" fill="#FDFAF5"/>
+<rect x="20" y="20" width="1060" height="760" fill="none" stroke="#1C3A5F" stroke-width="3" rx="4"/>
+<rect x="30" y="30" width="1040" height="740" fill="none" stroke="#1C3A5F" stroke-width="1" rx="2"/>
+<rect x="40" y="40" width="1020" height="720" fill="none" stroke="#C8A96E" stroke-width="0.5" stroke-dasharray="4,4"/>
+<text x="550" y="140" text-anchor="middle" font-family="Playfair Display,serif" font-size="62" font-weight="700" fill="#1C3A5F" letter-spacing="2">Certificate</text>
+<text x="550" y="185" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="28" font-style="italic" fill="#3A5068">of Achievement</text>
+<line x1="400" y1="210" x2="700" y2="210" stroke="#C8A96E" stroke-width="1.5"/>
+<circle cx="550" cy="210" r="3" fill="#C8A96E"/>
+<circle cx="400" cy="210" r="2" fill="#C8A96E"/>
+<circle cx="700" cy="210" r="2" fill="#C8A96E"/>
+<text x="550" y="270" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="16" fill="#3A5068" letter-spacing="1">This certificate is proudly presented to</text>
+<text x="550" y="350" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="52" font-style="italic" fill="#1C3A5F">${name}</text>
+<line x1="300" y1="375" x2="800" y2="375" stroke="#E6E9EF" stroke-width="1"/>
+<text x="550" y="430" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="16" fill="#3A5068">for completing <tspan font-weight="700">${hours} hours</tspan> of service in the</text>
+<text x="550" y="460" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="16" fill="#3A5068"><tspan font-weight="700">CareForBrains ${program} Program</tspan></text>
+<text x="550" y="500" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="14" fill="#7A8FA4">making an impact in mental health awareness</text>
+<line x1="180" y1="580" x2="380" y2="580" stroke="#1C3A5F" stroke-width="1"/>
+<text x="280" y="610" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="24" font-style="italic" fill="#1C3A5F">Tanmay Vasudeva</text>
+<text x="280" y="635" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="11" fill="#3A5068" letter-spacing="2" font-weight="700">TANMAY VASUDEVA</text>
+<text x="280" y="655" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="11" fill="#7A8FA4">Founder, CareForBrains</text>
+<line x1="720" y1="580" x2="920" y2="580" stroke="#1C3A5F" stroke-width="1"/>
+<text x="820" y="610" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="24" font-style="italic" fill="#1C3A5F">Ezra Weng</text>
+<text x="820" y="635" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="11" fill="#3A5068" letter-spacing="2" font-weight="700">EZRA WENG</text>
+<text x="820" y="655" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="11" fill="#7A8FA4">Co-Founder, CareForBrains</text>
+<text x="550" y="720" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="12" fill="#C3C6D4">${date} \u2022 CareForBrains 501(c)(3)</text>
+</svg>`;
+}
+
 function Emails({db,hubData,team,me}){
-  const canEmail=canUseEmails(me);
+  const[step,setStep]=useState(1);
   const[selSheet,setSelSheet]=useState('');
   const[rows,setRows]=useState([]);const[cols,setCols]=useState([]);
   const[emailCol,setEmailCol]=useState('');const[nameCol,setNameCol]=useState('');
-  const[checked,setChecked]=useState({});const[template,setTemplate]=useState('stem_accept');
-  const[sending,setSending]=useState(false);const[sent,setSent]=useState({});
+  const[checked,setChecked]=useState({});
+  const[template,setTemplate]=useState('vol_welcome');
   const[customSubj,setCustomSubj]=useState('');const[customBody,setCustomBody]=useState('');
-  const[showPrev,setShowPrev]=useState(false);const[prevIdx,setPrevIdx]=useState(0);
-  const[loading,setLoading]=useState(false);
-  const[editCfg,setEditCfg]=useState(false);
-  const emailCfg=normEmailCfg(hubData.emailjs);
-  const[cfgForm,setCfgForm]=useState(()=>normEmailCfg(hubData.emailjs));
-  const[senderId,setSenderId]=useState(emailCfg.defaultProfile||'general');
-  const[search,setSearch]=useState('');
+  const[sending,setSending]=useState(false);const[sent,setSent]=useState({});
   const[sendStats,setSendStats]=useState({done:0,total:0});
+  const[previewIdx,setPreviewIdx]=useState(0);
+  const[certPreview,setCertPreview]=useState(null);
+
   const sheets=hubData.sheets?Object.keys(hubData.sheets).filter(k=>k!=='_seed').map(k=>normSheetEntry(hubData.sheets[k])):[];
   const sheetData=hubData.sheetData||{};
-  const campaigns=fbToArr(hubData.emailCampaigns).sort((a,b)=>(b.createdTs||0)-(a.createdTs||0));
-  const TMPLS={
-    stem_accept:{name:'STEM Internship - Accepted',subj:'Welcome to the CareForBrains STEM Exploration Program!',body:'Hi {{name}},\n\nCongratulations! We are excited to welcome you to the CareForBrains STEM Exploration Program.\n\nHere are your next steps:\n1. Join our Discord server: [DISCORD_LINK]\n2. Fill out the onboarding form: [ONBOARDING_LINK]\n3. Attend orientation on [DATE]\n\nIf you have any questions, reply to this email.\n\nBest,\nThe CareForBrains STEM Team'},
-    stem_reject:{name:'STEM Internship - Not Selected',subj:'CareForBrains STEM Program Update',body:'Hi {{name}},\n\nThank you for your interest in the CareForBrains STEM Exploration Program. After careful review, we are unable to offer you a position at this time.\n\nWe encourage you to apply again and check out our other opportunities at careforbrains.org.\n\nBest,\nThe CareForBrains Team'},
-    volunteer_welcome:{name:'General Volunteer Welcome',subj:'Welcome to CareForBrains!',body:'Hi {{name}},\n\nWelcome to CareForBrains! We are thrilled to have you join our mission.\n\nGet started:\n1. Join our volunteer Discord: [DISCORD_LINK]\n2. Complete onboarding: [ONBOARDING_LINK]\n3. Check your chapter assignment\n\nThank you!\n\nBest,\nThe CareForBrains Team'},
-    chapter_response:{name:'Chapter Application Response',subj:'Your CareForBrains Chapter Application',body:'Hi {{name}},\n\nThank you for applying to start a CareForBrains chapter! We would love to move forward.\n\n1. Schedule a call: [CALENDLY_LINK]\n2. Review the Chapter Handbook: [HANDBOOK_LINK]\n\nBest,\nThe CareForBrains Team'},
-    custom:{name:'Custom Email',subj:'',body:''}
-  };
-  useEffect(()=>{if(!emailCfg.profiles[senderId])setSenderId(emailCfg.defaultProfile||'general')},[hubData.emailjs,senderId]);
-  const applySheetData=vals=>{if(vals&&Array.isArray(vals)&&vals.length>0){const headers=vals[0]||[];setCols(headers);setRows(vals.slice(1));const ei=headers.findIndex(h=>h.toLowerCase().includes('email'));const ni=headers.findIndex(h=>h.toLowerCase().includes('name')&&!h.toLowerCase().includes('last'));setEmailCol(ei>=0?headers[ei]:'');setNameCol(ni>=0?headers[ni]:'')}else{setCols([]);setRows([]);setEmailCol('');setNameCol('')}};
-  useEffect(()=>{if(selSheet)applySheetData(sheetData[selSheet])},[hubData.sheetData,selSheet]);
-  const loadSheet=sid=>{setSelSheet(sid);setChecked({});setSent({});setShowPrev(false);setPrevIdx(0);setSearch('');applySheetData(sheetData[sid]);const s=sheets.find(v=>v.id===sid);if((!sheetData[sid]||!sheetData[sid]?.length)&&s?.url&&hubData.sheetsApiKey)syncSheet(s)};
-  const syncSheet=async s=>{const key=hubData.sheetsApiKey;if(!getSheetId(s.url)||!key)return;setLoading(true);try{const vals=await fetchSheetValues(s.url,key);if(vals){db.ref('hub/sheetData/'+s.id).set(vals);applySheetData(vals)}}catch(e){console.error(e);alert('Could not pull that sheet. Check the API key and sharing settings.')}setLoading(false)};
-  const eIdx=cols.indexOf(emailCol);const nIdx=cols.indexOf(nameCol);
-  const fill=(tmpl,row)=>{let t=tmpl;const name=nIdx>=0?(row[nIdx]||''):'';t=t.replace(/\{\{name\}\}/g,name);cols.forEach((col,i)=>{t=t.replace(new RegExp('\\{\\{'+col.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\}\\}','g'),row[i]||'')});return t};
-  const cur=TMPLS[template]||TMPLS.custom;
-  const subj=template==='custom'?customSubj:cur.subj;
-  const body=template==='custom'?customBody:cur.body;
-  const rowMeta=rows.map((row,i)=>{const email=eIdx>=0?(row[eIdx]||'').trim():'';const name=nIdx>=0?(row[nIdx]||'').trim():'';return{i,row,email,name,emailValid:okEmail(email),search:row.map(v=>(v||'').toString().toLowerCase()).join(' ')}});
-  const filteredRows=rowMeta.filter(m=>!search.trim()||m.search.includes(search.trim().toLowerCase()));
-  const filteredValidRows=filteredRows.filter(m=>m.emailValid);
-  const selectedRows=rowMeta.filter(m=>checked[m.i]);
-  const sendableRows=selectedRows.filter(m=>m.emailValid);
-  const sender=emailCfg.profiles[senderId]||emailCfg.profiles[emailCfg.defaultProfile]||EMAIL_PROFILE_DEFAULTS.general;
+  const emailCfg=normEmailCfg(hubData.emailjs);
+  const sender=emailCfg.profiles[emailCfg.defaultProfile]||emailCfg.profiles.general||{};
   const senderReady=!!(sender.publicKey&&sender.serviceId&&sender.templateId);
-  const activeSheet=sheets.find(s=>s.id===selSheet);
-  const allVisibleValidChecked=filteredValidRows.length>0&&filteredValidRows.every(m=>checked[m.i]);
-  const previewRows=selectedRows;
-  const safePrevIdx=Math.min(prevIdx,Math.max(previewRows.length-1,0));
-  const toggleAll=()=>{const n={...checked};if(allVisibleValidChecked)filteredValidRows.forEach(m=>delete n[m.i]);else filteredValidRows.forEach(m=>{n[m.i]=true});setChecked(n)};
-  const openCfg=()=>{setCfgForm(normEmailCfg(hubData.emailjs));setEditCfg(true)};
-  const setCfgValue=(pid,key,val)=>setCfgForm(cur=>({...cur,profiles:{...cur.profiles,[pid]:{...cur.profiles[pid],[key]:val}}}));
-  const saveCfg=()=>{const next=normEmailCfg(cfgForm);db.ref('hub/emailjs').set(next);setCfgForm(next);setEditCfg(false);setSenderId(next.defaultProfile)};
+
+  const tmpl=EMAIL_TEMPLATES[template]||EMAIL_TEMPLATES.custom;
+  const subj=template==='custom'?customSubj:tmpl.subject;
+  const body=template==='custom'?customBody:tmpl.body;
+
+  const loadSheet=sid=>{setSelSheet(sid);setChecked({});setSent({});
+    const vals=sheetData[sid];
+    if(vals&&Array.isArray(vals)&&vals.length>0){
+      setCols(vals[0]);setRows(vals.slice(1));
+      const ei=vals[0].findIndex(h=>(h||'').toLowerCase().includes('email'));
+      const ni=vals[0].findIndex(h=>(h||'').toLowerCase().includes('name')&&!(h||'').toLowerCase().includes('last'));
+      setEmailCol(ei>=0?vals[0][ei]:'');setNameCol(ni>=0?vals[0][ni]:'');
+    }else{setCols([]);setRows([])}
+  };
+
+  const eIdx=cols.indexOf(emailCol);const nIdx=cols.indexOf(nameCol);
+  const fill=(t,row)=>{let s=t;const name=nIdx>=0?(row[nIdx]||''):'';s=s.replace(/\{\{name\}\}/g,name);cols.forEach((col,i)=>{s=s.replace(new RegExp('\\{\\{'+col.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\}\\}','g'),row[i]||'')});return s};
+
+  const selectedRows=Object.keys(checked).filter(k=>checked[k]).map(k=>({i:parseInt(k),row:rows[parseInt(k)]})).filter(r=>r.row);
+  const validSelected=selectedRows.filter(r=>eIdx>=0&&okEmail((r.row[eIdx]||'').trim()));
+  const allChecked=rows.length>0&&rows.every((_,i)=>checked[i]);
+
+  const downloadCert=(name,hours,program)=>{
+    const svg=generateCertSVG(name,hours||'50',program||'Volunteer',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
+    const blob=new Blob([svg],{type:'image/svg+xml'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=`CareForBrains_Certificate_${name.replace(/\s+/g,'_')}.svg`;a.click();URL.revokeObjectURL(url);
+  };
+
   const sendEmails=async()=>{
-    if(!senderReady){alert('Finish sender setup first');return}
-    if(eIdx<0){alert('Select the email column first');return}
-    if(!subj.trim()){alert('Add a subject first');return}
-    if(!body.trim()){alert('Add a message body first');return}
-    if(sendableRows.length===0){alert('Select recipients with valid email addresses');return}
-    setSending(true);setSendStats({done:0,total:sendableRows.length});
-    const ns={...sent};let sentCount=0;let failedCount=0;
-    for(let i=0;i<sendableRows.length;i++){
-      const meta=sendableRows[i];
+    if(!senderReady){alert('Set up EmailJS in the sender config first');return}
+    if(validSelected.length===0)return;
+    setSending(true);setSendStats({done:0,total:validSelected.length});
+    const ns={...sent};
+    for(let i=0;i<validSelected.length;i++){
+      const{row}=validSelected[i];
+      const email=(row[eIdx]||'').trim();
+      const name=nIdx>=0?(row[nIdx]||'').trim():'';
       try{
-        await emailjs.send(sender.serviceId,sender.templateId,{to_email:meta.email,to_name:meta.name,subject:fill(subj,meta.row),message:fill(body,meta.row),from_name:sender.fromName||sender.label||'CareForBrains',reply_to:sender.replyTo||'',sender_label:sender.label||''},{publicKey:sender.publicKey});
-        ns[meta.i]='sent';sentCount++;
-      }catch(e){
-        console.error(e);ns[meta.i]='failed';failedCount++;
-      }
-      setSent({...ns});
-      setSendStats({done:i+1,total:sendableRows.length});
-      if(i<sendableRows.length-1)await wait(1100);
+        await emailjs.send(sender.serviceId,sender.templateId,{
+          to_email:email,to_name:name,
+          subject:fill(subj,row),message:fill(body,row),
+          from_name:sender.fromName||'CareForBrains',
+          reply_to:sender.replyTo||'careforbrains@gmail.com'
+        },{publicKey:sender.publicKey});
+        ns[validSelected[i].i]='sent';
+        logEvent(db,'email_sent',{user:me,to:email,template:tmpl.name,subject:fill(subj,row)});
+      }catch(e){ns[validSelected[i].i]='failed';console.error(e)}
+      setSent({...ns});setSendStats({done:i+1,total:validSelected.length});
+      if(i<validSelected.length-1)await wait(1100);
     }
-    const ref=db.ref('hub/emailCampaigns').push();
-    ref.set({id:ref.key,sheetId:selSheet,sheetName:activeSheet?.name||'',profile:senderId,profileLabel:sender.label||senderId,template,templateName:cur.name,subject,recipientCount:sendableRows.length,sentCount,failedCount,createdBy:me,createdAt:new Date().toISOString(),createdTs:Date.now()});
     setSending(false);
   };
 
-  if(!canEmail)return(<div className="page-enter" style={{padding:"10px 0"}}>
-    <Card style={{border:"1px solid rgba(239,68,68,.2)"}}>
-      <div style={{padding:"18px 22px"}}>
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",color:C.rd,marginBottom:8}}>Restricted</div>
-        <h2 style={{fontFamily:F.sf,fontSize:24,fontWeight:400,marginBottom:6}}>Communications access is limited</h2>
-        <div style={{fontSize:13,color:C.sc,lineHeight:1.7}}>Only Tanmay and Ezra can open the email operations workspace and send outbound campaigns.</div>
-      </div>
-    </Card>
-  </div>);
+  const previewRow=validSelected[Math.min(previewIdx,Math.max(validSelected.length-1,0))]?.row||[];
 
   return(<div>
-    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>07 &#8212; Emails</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Send Emails</h1></div>
-    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
-    <Card style={{marginBottom:18}}><CardH right={!editCfg&&canEmail&&<button onClick={openCfg} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.sc,fontFamily:"inherit"}}>{Object.values(emailCfg.profiles).some(p=>p.publicKey)?'Edit':'Set up'}</button>}>Sender Profiles</CardH>
-      <div style={{padding:"14px 18px"}}>{editCfg?<div>
-        <div style={{background:C.bgA,borderRadius:8,padding:12,marginBottom:14,fontSize:12,color:C.sc,lineHeight:1.7}}>Use one EmailJS service and template per mailbox if you want a real send-from choice between your general and STEM inboxes. This flow is paced at 1 email per second to stay inside EmailJS browser limits.</div>
-        {Object.keys(cfgForm.profiles).map(pid=>{const p=cfgForm.profiles[pid];const ready=p.publicKey&&p.serviceId&&p.templateId;return(<div key={pid} style={{border:"1px solid "+C.cb,borderRadius:10,padding:14,marginBottom:12,background:C.cd}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><div><div style={{fontWeight:700,fontSize:14}}>{p.label||pid}</div><div style={{fontSize:10,color:ready?C.gn:C.mt,fontFamily:"monospace"}}>{ready?'CONNECTED':'NOT CONFIGURED'}</div></div><label style={{display:"flex",alignItems:"center",gap:6,fontSize:11,color:C.sc,cursor:"pointer"}}><input type="radio" checked={cfgForm.defaultProfile===pid} onChange={()=>setCfgForm(cur=>({...cur,defaultProfile:pid}))}/> Default sender</label></div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-            <div><Lbl>Label</Lbl><Inp value={p.label||''} onChange={e=>setCfgValue(pid,'label',e.target.value)}/></div>
-            <div><Lbl>From Name</Lbl><Inp value={p.fromName||''} onChange={e=>setCfgValue(pid,'fromName',e.target.value)}/></div>
-            <div><Lbl>Reply-To</Lbl><Inp value={p.replyTo||''} onChange={e=>setCfgValue(pid,'replyTo',e.target.value)} placeholder="name@example.org"/></div>
-            <div><Lbl>Public Key</Lbl><Inp value={p.publicKey||''} onChange={e=>setCfgValue(pid,'publicKey',e.target.value)}/></div>
-            <div><Lbl>Service ID</Lbl><Inp value={p.serviceId||''} onChange={e=>setCfgValue(pid,'serviceId',e.target.value)}/></div>
-            <div><Lbl>Template ID</Lbl><Inp value={p.templateId||''} onChange={e=>setCfgValue(pid,'templateId',e.target.value)}/></div>
-          </div>
-        </div>)})}
-        <div style={{display:"flex",gap:8}}><Btn primary onClick={saveCfg}>Save</Btn><Btn onClick={()=>setEditCfg(false)}>Cancel</Btn></div>
-      </div>:<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>{Object.values(emailCfg.profiles).map(p=>{const ready=p.publicKey&&p.serviceId&&p.templateId;return(<div key={p.id} style={{border:"1px solid "+C.cb,borderRadius:10,padding:12,background:p.id===emailCfg.defaultProfile?C.tg:C.cd}}>
-        <div style={{display:"flex",justifyContent:"space-between",gap:10,marginBottom:4}}><span style={{fontWeight:700,fontSize:13}}>{p.label||p.id}</span><span style={{fontSize:10,fontFamily:"monospace",color:ready?C.gn:C.mt}}>{ready?'READY':'SET UP NEEDED'}</span></div>
-        <div style={{fontSize:11,color:C.sc}}>{p.fromName||'No sender name yet'}</div>
-        <div style={{fontSize:10,color:C.mt,marginTop:4}}>{p.replyTo||'Reply-to not set yet'}</div>
-      </div>)})}</div>}</div>
-    </Card>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:18}}>
-      <Card><CardH>1. Data Source</CardH><div style={{padding:"14px 18px"}}>
-        <Lbl>Google Sheet</Lbl><div style={{display:"flex",gap:8}}><Sel value={selSheet} onChange={e=>loadSheet(e.target.value)}><option value="">Choose...</option>{sheets.map(s=><option key={s.id} value={s.id}>{(SHEET_SOURCES[s.source]||SHEET_SOURCES.general).tag} - {s.name}</option>)}</Sel>
-        {selSheet&&sheets.find(s=>s.id===selSheet)?.url&&<Btn onClick={()=>syncSheet(sheets.find(s=>s.id===selSheet))} primary>{loading?'...':'Sync'}</Btn>}</div>
-        {cols.length>0&&<div style={{marginTop:14}}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-          <div><Lbl>Email Column</Lbl><Sel value={emailCol} onChange={e=>setEmailCol(e.target.value)}><option value="">Select...</option>{cols.map(c=><option key={c} value={c}>{c}</option>)}</Sel></div>
-          <div><Lbl>Name Column</Lbl><Sel value={nameCol} onChange={e=>setNameCol(e.target.value)}><option value="">Select...</option>{cols.map(c=><option key={c} value={c}>{c}</option>)}</Sel></div>
-        </div><div style={{marginTop:8,fontSize:11,color:C.gn,fontWeight:600}}>{cols.length} columns &#183; {rows.length} rows &#183; {rowMeta.filter(m=>m.emailValid).length} valid emails</div></div>}
-      </div></Card>
-      <Card><CardH>2. Campaign</CardH><div style={{padding:"14px 18px"}}>
-        <div style={{marginBottom:12}}><Lbl>Send From</Lbl><Sel value={senderId} onChange={e=>setSenderId(e.target.value)}>{Object.values(emailCfg.profiles).map(p=>{const ready=p.publicKey&&p.serviceId&&p.templateId;return<option key={p.id} value={p.id}>{p.label||p.id}{ready?'':' (set up needed)'}</option>})}</Sel>
-          <div style={{marginTop:6,fontSize:11,color:senderReady?C.gn:C.rd,fontWeight:600}}>{senderReady?(sender.replyTo?`Replies go to ${sender.replyTo}`:'Sender ready'):'Finish this sender profile in Sender Profiles before sending.'}</div>
-        </div>
-        <Lbl>Email Template</Lbl><Sel value={template} onChange={e=>setTemplate(e.target.value)}>{Object.entries(TMPLS).map(([k,v])=><option key={k} value={k}>{v.name}</option>)}</Sel>
-        {template==='custom'&&<div style={{marginTop:10}}><div style={{marginBottom:8}}><Lbl>Subject</Lbl><Inp value={customSubj} onChange={e=>setCustomSubj(e.target.value)}/></div><Lbl>Body</Lbl><textarea style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:7,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",minHeight:120,resize:"vertical"}} value={customBody} onChange={e=>setCustomBody(e.target.value)} placeholder="Use {{name}} for personalization..."/></div>}
-        {template!=='custom'&&<div style={{marginTop:10,background:C.bgA,borderRadius:8,padding:12}}><div style={{fontWeight:700,fontSize:12,marginBottom:4}}>Subject: {cur.subj}</div><div style={{fontSize:12,color:C.sc,whiteSpace:"pre-wrap",lineHeight:1.5,maxHeight:120,overflow:"auto"}}>{cur.body}</div></div>}
-        <div style={{marginTop:8,fontSize:10.5,color:C.mt}}>{'{{name}}'} and {'{{column_name}}'} auto-fill from sheet headers.</div>
-        {cols.length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:10}}>{['{{name}}',...cols.slice(0,6).map(c=>`{{${c}}}`)].map(tok=><span key={tok} style={{padding:"3px 7px",borderRadius:999,border:"1px solid "+C.rl,fontSize:10,fontFamily:"monospace",color:C.sc}}>{tok}</span>)}</div>}
-      </div></Card>
+    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>07 &#8212; Comms</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Email Center</h1></div>
+    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 18px"}}/>
+
+    {!senderReady&&<div style={{padding:"12px 16px",borderRadius:10,background:"#FFF5F5",border:"1px solid #FECACA",marginBottom:16,fontSize:12.5}}>
+      <span style={{color:"#E44258",fontWeight:700}}>&#9888; EmailJS not configured.</span><span style={{color:"#676879",marginLeft:6}}>Go to Settings to set up your sender profile before sending emails.</span>
+    </div>}
+
+    <div style={{display:"flex",gap:8,marginBottom:20}}>
+      {[1,2,3].map(s=><div key={s} style={{display:"flex",alignItems:"center",gap:8}}>
+        <div style={{width:28,height:28,borderRadius:"50%",background:step>=s?"#579BFC":"#E6E9EF",color:step>=s?"#fff":"#676879",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,transition:"all .3s var(--ease-spring)"}}>{s}</div>
+        <span style={{fontSize:12,fontWeight:step===s?700:500,color:step===s?"#323338":"#676879"}}>{s===1?'Select Data':s===2?'Choose Template':'Review & Send'}</span>
+        {s<3&&<div style={{width:40,height:1,background:"#E6E9EF"}}/>}
+      </div>)}
     </div>
-    {cols.length>0&&rows.length>0&&<Card><CardH right={<div style={{display:"flex",alignItems:"center",gap:12}}>
-      <span style={{fontSize:12,color:C.sc}}>{selectedRows.length} selected &#183; {sendableRows.length} ready</span>
-      {selectedRows.length>0&&<button onClick={()=>{setShowPrev(!showPrev);setPrevIdx(0)}} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.tl,fontWeight:600,fontFamily:"inherit"}}>{showPrev?'Hide':'Preview'}</button>}
-      <Btn primary onClick={sendEmails} disabled={sending||sendableRows.length===0}>{sending?`Sending ${sendStats.done}/${sendStats.total}`:'Send to '+sendableRows.length}</Btn>
-    </div>}>3. Select Recipients</CardH>
-      <div style={{padding:"12px 18px 0"}}><Inp value={search} onChange={e=>setSearch(e.target.value)} placeholder="Filter rows by any text, name, or email"/><div style={{marginTop:8,fontSize:10.5,color:C.mt}}>Only rows with valid email addresses can be bulk-selected and sent.</div></div>
-      <div style={{padding:0,overflowX:"auto",maxHeight:500}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12.5}}>
-        <thead><tr><th style={{padding:"8px 12px",textAlign:"center",borderBottom:"2px solid "+C.rl,background:C.bgA,position:"sticky",top:0,width:40}}><input type="checkbox" onChange={toggleAll} checked={allVisibleValidChecked}/></th><th style={{padding:"8px 12px",textAlign:"center",borderBottom:"2px solid "+C.rl,background:C.bgA,position:"sticky",top:0,width:88,fontSize:10,fontWeight:700,color:C.sc}}>Status</th>
-          {cols.map((h,i)=><th key={i} style={{padding:"8px 12px",textAlign:"left",borderBottom:"2px solid "+C.rl,fontSize:10,fontWeight:700,textTransform:"uppercase",color:C.sc,position:"sticky",top:0,background:C.bgA,whiteSpace:"nowrap"}}>{h}{h===emailCol&&' \u2709'}{h===nameCol&&' \u263A'}</th>)}</tr></thead>
-        <tbody>{filteredRows.map(meta=><tr key={meta.i} style={{background:checked[meta.i]?C.tg:"transparent",opacity:meta.emailValid?1:0.72}}>
-          <td style={{padding:"7px 12px",borderBottom:"1px solid "+C.bgA,textAlign:"center"}}><input type="checkbox" checked={!!checked[meta.i]} disabled={!meta.emailValid} onChange={e=>{const n={...checked};if(e.target.checked)n[meta.i]=true;else delete n[meta.i];setChecked(n)}}/></td>
-          <td style={{padding:"7px 12px",borderBottom:"1px solid "+C.bgA,textAlign:"center",fontSize:10.5,fontWeight:700,color:sent[meta.i]==='sent'?C.gn:sent[meta.i]==='failed'?C.rd:!meta.email?C.mt:meta.emailValid?C.sc:C.rd}}>
-            {sent[meta.i]==='sent'?'SENT':sent[meta.i]==='failed'?'FAILED':!meta.email?'NO EMAIL':meta.emailValid?'READY':'INVALID'}
-          </td>
-          {cols.map((_,j)=><td key={j} style={{padding:"7px 12px",borderBottom:"1px solid "+C.bgA,maxWidth:200,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{meta.row[j]||''}</td>)}</tr>)}</tbody>
-      </table></div>
-    </Card>}
-    {showPrev&&previewRows.length>0&&<Card style={{border:"2px solid "+C.tl,marginTop:14}}><CardH right={<div style={{display:"flex",gap:8}}>
-      <button onClick={()=>setPrevIdx(Math.max(0,safePrevIdx-1))} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:14,color:C.sc}}>&#8592;</button>
-      <span style={{fontSize:12,color:C.mt}}>{safePrevIdx+1}/{previewRows.length}</span>
-      <button onClick={()=>setPrevIdx(Math.min(previewRows.length-1,safePrevIdx+1))} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:14,color:C.sc}}>&#8594;</button>
-    </div>}>Preview</CardH><div style={{padding:"14px 18px"}}>{previewRows[safePrevIdx]&&<div>
-      <div style={{fontSize:11,color:C.mt,marginBottom:4}}>To: <strong style={{color:C.fg}}>{previewRows[safePrevIdx].email||'-'}</strong></div>
-      <div style={{fontSize:11,color:C.mt,marginBottom:4}}>From: <strong style={{color:C.fg}}>{sender.fromName||sender.label||'CareForBrains'}</strong>{sender.replyTo&&<span style={{color:C.mt}}> &#183; reply-to {sender.replyTo}</span>}</div>
-      <div style={{fontSize:11,color:C.mt,marginBottom:8}}>Subject: <strong style={{color:C.fg}}>{fill(subj,previewRows[safePrevIdx].row)}</strong></div>
-      {!previewRows[safePrevIdx].emailValid&&<div style={{marginBottom:10,fontSize:11,color:C.rd,fontWeight:700}}>This row will not be sent because the email is missing or invalid.</div>}
-      <div style={{background:C.bgA,borderRadius:8,padding:14,fontSize:13,lineHeight:1.7,whiteSpace:"pre-wrap",color:C.sc}}>{fill(body,previewRows[safePrevIdx].row)}</div>
-    </div>}</div></Card>}
-    {campaigns.length>0&&<Card style={{marginTop:14}}><CardH>Recent Campaigns</CardH><div style={{padding:"14px 18px"}}>{campaigns.slice(0,5).map(c=><div key={c._fbKey} style={{display:"flex",justifyContent:"space-between",gap:12,padding:"10px 0",borderBottom:"1px solid "+C.bgA}}>
-      <div><div style={{fontWeight:700,fontSize:13}}>{c.templateName||c.template||'Email Campaign'}</div><div style={{fontSize:11,color:C.sc}}>{c.profileLabel||c.profile||'Sender'} &#183; {c.sheetName||'Manual sheet'}</div><div style={{fontSize:10,color:C.mt,fontFamily:"monospace"}}>{c.createdAt?new Date(c.createdAt).toLocaleString():''}</div></div>
-      <div style={{textAlign:"right",fontSize:11,color:C.sc}}><div><strong style={{color:C.fg}}>{c.sentCount||0}</strong> sent</div><div>{c.failedCount||0} failed</div></div>
-    </div>)}</div></Card>}
-    {!selSheet&&<div style={{textAlign:"center",padding:"60px 20px",color:C.mt}}><div style={{fontFamily:F.sf,fontSize:20,fontStyle:"italic",marginBottom:8}}>Select a sheet to get started</div><div style={{fontSize:13}}>Link sheets in the Sheets tab first, then select one here.</div></div>}
+
+    {step===1&&<div>
+      <Card><CardH>Data Source</CardH><div style={{padding:"16px 18px"}}>
+        <div style={{marginBottom:12}}><Lbl>Google Sheet</Lbl>
+          <Sel value={selSheet} onChange={e=>loadSheet(e.target.value)}><option value="">Choose a sheet...</option>{sheets.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</Sel>
+        </div>
+        {cols.length>0&&<>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+            <div><Lbl>Email Column</Lbl><Sel value={emailCol} onChange={e=>setEmailCol(e.target.value)}><option value="">Select...</option>{cols.map(c=><option key={c} value={c}>{c}</option>)}</Sel></div>
+            <div><Lbl>Name Column</Lbl><Sel value={nameCol} onChange={e=>setNameCol(e.target.value)}><option value="">Select...</option>{cols.map(c=><option key={c} value={c}>{c}</option>)}</Sel></div>
+          </div>
+          <div style={{fontSize:12,color:C.gn,fontWeight:600,marginBottom:14}}>{rows.length} rows &middot; {rows.filter(r=>eIdx>=0&&okEmail((r[eIdx]||'').trim())).length} valid emails</div>
+          <div style={{overflowY:"auto",maxHeight:300,border:"1px solid "+C.rl,borderRadius:8}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+              <thead><tr>
+                <th style={{padding:"6px 10px",borderBottom:"2px solid "+C.rl,background:"#F5F6F8",position:"sticky",top:0,width:36}}><input type="checkbox" checked={allChecked} onChange={()=>{if(allChecked)setChecked({});else{const n={};rows.forEach((_,i)=>n[i]=true);setChecked(n)}}}/></th>
+                <th style={{padding:"6px 10px",borderBottom:"2px solid "+C.rl,background:"#F5F6F8",position:"sticky",top:0,textAlign:"left",fontSize:10,fontWeight:700,color:"#323338"}}>Name</th>
+                <th style={{padding:"6px 10px",borderBottom:"2px solid "+C.rl,background:"#F5F6F8",position:"sticky",top:0,textAlign:"left",fontSize:10,fontWeight:700,color:"#323338"}}>Email</th>
+              </tr></thead>
+              <tbody>{rows.map((row,i)=>{const email=eIdx>=0?(row[eIdx]||'').trim():'';const name=nIdx>=0?(row[nIdx]||'').trim():'';const valid=okEmail(email);return<tr key={i} style={{background:checked[i]?"rgba(87,155,252,.06)":"transparent",opacity:valid?1:.5}}>
+                <td style={{padding:"5px 10px",borderBottom:"1px solid #F0F1F3",textAlign:"center"}}><input type="checkbox" checked={!!checked[i]} disabled={!valid} onChange={e=>{const n={...checked};if(e.target.checked)n[i]=true;else delete n[i];setChecked(n)}}/></td>
+                <td style={{padding:"5px 10px",borderBottom:"1px solid #F0F1F3"}}>{name||'\u2014'}</td>
+                <td style={{padding:"5px 10px",borderBottom:"1px solid #F0F1F3",color:valid?"#323338":"#E44258"}}>{email||'No email'}</td>
+              </tr>})}</tbody>
+            </table>
+          </div>
+          <div style={{marginTop:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:12,color:C.sc}}>{validSelected.length} selected</span>
+            <Btn primary onClick={()=>{if(validSelected.length>0)setStep(2)}} disabled={validSelected.length===0}>Next: Choose Template</Btn>
+          </div>
+        </>}
+      </div></Card>
+    </div>}
+
+    {step===2&&<div>
+      <Btn onClick={()=>setStep(1)} style={{marginBottom:14,fontSize:12,color:C.tl,background:"transparent",border:"none",padding:0}}>&larr; Back to data</Btn>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:18}}>
+        {Object.entries(EMAIL_TEMPLATES).map(([k,t])=><div key={k} onClick={()=>setTemplate(k)} style={{
+          padding:"18px",border:template===k?"2px solid #579BFC":"1px solid "+C.rl,borderRadius:12,cursor:"pointer",
+          background:template===k?"#EBF5FF":"#fff",transition:"all .3s var(--ease-spring)"
+        }}>
+          <div style={{fontSize:22,marginBottom:6}}>{t.icon}</div>
+          <div style={{fontWeight:700,fontSize:13,marginBottom:4}}>{t.name}</div>
+          {t.hasCert&&<span style={{padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700,background:"#E8FFF3",color:"#00CA72"}}>+ CERTIFICATE</span>}
+        </div>)}
+      </div>
+
+      {template==='custom'&&<Card style={{marginBottom:14}}><div style={{padding:"16px 18px"}}>
+        <div style={{marginBottom:10}}><Lbl>Subject</Lbl><Inp value={customSubj} onChange={e=>setCustomSubj(e.target.value)} placeholder="Email subject..."/></div>
+        <Lbl>Body</Lbl><textarea style={{width:"100%",padding:"9px 12px",background:"#fff",border:"1px solid "+C.rl,borderRadius:8,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",minHeight:140,resize:"vertical"}} value={customBody} onChange={e=>setCustomBody(e.target.value)} placeholder="Use {{name}} or any {{column_name}} for personalization..."/>
+      </div></Card>}
+
+      {template!=='custom'&&<Card style={{marginBottom:14}}><CardH right={tmpl.hasCert&&<span style={{fontSize:11,color:C.gn,fontWeight:600}}>Certificate will be generated</span>}>Preview: {tmpl.name}</CardH>
+        <div style={{padding:"16px 18px"}}>
+          <div style={{fontSize:12,fontWeight:700,color:"#323338",marginBottom:6}}>Subject: {subj}</div>
+          <div style={{background:"#F5F6F8",borderRadius:8,padding:14,fontSize:13,lineHeight:1.7,whiteSpace:"pre-wrap",color:"#676879",maxHeight:200,overflow:"auto"}}>{body}</div>
+        </div>
+      </Card>}
+
+      {tmpl.hasCert&&<Card style={{marginBottom:14}}><CardH>Certificate Preview</CardH>
+        <div style={{padding:"16px 18px",textAlign:"center"}}>
+          <div dangerouslySetInnerHTML={{__html:generateCertSVG(validSelected[0]?.row?.[nIdx]||'Your Name','50','Volunteer',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}))}} style={{maxWidth:500,margin:"0 auto"}}/>
+          <div style={{marginTop:10,fontSize:11,color:C.mt}}>Certificate auto-fills with each recipient's name and hours</div>
+        </div>
+      </Card>}
+
+      <div style={{display:"flex",justifyContent:"space-between"}}>
+        <span style={{fontSize:12,color:C.sc}}>{validSelected.length} recipients selected</span>
+        <Btn primary onClick={()=>setStep(3)}>Next: Review & Send</Btn>
+      </div>
+    </div>}
+
+    {step===3&&<div>
+      <Btn onClick={()=>setStep(2)} style={{marginBottom:14,fontSize:12,color:C.tl,background:"transparent",border:"none",padding:0}}>&larr; Back to template</Btn>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:18}}>
+        <Card><CardH>Summary</CardH><div style={{padding:"16px 18px"}}>
+          <div style={{display:"grid",gap:10}}>
+            <div><span style={{fontSize:11,color:C.mt}}>Template</span><div style={{fontWeight:700,fontSize:14}}>{tmpl.icon} {tmpl.name}</div></div>
+            <div><span style={{fontSize:11,color:C.mt}}>Recipients</span><div style={{fontWeight:700,fontSize:14}}>{validSelected.length} people</div></div>
+            <div><span style={{fontSize:11,color:C.mt}}>Subject</span><div style={{fontSize:13,color:"#323338"}}>{subj}</div></div>
+            {tmpl.hasCert&&<div><span style={{fontSize:11,color:C.mt}}>Attachment</span><div style={{fontWeight:600,fontSize:13,color:C.gn}}>Certificate of Achievement</div></div>}
+            <div><span style={{fontSize:11,color:C.mt}}>From</span><div style={{fontSize:13}}>{sender.fromName||'CareForBrains'} &middot; {sender.replyTo||''}</div></div>
+          </div>
+        </div></Card>
+
+        <Card><CardH right={<div style={{display:"flex",gap:6}}>
+          <button onClick={()=>setPreviewIdx(Math.max(0,previewIdx-1))} disabled={previewIdx===0} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:C.sc}}>&larr;</button>
+          <span style={{fontSize:11,color:C.mt}}>{previewIdx+1}/{validSelected.length}</span>
+          <button onClick={()=>setPreviewIdx(Math.min(validSelected.length-1,previewIdx+1))} disabled={previewIdx>=validSelected.length-1} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:C.sc}}>&rarr;</button>
+        </div>}>Live Preview</CardH><div style={{padding:"16px 18px"}}>
+          <div style={{fontSize:11,color:C.mt,marginBottom:3}}>To: <strong style={{color:"#323338"}}>{eIdx>=0?(previewRow[eIdx]||''):''}</strong></div>
+          <div style={{fontSize:11,color:C.mt,marginBottom:8}}>Subject: <strong style={{color:"#323338"}}>{fill(subj,previewRow)}</strong></div>
+          <div style={{background:"#F5F6F8",borderRadius:8,padding:12,fontSize:12,lineHeight:1.6,whiteSpace:"pre-wrap",color:"#676879",maxHeight:180,overflow:"auto"}}>{fill(body,previewRow)}</div>
+        </div></Card>
+      </div>
+
+      {tmpl.hasCert&&<div style={{marginBottom:14,display:"flex",gap:8,flexWrap:"wrap"}}>
+        {validSelected.slice(0,5).map(({row},i)=>{
+          const name=nIdx>=0?(row[nIdx]||''):'';
+          return<Btn key={i} onClick={()=>downloadCert(name,'50','Volunteer')} style={{fontSize:11}}>Download cert: {name}</Btn>
+        })}
+        {validSelected.length>5&&<span style={{fontSize:11,color:C.mt,alignSelf:"center"}}>+{validSelected.length-5} more</span>}
+      </div>}
+
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          {sending&&<div style={{fontSize:12,color:C.tl,fontWeight:600}}>Sending {sendStats.done}/{sendStats.total}...</div>}
+          {!sending&&Object.keys(sent).length>0&&<div style={{fontSize:12,color:C.gn,fontWeight:600}}>{Object.values(sent).filter(v=>v==='sent').length} sent &middot; {Object.values(sent).filter(v=>v==='failed').length} failed</div>}
+        </div>
+        <Btn primary onClick={sendEmails} disabled={sending||validSelected.length===0||!senderReady}>
+          {sending?'Sending...':'Send to '+validSelected.length+' people'}
+        </Btn>
+      </div>
+    </div>}
   </div>);
 }
 
