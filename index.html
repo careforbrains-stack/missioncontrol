@@ -381,7 +381,8 @@ function Sheets({db,hubData,team,me}){
   });
   const sheetData=hubData.sheetData||{};
   const[active,setActive]=useState(sheets[0]?._fbKey||'');
-  const[gToken,setGToken]=useState(null);
+  const[gToken,setGTokenState]=useState(_gToken);
+  const setGToken=v=>{_gToken=v;setGTokenState(v)};
   const[editCell,setEditCell]=useState(null);
   const[editVal,setEditVal]=useState('');
   const[saving,setSaving]=useState(false);
@@ -424,6 +425,9 @@ function Sheets({db,hubData,team,me}){
     tokenClientRef.current.requestAccessToken();
   };
   const colToLetter=c=>{let s='';while(c>=0){s=String.fromCharCode(65+(c%26))+s;c=Math.floor(c/26)-1}return s};
+
+// Google token stored at module level so it survives re-renders
+let _gToken=null;
   const saveCell=async(rowIdx,realCol,value)=>{
     if(!activeSheet||!gToken)return;
     const sid=getSheetId(activeSheet.url);if(!sid)return;
@@ -438,7 +442,10 @@ function Sheets({db,hubData,team,me}){
       if(cached[rowIdx+1])cached[rowIdx+1][realCol]=value;
       db.ref('hub/sheetData/'+activeSheet.id).set(cached);
       setEditCell(null);
-    }catch(e){if(String(e).includes('401'))setGToken(null);alert('Edit failed')}
+    }catch(e){
+      const msg=String(e);
+      if(msg.includes('401')||msg.includes('403'))setGToken(null);
+    }
     setSaving(false);
   };
   const jumpTo=pct=>{if(tableRef.current)tableRef.current.scrollTop=tableRef.current.scrollHeight*pct};
