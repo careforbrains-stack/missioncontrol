@@ -382,12 +382,28 @@ function Sheets({db,hubData,team,me}){
   const[editCell,setEditCell]=useState(null);
   const[editVal,setEditVal]=useState('');
   const[saving,setSaving]=useState(false);
+  const tableRef=useRef(null);
   const tokenClientRef=useRef(null);
 
   const activeSheet=sheets.find(s=>(s._fbKey||s.id)===active)||sheets[0]||null;
   const activeVals=activeSheet?sheetData[activeSheet.id]:null;
-  const headers=Array.isArray(activeVals)&&activeVals.length?activeVals[0]:[];
-  const rows=Array.isArray(activeVals)&&activeVals.length>1?activeVals.slice(1):[];
+  const rawHeaders=Array.isArray(activeVals)&&activeVals.length?activeVals[0]:[];
+  const rawRows=Array.isArray(activeVals)&&activeVals.length>1?activeVals.slice(1):[];
+
+  // Reorder: move priority columns (like "reached out", "status") to front
+  const priorityWords=['reached','status','done','complete','approved','accepted'];
+  const colOrder=React.useMemo(()=>{
+    if(!rawHeaders.length)return[];
+    const priority=[];const rest=[];
+    rawHeaders.forEach((_,i)=>{
+      const h=(rawHeaders[i]||'').toLowerCase();
+      if(priorityWords.some(w=>h.includes(w)))priority.push(i);else rest.push(i);
+    });
+    return[...priority,...rest];
+  },[rawHeaders.join(',')]);
+  const headers=colOrder.map(i=>rawHeaders[i]);
+  const rows=rawRows.map(row=>colOrder.map(i=>row[i]||''));
+  const origColIdx=i=>colOrder[i];
 
   const connectGoogle=()=>{
     if(!window.google?.accounts?.oauth2)return;
@@ -400,105 +416,100 @@ function Sheets({db,hubData,team,me}){
     }
     tokenClientRef.current.requestAccessToken();
   };
-
   const colToLetter=(c)=>{let s='';while(c>=0){s=String.fromCharCode(65+(c%26))+s;c=Math.floor(c/26)-1}return s};
-
   const saveCell=async(rowIdx,colIdx,value)=>{
     if(!activeSheet||!gToken)return;
-    const sid=getSheetId(activeSheet.url);
-    if(!sid)return;
+    const sid=getSheetId(activeSheet.url);if(!sid)return;
+    const realCol=origColIdx(colIdx);
     setSaving(true);
-    const range=colToLetter(colIdx)+(rowIdx+2);
+    const range=colToLetter(realCol)+(rowIdx+2);
     try{
-      const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}/values/${range}?valueInputOption=USER_ENTERED`,{
-        method:'PUT',
-        headers:{'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},
+      const r=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+sid+'/values/'+range+'?valueInputOption=USER_ENTERED',{
+        method:'PUT',headers:{'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},
         body:JSON.stringify({range,values:[[value]]})
       });
       if(!r.ok)throw new Error('Write failed');
-      const cached=[...(activeVals||[])];
-      if(cached[rowIdx+1])cached[rowIdx+1][colIdx]=value;
+      const cached=JSON.parse(JSON.stringify(activeVals||[]));
+      if(cached[rowIdx+1])cached[rowIdx+1][realCol]=value;
       db.ref('hub/sheetData/'+activeSheet.id).set(cached);
       setEditCell(null);
     }catch(e){
-      if(e.message?.includes('401'))setGToken(null);
-      alert('Edit failed — try connecting Google again');
+      if(String(e).includes('401'))setGToken(null);
+      alert('Edit failed — reconnect Google');
     }
     setSaving(false);
   };
+  const jumpTo=(pct)=>{if(tableRef.current){const el=tableRef.current;el.scrollTop=el.scrollHeight*pct}};
 
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
       <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>05 &#8212; Sheets</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Data Room</h1></div>
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        {!gToken?<Btn onClick={connectGoogle} primary>Connect Google</Btn>:<span style={{fontSize:11,fontWeight:600,color:C.gn}}>&#9679; Google connected</span>}
+        {saving&&<span style={{fontSize:11,color:C.tl}}>Saving...</span>}
+        {!gToken?<Btn onClick={connectGoogle} primary>Connect Google</Btn>:<span style={{fontSize:11,fontWeight:600,color:C.gn}}>&#9679; Connected</span>}
       </div>
     </div>
-    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
-
-    <div style={{display:"flex",gap:6,marginBottom:18,flexWrap:"wrap"}}>
+    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 18px"}}/>
+    <div style={{display:"flex",gap:4,marginBottom:14,flexWrap:"wrap"}}>
       {sheets.map(s=>{
-        const isActive=(s._fbKey||s.id)===active;
-        const rowCount=Math.max(((sheetData[s.id]||[]).length||0)-1,0);
-        const isStem=s.source==='stem';
+        const isAct=(s._fbKey||s.id)===active;
+        const rc=Math.max(((sheetData[s.id]||[]).length||0)-1,0);
         return<button key={s._fbKey} onClick={()=>{setActive(s._fbKey||s.id);setEditCell(null)}} style={{
-          display:"flex",alignItems:"center",gap:8,padding:"10px 16px",
-          border:isActive?"2px solid #579BFC":"1px solid "+C.rl,
-          borderRadius:10,background:isActive?"#EBF5FF":"#fff",
-          cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:isActive?700:500,
-          color:isActive?"#323338":"#676879"
+          padding:"7px 14px",border:isAct?"2px solid #579BFC":"1px solid "+C.rl,
+          borderRadius:8,background:isAct?"#EBF5FF":"#fff",cursor:"pointer",fontFamily:"inherit",
+          fontSize:12,fontWeight:isAct?700:500,color:isAct?"#323338":"#676879",display:"flex",alignItems:"center",gap:6
         }}>
-          <span>{s.name}</span>
-          {isStem&&<span style={{padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700,background:"#E8F0FE",color:"#0073EA",fontFamily:"monospace"}}>STEM</span>}
-          <span style={{fontSize:11,fontFamily:"monospace",color:rowCount?C.gn:C.mt}}>{rowCount}</span>
+          {s.name}
+          {s.source==='stem'&&<span style={{padding:"1px 5px",borderRadius:3,fontSize:8.5,fontWeight:700,background:"#E8F0FE",color:"#0073EA"}}>STEM</span>}
+          <span style={{fontSize:10,color:rc?C.gn:C.mt,fontFamily:"monospace"}}>{rc}</span>
         </button>
       })}
     </div>
-
-    {activeSheet?<Card>
-      <div style={{padding:"14px 18px",borderBottom:"1px solid "+C.bgA,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div>
-          <span style={{fontWeight:700,fontSize:15}}>{activeSheet.name}</span>
-          <span style={{fontSize:12,color:C.sc,marginLeft:10}}>{activeSheet.desc}</span>
-        </div>
+    {activeSheet&&headers.length>0?<Card style={{overflow:"hidden"}}>
+      <div style={{padding:"8px 14px",borderBottom:"1px solid "+C.rl,display:"flex",justifyContent:"space-between",alignItems:"center",background:"#F5F6F8"}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          {saving&&<span style={{fontSize:11,color:C.tl}}>Saving...</span>}
+          <span style={{fontWeight:700,fontSize:13}}>{activeSheet.name}</span>
+          <span style={{fontSize:11,color:C.sc}}>{rows.length} rows</span>
           {gToken&&<span style={{fontSize:10,color:C.mt}}>double-click to edit</span>}
-          {activeSheet.url&&<a href={activeSheet.url} target="_blank" rel="noreferrer" style={{fontSize:12,color:C.tl,textDecoration:"none",fontWeight:600}}>Open in Sheets &#8599;</a>}
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:6}}>
+          {[['25%',.25],['50%',.5],['75%',.75],['End',1]].map(([l,p])=><button key={l} onClick={()=>jumpTo(p)} style={{padding:"3px 8px",border:"1px solid "+C.rl,borderRadius:5,background:"#fff",fontSize:10,fontWeight:600,color:C.sc,cursor:"pointer",fontFamily:"inherit"}}>{l}</button>)}
+          {activeSheet.url&&<a href={activeSheet.url} target="_blank" rel="noreferrer" style={{fontSize:11,color:C.tl,textDecoration:"none",fontWeight:600,marginLeft:6}}>Open &#8599;</a>}
         </div>
       </div>
-      {headers.length>0?<div style={{overflowX:"auto",maxHeight:600}}>
-        <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
-          <thead><tr>{headers.map((h,i)=><th key={i} style={{
-            padding:"10px 14px",textAlign:"left",borderBottom:"2px solid "+C.rl,
-            fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.05em",
-            color:"#323338",position:"sticky",top:0,background:"#F5F6F8",whiteSpace:"nowrap"
-          }}>{h}</th>)}</tr></thead>
-          <tbody>{rows.slice(0,300).map((row,i)=><tr key={i} style={{background:i%2===0?"#fff":"#FAFBFC"}}>
-            {headers.map((_,j)=>{
+      <div ref={tableRef} style={{overflowX:"auto",overflowY:"auto",maxHeight:"72vh"}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"auto"}}>
+          <thead><tr>{headers.map((h,i)=>{
+            const isPriority=priorityWords.some(w=>(h||'').toLowerCase().includes(w));
+            return<th key={i} style={{
+              padding:"6px 10px",textAlign:"left",borderBottom:"2px solid "+C.rl,
+              fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.04em",
+              color:isPriority?"#0073EA":"#323338",background:isPriority?"#E8F0FE":"#F5F6F8",
+              position:"sticky",top:0,whiteSpace:"nowrap",zIndex:2
+            }}>{(h||'').replace(/^\d+\.\s*/,'').trim()}</th>
+          })}</tr></thead>
+          <tbody>{rows.map((row,i)=><tr key={i} style={{background:i%2===0?"#fff":"#FAFBFC"}}>
+            {row.map((cell,j)=>{
               const isEditing=editCell&&editCell.r===i&&editCell.c===j;
-              return<td key={j} onDoubleClick={()=>{if(gToken){setEditCell({r:i,c:j});setEditVal(row[j]||'')}}} style={{
-                padding:isEditing?"4px":"10px 14px",borderBottom:"1px solid #F0F1F3",
-                maxWidth:280,verticalAlign:"top",color:"#323338",
-                cursor:gToken?"text":"default",background:isEditing?"#EBF5FF":"inherit",
-                fontSize:13,lineHeight:"1.4"
+              const isPriority=priorityWords.some(w=>(headers[j]||'').toLowerCase().includes(w));
+              return<td key={j} onDoubleClick={()=>{if(gToken){setEditCell({r:i,c:j});setEditVal(cell||'')}}} style={{
+                padding:isEditing?"2px":"5px 10px",borderBottom:"1px solid #F0F1F3",
+                maxWidth:220,verticalAlign:"top",color:"#323338",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
+                cursor:gToken?"text":"default",background:isEditing?"#EBF5FF":isPriority?"#F0F7FF":"inherit",
+                fontSize:12,fontWeight:isPriority?600:"normal"
               }}>
                 {isEditing?<input autoFocus value={editVal} onChange={e=>setEditVal(e.target.value)}
                   onBlur={()=>saveCell(i,j,editVal)}
                   onKeyDown={e=>{if(e.key==='Enter')saveCell(i,j,editVal);if(e.key==='Escape')setEditCell(null)}}
-                  style={{width:"100%",padding:"6px 8px",border:"2px solid #579BFC",borderRadius:6,fontSize:13,fontFamily:"inherit",outline:"none",background:"#fff"}}
-                />:(row[j]||'')}
+                  style={{width:"100%",padding:"4px 6px",border:"2px solid #579BFC",borderRadius:4,fontSize:12,fontFamily:"inherit",outline:"none",background:"#fff"}}
+                />:(cell||'')}
               </td>
             })}</tr>)}</tbody>
         </table>
-        {rows.length>300&&<div style={{padding:"12px 14px",fontSize:11,color:C.mt,borderTop:"1px solid "+C.rl}}>Showing 300 of {rows.length} rows. Open in Google Sheets for full data.</div>}
-      </div>:<div style={{padding:"48px 24px",textAlign:"center",color:C.mt}}>
-        <div style={{fontFamily:F.sf,fontSize:18,fontStyle:"italic",marginBottom:6}}>No data yet</div>
-        <div style={{fontSize:13}}>This sheet hasn't been synced. Data will appear once synced.</div>
-      </div>}
-    </Card>:<div style={{padding:"48px 24px",textAlign:"center",color:C.mt}}>
-      <div style={{fontFamily:F.sf,fontSize:18,fontStyle:"italic"}}>No sheets linked</div>
-    </div>}
+      </div>
+    </Card>:activeSheet?<Card><div style={{padding:"40px 24px",textAlign:"center",color:C.mt}}>
+      <div style={{fontFamily:F.sf,fontSize:18,fontStyle:"italic"}}>No data synced yet</div>
+    </div></Card>:<div style={{padding:"40px",textAlign:"center",color:C.mt}}>No sheets linked</div>}
   </div>);
 }
 
