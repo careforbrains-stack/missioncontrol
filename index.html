@@ -7,69 +7,82 @@
 <link rel="icon" href="https://raw.githubusercontent.com/careforbrains-stack/careforbrains-website/main/logo.png">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&display=swap" rel="stylesheet">
 <style>
-:root{--ease-out-expo:cubic-bezier(.16,1,.3,1);--ease-spring:cubic-bezier(.34,1.56,.64,1)}
+:root{--ease-expo:cubic-bezier(.16,1,.3,1);--ease-spring:cubic-bezier(.34,1.56,.64,1);--ease-smooth:cubic-bezier(.23,1,.32,1)}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{min-height:100%;background:#F7F8FA}
 body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;color:#1A1D21;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
 #root{min-height:100vh}
-button,input,select,textarea{font-family:inherit;transition:all .25s var(--ease-out-expo)}
+button,input,select,textarea{font-family:inherit}
 button{cursor:pointer}
 button:disabled{opacity:.4;cursor:not-allowed}
-button:not(:disabled):active{transform:scale(.96)}
 ::selection{background:rgba(87,155,252,.2)}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(50,51,56,.12);border-radius:8px}
-::-webkit-scrollbar-thumb:hover{background:rgba(50,51,56,.22)}
 
 /* SIDEBAR */
-.sidebar-shell{background:linear-gradient(180deg,#1C2038,#292F4C);color:#fff;box-shadow:3px 0 24px rgba(0,0,0,.1)}
+.sidebar-shell{background:linear-gradient(180deg,#1C2038,#252A45);color:#fff;box-shadow:3px 0 24px rgba(0,0,0,.1)}
 .sidebar-brand{border-bottom:1px solid rgba(255,255,255,.06)}
 .sidebar-profile{border-bottom:1px solid rgba(255,255,255,.06)}
-.sidebar-label{color:rgba(255,255,255,.28)}
-.nav-btn{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:13px;font-weight:500;color:rgba(255,255,255,.45);background:transparent;border:none;border-left:3px solid transparent;width:100%;text-align:left;font-family:inherit;transition:all .3s var(--ease-spring);letter-spacing:-.01em}
-.nav-btn:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.04);transform:translateX(3px)}
-.nav-btn.active{color:#fff;background:rgba(87,155,252,.15);border-left-color:#579BFC;font-weight:700;transform:translateX(0)}
+.sidebar-label{color:rgba(255,255,255,.25)}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:13px;font-weight:500;color:rgba(255,255,255,.42);background:transparent;border:none;border-left:3px solid transparent;width:100%;text-align:left;font-family:inherit;transition:all .35s var(--ease-spring)}
+.nav-btn:hover{color:rgba(255,255,255,.88);background:rgba(255,255,255,.04);transform:translateX(4px);border-left-color:rgba(87,155,252,.3)}
+.nav-btn.active{color:#fff;background:rgba(87,155,252,.14);border-left-color:#579BFC;font-weight:700;transform:translateX(0)}
 
 /* SURFACES */
 .login-panel{background:#fff;border:1px solid #E6E9EF;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.04),0 24px 60px rgba(0,0,0,.06)}
-.mission-card{background:#fff;border:1px solid #E6E9EF;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.03);transition:all .3s var(--ease-out-expo)}
-.mission-card:hover{border-color:#D0D4DC;box-shadow:0 6px 24px rgba(0,0,0,.06)}
+.mission-card{background:#fff;border:1px solid #E6E9EF;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.03);transition:all .4s var(--ease-smooth)}
+.mission-card:hover{border-color:#D0D4DC;box-shadow:0 8px 30px rgba(0,0,0,.06)}
 
 /* BUTTONS */
-.mission-btn{border-radius:8px;font-weight:600;border:none;padding:8px 18px;font-size:12.5px;letter-spacing:-.01em;transition:all .25s var(--ease-spring)}
+.mission-btn{border-radius:8px;font-weight:600;border:none;padding:8px 18px;font-size:12.5px;letter-spacing:-.01em;transition:all .3s var(--ease-spring);transform:translateY(0)}
 .mission-btn:not(.mission-btn-primary){background:#F5F6F8;color:#323338;border:1px solid #E6E9EF}
-.mission-btn:not(.mission-btn-primary):hover{background:#ECEDF5;border-color:#D0D4DC;transform:translateY(-1px)}
-.mission-btn-primary{background:#579BFC;color:#fff;border:1px solid #4B8AE8;box-shadow:0 3px 12px rgba(87,155,252,.25)}
-.mission-btn-primary:hover{background:#4B8AE8;box-shadow:0 6px 20px rgba(87,155,252,.35);transform:translateY(-2px)}
+.mission-btn:not(.mission-btn-primary):hover{background:#ECEDF5;border-color:#D0D4DC;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.mission-btn:not(:disabled):active{transform:translateY(0) scale(.96)!important;transition-duration:.1s}
+.mission-btn-primary{background:#579BFC;color:#fff;border:1px solid #4B8AE8;box-shadow:0 4px 14px rgba(87,155,252,.25)}
+.mission-btn-primary:hover{background:#4B8AE8;box-shadow:0 8px 28px rgba(87,155,252,.35);transform:translateY(-3px)}
 
 /* FIELDS */
-.mission-field{border:1px solid #E6E9EF;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;background:#fff;color:#323338;box-shadow:inset 0 1px 2px rgba(0,0,0,.03);transition:all .25s var(--ease-out-expo)}
-.mission-field:focus{border-color:#579BFC;box-shadow:0 0 0 3px rgba(87,155,252,.12),inset 0 1px 2px rgba(0,0,0,.02)}
+.mission-field{border:1px solid #E6E9EF;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;background:#fff;color:#323338;transition:all .3s var(--ease-expo)}
+.mission-field:focus{border-color:#579BFC;box-shadow:0 0 0 4px rgba(87,155,252,.1);transform:scale(1.01)}
 
 /* TOPBAR */
-.topbar-shell{background:rgba(255,255,255,.88);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);border-bottom:1px solid rgba(230,233,239,.7);box-shadow:0 1px 8px rgba(0,0,0,.02)}
+.topbar-shell{background:rgba(255,255,255,.85);backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5);border-bottom:1px solid rgba(230,233,239,.6)}
 .topbar-title{font-weight:600;color:#323338;letter-spacing:-.02em}
 
-/* LIVE PILL */
+/* LIVE */
 .live-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;background:#E8FFF3;border:1px solid #C3F0D8}
-.live-pill-dot{width:7px;height:7px;border-radius:50%;background:#00CA72;box-shadow:0 0 8px rgba(0,202,114,.5);animation:pulseDot 2s ease-in-out infinite}
+.live-pill-dot{width:7px;height:7px;border-radius:50%;background:#00CA72;box-shadow:0 0 10px rgba(0,202,114,.6);animation:pulseDot 2s ease-in-out infinite}
 
 /* STAT CARDS */
-.stat-card{padding:22px;border-radius:12px;background:#fff;border:1px solid #E6E9EF;box-shadow:0 1px 4px rgba(0,0,0,.03);transition:all .35s var(--ease-spring);position:relative;overflow:hidden}
-.stat-card:hover{box-shadow:0 8px 28px rgba(0,0,0,.06);transform:translateY(-3px)}
-.stat-card::after{content:"";position:absolute;bottom:-25px;right:-25px;width:80px;height:80px;border-radius:50%;background:rgba(87,155,252,.06);pointer-events:none}
+.stat-card{padding:22px;border-radius:12px;background:#fff;border:1px solid #E6E9EF;box-shadow:0 1px 4px rgba(0,0,0,.03);transition:all .4s var(--ease-spring);position:relative;overflow:hidden}
+.stat-card:hover{box-shadow:0 12px 36px rgba(0,0,0,.07);transform:translateY(-4px) scale(1.02)}
+.stat-card::after{content:"";position:absolute;bottom:-30px;right:-30px;width:90px;height:90px;border-radius:50%;background:rgba(87,155,252,.05);transition:all .4s var(--ease-expo);pointer-events:none}
+.stat-card:hover::after{transform:scale(1.8);background:rgba(87,155,252,.08)}
 
 /* TEAM TILES */
-.team-tile{border-radius:12px;background:#fff;border:1px solid #E6E9EF;box-shadow:0 1px 4px rgba(0,0,0,.03);transition:all .35s var(--ease-spring)}
-.team-tile:hover{border-color:#579BFC;box-shadow:0 8px 28px rgba(87,155,252,.12);transform:translateY(-3px) scale(1.01)}
+.team-tile{border-radius:12px;background:#fff;border:1px solid #E6E9EF;box-shadow:0 1px 4px rgba(0,0,0,.03);transition:all .4s var(--ease-spring)}
+.team-tile:hover{border-color:#579BFC;box-shadow:0 12px 36px rgba(87,155,252,.12);transform:translateY(-4px) scale(1.02)}
+
+/* LOGIN MEMBER BUTTONS */
+.login-member{transition:all .3s var(--ease-spring)!important}
+.login-member:hover{transform:translateY(-2px)!important;border-color:#579BFC!important;box-shadow:0 8px 24px rgba(87,155,252,.12)!important}
+.login-member:active{transform:translateY(0) scale(.98)!important}
 
 /* PAGE ANIMATIONS */
-.page-enter{animation:pageSlideUp .4s var(--ease-out-expo) both}
+.page-enter{animation:pageSlide .5s var(--ease-expo) both}
 .section-shell{position:relative}
 
-@keyframes pageSlideUp{from{opacity:0;transform:translateY(16px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.6)}}
+/* REVEAL SYSTEM - staggered entrance */
+.reveal{opacity:0;transform:translateY(20px);transition:all .6s var(--ease-expo)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-scale{opacity:0;transform:scale(.95);transition:all .5s var(--ease-spring)}
+.reveal-scale.visible{opacity:1;transform:scale(1)}
+
+@keyframes pageSlide{from{opacity:0;transform:translateY(20px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(1.8)}}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
 @media(max-width:900px){.sidebar-shell{display:none!important}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -84,7 +97,23 @@ button:not(:disabled):active{transform:scale(.96)}
 <script src="https://accounts.google.com/gsi/client"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script type="text/babel">
-const{useState,useEffect,useRef}=React;
+const{useState,useEffect,useRef,useCallback}=React;
+
+// Scroll reveal hook - triggers CSS animation when element enters viewport
+function useReveal(){
+  const ref=useRef(null);
+  useEffect(()=>{
+    const el=ref.current;if(!el)return;
+    const obs=new IntersectionObserver(([e])=>{if(e.isIntersecting){el.classList.add('visible');obs.disconnect()}},{threshold:0.1});
+    obs.observe(el);
+    return()=>obs.disconnect();
+  },[]);
+  return ref;
+}
+function Reveal({children,delay=0,scale=false,style={}}){
+  const ref=useReveal();
+  return<div ref={ref} className={scale?'reveal-scale':'reveal'} style={{transitionDelay:delay+'ms',...style}}>{children}</div>;
+}
 const IMG="https://raw.githubusercontent.com/careforbrains-stack/careforbrains-website/main/images/";
 const LOGO="https://raw.githubusercontent.com/careforbrains-stack/careforbrains-website/main/logo.png";
 const TEAM=[
@@ -256,7 +285,7 @@ function MyWork({db,tasks,events,team,me}){
     <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>01 &#8212; My Work</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Good {hr<12?"morning":hr<18?"afternoon":"evening"}, {fn(meD?.name)}</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
     <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:22}}>
-      {[[pending.length,"Open Tasks"],[done.length,"Completed"],[myEv.length,"Upcoming"]].map(([n,l],i)=><div key={i} className="stat-card" style={{border:"1px solid "+C.cb}}><div style={{fontFamily:F.sf,fontSize:34,fontWeight:400,lineHeight:1}}>{n}</div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginTop:6}}>{l}</div></div>)}
+      {[[pending.length,"Open Tasks"],[done.length,"Completed"],[myEv.length,"Upcoming"]].map(([n,l],i)=><Reveal key={i} delay={i*80} scale><div className="stat-card" style={{border:"1px solid "+C.cb}}><div style={{fontFamily:F.sf,fontSize:34,fontWeight:400,lineHeight:1}}>{n}</div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginTop:6}}>{l}</div></div></Reveal>)}
     </div>
     <Card>
       <CardH right={<span style={{fontFamily:"monospace",fontSize:11,color:C.mt}}>{pending.length} open</span>}>Your Assignments</CardH>
@@ -289,11 +318,11 @@ function TeamBoard({db,tasks,team,me}){
     <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>02 &#8212; Team Board</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Everyone's Work</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
     <div style={{display:"grid",gridTemplateColumns:"repeat("+Math.min(team.length,3)+",1fr)",gap:14,marginBottom:22}}>
-      {team.map(m=>{const ts=tasks.filter(t=>t.assignee===m.id);const op=ts.filter(t=>!t.done).length;const dn=ts.filter(t=>t.done).length;const od=ts.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;
-        return(<div key={m.id} className="team-tile" onClick={()=>setView(view===m.id?null:m.id)} style={{background:C.cd,border:"1px solid "+(m.id===me?C.tl:view===m.id?C.td:C.cb),boxShadow:m.id===me?"0 0 0 1px "+C.tl:view===m.id?"0 0 0 1px "+C.td:"none",cursor:"pointer",padding:16}}>
+      {team.map((m,idx)=>{const ts=tasks.filter(t=>t.assignee===m.id);const op=ts.filter(t=>!t.done).length;const dn=ts.filter(t=>t.done).length;const od=ts.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;
+        return(<Reveal key={m.id} delay={idx*60} scale><div className="team-tile" onClick={()=>setView(view===m.id?null:m.id)} style={{background:C.cd,border:"1px solid "+(m.id===me?C.tl:view===m.id?C.td:C.cb),boxShadow:m.id===me?"0 0 0 1px "+C.tl:view===m.id?"0 0 0 1px "+C.td:"none",cursor:"pointer",padding:16}}>
           <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}><Av m={m} s={34}/><div><div style={{fontWeight:700,fontSize:13}}>{fn(m.name)}</div><div style={{fontSize:9.5,color:C.mt,fontFamily:"monospace"}}>{m.admin?'ADMIN':fn(m.role.split('of ')[1]||m.role)}</div></div></div>
           <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:22,fontWeight:700,fontFamily:F.sf,color:op>0?C.fg:C.mt}}>{op}</span><span style={{fontSize:10,color:C.mt}}>open</span><span style={{color:C.mt}}>&#183;</span><span style={{fontSize:14,fontWeight:600,color:C.gn}}>{dn}</span><span style={{fontSize:10,color:C.mt}}>done</span>
-            {od>0&&<><span style={{color:C.mt}}>&#183;</span><span style={{fontSize:12,fontWeight:700,color:C.rd}}>{od} overdue</span></>}</div></div>)})}
+            {od>0&&<><span style={{color:C.mt}}>&#183;</span><span style={{fontSize:12,fontWeight:700,color:C.rd}}>{od} overdue</span></>}</div></div></Reveal>)})}
     </div>
     {view&&(()=>{const m=team.find(t=>t.id===view);const ts=tasks.filter(t=>t.assignee===view).sort((a,b)=>(a.done?1:0)-(b.done?1:0));return(
       <Card style={{border:"2px solid "+C.tl}}>
