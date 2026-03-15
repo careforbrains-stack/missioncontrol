@@ -803,7 +803,7 @@ Founder & CEO, CareForBrains`
 };
 
 function generateCertSVG(name,hours,program,date){
-  return`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 800" width="1100" height="800">
+  return`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 800" style="width:100%;height:auto;display:block">
 <defs>
   <style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&amp;family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&amp;family=Great+Vibes&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap');</style>
   <pattern id="bg" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#FDFAF3"/><circle cx="20" cy="20" r=".4" fill="#D4C5A0" opacity=".3"/></pattern>
@@ -887,7 +887,7 @@ function Emails({db,hubData,team,me}){
 
   const downloadCert=(name,hours,program)=>{
     const svg=generateCertSVG(name,hours||'50',program||'Volunteer',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
-    const blob=new Blob([svg],{type:'image/svg+xml'});
+    const fixedSvg=svg.replace('style="width:100%;height:auto;display:block"','width="1100" height="800"');const blob=new Blob([fixedSvg],{type:'image/svg+xml'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');a.href=url;a.download=`CareForBrains_Certificate_${name.replace(/\s+/g,'_')}.svg`;a.click();URL.revokeObjectURL(url);
   };
@@ -1005,7 +1005,7 @@ function Emails({db,hubData,team,me}){
 
       {tmpl.hasCert&&<Card style={{marginBottom:14}}><CardH>Certificate Preview</CardH>
         <div style={{padding:"16px 18px",textAlign:"center"}}>
-          <div dangerouslySetInnerHTML={{__html:generateCertSVG(validSelected[0]?.row?.[nIdx]||'Your Name','50','Volunteer',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}))}} style={{maxWidth:550,margin:"0 auto",display:"block"}}/>
+          <div dangerouslySetInnerHTML={{__html:generateCertSVG(validSelected[0]?.row?.[nIdx]||'Your Name','50','Volunteer',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}))}} style={{width:"100%",maxWidth:700,margin:"0 auto"}}/>
           <div style={{marginTop:10,fontSize:11,color:C.mt}}>Certificate auto-fills with each recipient's name and hours</div>
         </div>
       </Card>}
