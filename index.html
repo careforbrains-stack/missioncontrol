@@ -132,6 +132,7 @@ const fmtSyncTime=ts=>{
 };
 
 let _gToken=null;
+let _activeSheet='';
 const colToLetter=c=>{let s='';while(c>=0){s=String.fromCharCode(65+(c%26))+s;c=Math.floor(c/26)-1}return s};
 
 function Av({m,s=38}){const[e,setE]=useState(false);if(m?.img&&!e)return React.createElement('img',{src:m.img,alt:'',style:{width:s,height:s,borderRadius:8,objectFit:'cover',flexShrink:0,background:m.color},onError:()=>setE(true)});return<div style={{width:s,height:s,borderRadius:8,background:m?.color||C.tl,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:s*.38,flexShrink:0}}>{m?.name?.[0]||"?"}</div>}
@@ -383,7 +384,8 @@ function Sheets({db,hubData,team,me}){
     return(a.name||'').localeCompare(b.name||'');
   });
   const sheetData=hubData.sheetData||{};
-  const[active,setActive]=useState(sheets[0]?._fbKey||'');
+  const[active,setActiveState]=useState(()=>_activeSheet||sheets[0]?._fbKey||'');
+  const setActive=v=>{_activeSheet=v;setActiveState(v)};
   const[gToken,setGTokenState]=useState(_gToken);
   const setGToken=v=>{_gToken=v;setGTokenState(v)};
   const[editCell,setEditCell]=useState(null);
