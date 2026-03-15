@@ -737,32 +737,27 @@ const EMAIL_TEMPLATES={
     subject:'Welcome to CareForBrains \u2014 Let\u2019s Get Started',
     html:true,
     body:function(name){return emailHTML(`
-<h2 style="font-size:22px;color:#1C3050;margin:0 0 6px;font-weight:600">Welcome aboard, ${name||'there'}!</h2>
-<p style="color:#555;font-size:14px;line-height:1.7;margin:12px 0">We\u2019re thrilled to have you join <strong>800+ volunteers</strong> making a real difference in mental health awareness through the CareForBrains Volunteering Program.</p>
-
-<div style="background:#F5F8FA;border-radius:8px;padding:18px 20px;margin:18px 0;border-left:4px solid #1490B0">
-<div style="font-size:12px;font-weight:700;color:#1490B0;letter-spacing:1.5px;margin-bottom:8px">YOUR PROGRAM</div>
-<p style="color:#333;font-size:13px;line-height:1.7;margin:0">This is a fully virtual, self-paced program. Complete mental health awareness modules, create outreach content, and earn verified volunteer hours toward the <strong>Presidential Volunteer Service Award (PVSA)</strong>.</p>
-</div>
-
-<div style="background:#F0FDF4;border-radius:8px;padding:18px 20px;margin:18px 0;border-left:4px solid #10B981">
-<div style="font-size:12px;font-weight:700;color:#10B981;letter-spacing:1.5px;margin-bottom:8px">E-CARD VOLUNTEERING (NEW)</div>
-<p style="color:#333;font-size:13px;line-height:1.7;margin:0">Design mental health e-cards using Canva \u2014 each card = <strong>30 minutes</strong> of volunteer credit. No limit on how many you can make!</p>
-<a href="${ECARD_FORM}" style="display:inline-block;margin-top:10px;padding:8px 18px;background:#10B981;color:#fff;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600">Submit E-Cards</a>
-</div>
-
-<div style="background:#FEF2F2;border-radius:8px;padding:18px 20px;margin:18px 0;border-left:4px solid #EF4444">
-<div style="font-size:12px;font-weight:700;color:#EF4444;letter-spacing:1.5px;margin-bottom:8px">REQUIRED \u2014 JOIN THESE NOW</div>
-<p style="color:#333;font-size:13px;line-height:1.7;margin:0 0 10px">All updates and deadlines are shared exclusively here. If you\u2019re not on both, you\u2019ll miss critical information.</p>
-<a href="${DISCORD_LINK}" style="display:inline-block;padding:8px 18px;background:#5865F2;color:#fff;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;margin-right:8px">Join Discord</a>
-<a href="${CANVAS_LINK}" style="display:inline-block;padding:8px 18px;background:#E74C3C;color:#fff;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600">Enroll in Canvas</a>
-</div>
-
-<p style="color:#555;font-size:14px;line-height:1.7;margin:18px 0 0">Questions? Reply to this email.</p>
-<div style="margin-top:24px;padding-top:16px;border-top:1px solid #eee">
-<p style="margin:0;font-size:14px;color:#1C3050;font-weight:600">Tanmay Vasudeva</p>
-<p style="margin:2px 0 0;font-size:12px;color:#888">Founder & CEO, CareForBrains</p>
-</div>`,name)}
+<p style="font-size:24px;font-weight:700;color:#1C3050;margin:0 0 4px">Welcome, ${'+'name||'+chr(39)+'there'+chr(39)+'}!</p>
+<p style="font-size:15px;color:#555;line-height:1.7;margin:8px 0 24px">You're now part of <strong>800+ volunteers</strong> making a real difference in mental health through CareForBrains.</p>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="background:#f0f9ff;border-radius:10px;padding:22px 24px">
+<p style="font-size:11px;font-weight:700;letter-spacing:2px;color:#0284c7;margin:0 0 12px">YOUR PROGRAM</p>
+<p style="font-size:14px;color:#333;margin:0;line-height:1.8">Complete mental health modules at your own pace, create outreach content, and earn verified hours toward the <strong>Presidential Volunteer Service Award (PVSA)</strong>.</p>
+</td></tr></table>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="background:#f0fdf4;border-radius:10px;padding:22px 24px">
+<p style="font-size:11px;font-weight:700;letter-spacing:2px;color:#059669;margin:0 0 12px">E-CARD VOLUNTEERING</p>
+<p style="font-size:14px;color:#333;margin:0 0 12px;line-height:1.8">Design mental health e-cards. Each card = <strong>30 minutes</strong> volunteer credit. No limit!</p>
+<a href="https://forms.gle/4ui2aeHr4bj39vvr5" style="display:inline-block;padding:12px 28px;background:#059669;color:#fff;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">Submit E-Cards</a>
+</td></tr></table>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="background:#fef2f2;border-radius:10px;padding:22px 24px">
+<p style="font-size:11px;font-weight:700;letter-spacing:2px;color:#dc2626;margin:0 0 12px">JOIN THESE NOW</p>
+<p style="font-size:14px;color:#333;margin:0 0 14px;line-height:1.7">All updates shared exclusively here. Missing these = missing deadlines.</p>
+<a href="https://discord.com/invite/2Zra5JChnz" style="display:inline-block;padding:12px 24px;background:#5865F2;color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;margin-right:8px">Join Discord</a>
+<a href="https://canvas.instructure.com/enroll/W6LGYH" style="display:inline-block;padding:12px 24px;background:#dc2626;color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">Enroll in Canvas</a>
+</td></tr></table>
+<p style="font-size:14px;color:#555;margin:0 0 24px">Questions? Just reply to this email.</p>
+<p style="font-size:14px;color:#1C3050;font-weight:600;margin:0">Tanmay Vasudeva</p>
+<p style="font-size:12px;color:#999;margin:2px 0 0">Founder &amp; CEO, CareForBrains</p>
+`,name)}
   },
   vol_done:{
     name:'Volunteer Completion',
@@ -771,27 +766,22 @@ const EMAIL_TEMPLATES={
     html:true,
     hasCert:true,
     body:function(name){return emailHTML(`
-<h2 style="font-size:22px;color:#1C3050;margin:0 0 6px;font-weight:600">Congratulations, ${name||'there'}!</h2>
-<p style="color:#555;font-size:14px;line-height:1.7;margin:12px 0">You\u2019ve completed the <strong>CareForBrains Volunteer Program</strong>. Your dedication has directly contributed to making mental health resources more accessible. Thank you.</p>
-
-<div style="background:#F0FDF4;border-radius:8px;padding:18px 20px;margin:18px 0;border-left:4px solid #10B981">
-<div style="font-size:12px;font-weight:700;color:#10B981;letter-spacing:1.5px;margin-bottom:10px">WHAT YOU\u2019VE EARNED (FREE)</div>
-<table style="width:100%;font-size:13px;color:#333"><tr><td style="padding:4px 0">\u2705 CareForBrains Certificate of Achievement</td></tr><tr><td style="padding:4px 0">\u2705 Verified volunteer hours for school & college apps</td></tr><tr><td style="padding:4px 0">\u2705 Signed documentation for professional use</td></tr></table>
-</div>
-
-<div style="background:#F5F3FF;border-radius:8px;padding:18px 20px;margin:18px 0;border-left:4px solid #8B5CF6">
-<div style="font-size:12px;font-weight:700;color:#8B5CF6;letter-spacing:1.5px;margin-bottom:10px">MEMBERSHIP UPGRADE \u2014 $36</div>
-<p style="color:#333;font-size:13px;line-height:1.7;margin:0 0 8px">Everything above, plus:</p>
-<table style="width:100%;font-size:13px;color:#333"><tr><td style="padding:4px 0">\uD83C\uDFC5 PVSA Award (Bronze, Silver, or Gold) with certificate & medallion</td></tr><tr><td style="padding:4px 0">\u270D\uFE0F Personalized letter of recommendation</td></tr><tr><td style="padding:4px 0">\uD83D\uDD13 Priority access to future programs</td></tr></table>
-<a href="[MEMBERSHIP_LINK]" style="display:inline-block;margin-top:12px;padding:10px 24px;background:#8B5CF6;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600">Upgrade to Membership</a>
-<p style="color:#888;font-size:11px;margin:8px 0 0">Include your full name. Allow 1\u20132 business days.</p>
-</div>
-
-<p style="color:#555;font-size:14px;line-height:1.7;margin:18px 0 0">Your certificate is attached to this email.</p>
-<div style="margin-top:24px;padding-top:16px;border-top:1px solid #eee">
-<p style="margin:0;font-size:14px;color:#1C3050;font-weight:600">Tanmay Vasudeva</p>
-<p style="margin:2px 0 0;font-size:12px;color:#888">Founder & CEO, CareForBrains</p>
-</div>`,name)}
+<p style="font-size:24px;font-weight:700;color:#1C3050;margin:0 0 4px">Congratulations, ${name||'there'}!</p>
+<p style="font-size:15px;color:#555;line-height:1.7;margin:8px 0 24px">You've officially completed the <strong>CareForBrains Volunteer Program</strong>. Your work has directly helped make mental health resources more accessible.</p>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="background:#f0fdf4;border-radius:10px;padding:22px 24px">
+<p style="font-size:11px;font-weight:700;letter-spacing:2px;color:#059669;margin:0 0 12px">WHAT YOU'VE EARNED</p>
+<p style="font-size:14px;color:#333;margin:0;line-height:2">&#10004; CareForBrains Certificate of Achievement<br/>&#10004; Verified volunteer hours for school and college apps<br/>&#10004; Signed documentation for professional use</p>
+</td></tr></table>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="background:#faf5ff;border-radius:10px;padding:22px 24px">
+<p style="font-size:11px;font-weight:700;letter-spacing:2px;color:#7c3aed;margin:0 0 12px">MEMBERSHIP UPGRADE &mdash; $36</p>
+<p style="font-size:14px;color:#333;margin:0 0 12px;line-height:1.8">Everything above, plus:<br/>&#8226; PVSA Award (Bronze, Silver, or Gold) with medallion<br/>&#8226; Personalized letter of recommendation<br/>&#8226; Priority access to future programs</p>
+<a href="[MEMBERSHIP_LINK]" style="display:inline-block;padding:12px 28px;background:#7c3aed;color:#fff;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">Upgrade Now</a>
+<p style="font-size:11px;color:#999;margin:10px 0 0">Include your full name. Allow 1-2 business days.</p>
+</td></tr></table>
+<p style="font-size:14px;color:#555;margin:0 0 24px">Your certificate is attached to this email.</p>
+<p style="font-size:14px;color:#1C3050;font-weight:600;margin:0">Tanmay Vasudeva</p>
+<p style="font-size:12px;color:#999;margin:2px 0 0">Founder &amp; CEO, CareForBrains</p>
+`,name)}
   },
   ecard_done:{
     name:'E-Card Completion',
