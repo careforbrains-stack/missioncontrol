@@ -953,6 +953,7 @@ function Emails({db,hubData,team,me}){
   const[sendStats,setSendStats]=useState({done:0,total:0});
   const[previewIdx,setPreviewIdx]=useState(0);
   const[certPreview,setCertPreview]=useState(null);
+  const[ecardCount,setEcardCount]=useState('');
   const[manualMode,setManualMode]=useState(false);
   const[manualName,setManualName]=useState('');
   const[manualEmail,setManualEmail]=useState('');
@@ -1012,8 +1013,7 @@ function Emails({db,hubData,team,me}){
       const emailBody=(()=>{
         if(template==='custom')return '<div style="font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;color:#333;white-space:pre-wrap">'+fill(customBody,row).replace(/{{name}}/g,name)+'</div>';
         if(template==='ecard_done'){
-          const ci=cols.findIndex(c=>(c||'').toLowerCase().includes('card')&&(c||'').toLowerCase().includes('total'));
-          const cc=ci>=0?parseInt(row[ci])||0:0;
+          const cc=parseInt(ecardCount)||0;
           const hrs=cc>0?String(Math.round(cc*0.5)):'0';
           return tmpl.body(name,String(cc),hrs);
         }
@@ -1025,9 +1025,8 @@ function Emails({db,hubData,team,me}){
           let certHours='50';let certProgram='Volunteer';
           if(template==='ecard_done'){
             certProgram='E-Card';
-            const cardsColIdx=cols.findIndex(h=>(h||'').toLowerCase().includes('card')&&(h||'').toLowerCase().includes('total'));
-            const cardCount=cardsColIdx>=0?parseInt(row[cardsColIdx])||0:0;
-            certHours=cardCount>0?String(Math.round(cardCount*0.5)):certHours;
+            const cc=parseInt(ecardCount)||0;
+            certHours=cc>0?String(Math.round(cc*0.5)):'0';
           }
           const svg=generateCertSVG(name,certHours,certProgram,new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
           const pdfB64=await svgToPdfBase64(svg);
@@ -1127,6 +1126,17 @@ function Emails({db,hubData,team,me}){
         </div>)}
       </div>
 
+      {template==='ecard_done'&&<Card style={{marginBottom:14}}><CardH>E-Card Details</CardH><div style={{padding:"16px 18px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:14}}>
+          <div style={{flex:1}}><Lbl>Number of E-Cards</Lbl><Inp type="number" min="1" value={ecardCount} onChange={e=>setEcardCount(e.target.value)} placeholder="e.g. 20"/></div>
+          <div style={{flex:1,padding:"12px 16px",background:"#F0FDF4",borderRadius:8,textAlign:"center"}}>
+            <div style={{fontSize:10,fontWeight:700,color:"#059669",letterSpacing:"1.5px",marginBottom:4}}>HOURS EARNED</div>
+            <div style={{fontSize:28,fontWeight:700,color:"#1B2838",fontFamily:"'Playfair Display',serif"}}>{ecardCount?Math.round(parseInt(ecardCount||0)*0.5):0}</div>
+            <div style={{fontSize:10,color:"#5A6B7E"}}>({ecardCount||0} cards &times; 30 min each)</div>
+          </div>
+        </div>
+      </div></Card>}
+
       {template==='custom'&&<Card style={{marginBottom:14}}><div style={{padding:"16px 18px"}}>
         <div style={{marginBottom:10}}><Lbl>Subject</Lbl><Inp value={customSubj} onChange={e=>setCustomSubj(e.target.value)} placeholder="Email subject..."/></div>
         <Lbl>Body</Lbl><textarea style={{width:"100%",padding:"9px 12px",background:"#fff",border:"1px solid "+C.rl,borderRadius:8,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",minHeight:140,resize:"vertical"}} value={customBody} onChange={e=>setCustomBody(e.target.value)} placeholder="Use {{name}} or any {{column_name}} for personalization..."/>
@@ -1143,7 +1153,7 @@ function Emails({db,hubData,team,me}){
         <div style={{padding:"16px 18px",textAlign:"center"}}>
           <div dangerouslySetInnerHTML={{__html:(()=>{
             let h='50',p='Volunteer';
-            if(template==='ecard_done'){p='E-Card';const ci=cols.findIndex(c=>(c||'').toLowerCase().includes('card')&&(c||'').toLowerCase().includes('total'));const cc=ci>=0?parseInt((validSelected[0]?.row||[])[ci])||0:0;if(cc>0)h=String(Math.round(cc*0.5))}
+            if(template==='ecard_done'){p='E-Card';const cc=parseInt(ecardCount)||0;h=cc>0?String(Math.round(cc*0.5)):'0'}
             return generateCertSVG(validSelected[0]?.row?.[nIdx]||'Your Name',h,p,new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}))
           })()}} style={{width:"100%",maxWidth:700,margin:"0 auto"}}/>
           <div style={{marginTop:10,fontSize:11,color:C.mt}}>Certificate auto-fills with each recipient's name and hours</div>
@@ -1186,7 +1196,7 @@ function Emails({db,hubData,team,me}){
           const name=nIdx>=0?(row[nIdx]||''):'';
           return<Btn key={i} onClick={()=>{
             let h='50',p='Volunteer';
-            if(template==='ecard_done'){p='E-Card';const ci=cols.findIndex(c=>(c||'').toLowerCase().includes('card')&&(c||'').toLowerCase().includes('total'));const cc=ci>=0?parseInt(row[ci])||0:0;if(cc>0)h=String(Math.round(cc*0.5))}
+            if(template==='ecard_done'){p='E-Card';const cc=parseInt(ecardCount)||0;h=cc>0?String(Math.round(cc*0.5)):'0'}
             downloadCert(name,h,p)
           }} style={{fontSize:11}}>Download cert: {name}</Btn>
         })}
