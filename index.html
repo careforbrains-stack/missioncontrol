@@ -228,6 +228,7 @@ async function sendGmail(token, to, subject, htmlBody, fromName='CareForBrains',
   let raw;
   if(pdfAttachment){
     const boundary='cfb_'+Date.now();
+    const htmlB64=btoa(unescape(encodeURIComponent(htmlBody)));
     raw=[
       'MIME-Version: 1.0',
       'Content-Type: multipart/mixed; boundary='+boundary,
@@ -238,8 +239,9 @@ async function sendGmail(token, to, subject, htmlBody, fromName='CareForBrains',
       '',
       '--'+boundary,
       'Content-Type: text/html; charset=utf-8',
+      'Content-Transfer-Encoding: base64',
       '',
-      htmlBody,
+      htmlB64,
       '--'+boundary,
       'Content-Type: application/pdf; name="'+pdfAttachment.name+'"',
       'Content-Disposition: attachment; filename="'+pdfAttachment.name+'"',
