@@ -381,39 +381,38 @@ function Sheets({db,hubData,team,me}){
   const[editCell,setEditCell]=useState(null);
   const[editVal,setEditVal]=useState('');
   const[saving,setSaving]=useState(false);
+  const[expandedRow,setExpandedRow]=useState(null);
   const tableRef=useRef(null);
   const tokenClientRef=useRef(null);
 
   const activeSheet=sheets.find(s=>(s._fbKey||s.id)===active)||sheets[0]||null;
   const activeVals=activeSheet?sheetData[activeSheet.id]:null;
-  const rawHeaders=Array.isArray(activeVals)&&activeVals.length?activeVals[0]:[];
-  const rawRows=Array.isArray(activeVals)&&activeVals.length>1?activeVals.slice(1):[];
-
-  // Move priority columns to front
-  const priorityWords=['reached','status','done','complete','approved','accepted'];
-  const colOrder=React.useMemo(()=>{
-    if(!rawHeaders.length)return[];
-    const pri=[];const rest=[];
-    rawHeaders.forEach((_,i)=>{
-      const h=(rawHeaders[i]||'').toLowerCase();
-      if(priorityWords.some(w=>h.includes(w)))pri.push(i);else rest.push(i);
-    });
-    return[...pri,...rest];
-  },[rawHeaders.join(',')]);
-  const headers=colOrder.map(i=>rawHeaders[i]);
-  const rows=rawRows.map(row=>colOrder.map(i=>row[i]||''));
-  const origColIdx=i=>colOrder[i];
+  const allHeaders=Array.isArray(activeVals)&&activeVals.length?activeVals[0]:[];
+  const allRows=Array.isArray(activeVals)&&activeVals.length>1?activeVals.slice(1):[];
 
   // Strip empty trailing columns
-  const lastUsedCol=React.useMemo(()=>{
-    if(!headers.length)return 0;
-    for(let c=headers.length-1;c>=0;c--){
-      if((headers[c]||'').trim())return c+1;
-      if(rows.some(r=>(r[c]||'').trim()))return c+1;
+  const lastUsed=React.useMemo(()=>{
+    for(let c=allHeaders.length-1;c>=0;c--){
+      if((allHeaders[c]||'').trim()||allRows.some(r=>(r[c]||'').trim()))return c+1;
     }
-    return headers.length;
-  },[headers.join(','),rows.length]);
-  const visHeaders=headers.slice(0,lastUsedCol);
+    return allHeaders.length;
+  },[allHeaders.join(','),allRows.length]);
+  const cleanHeaders=allHeaders.slice(0,lastUsed);
+
+  // Pick which columns to show in the compact table (max 6)
+  const priorityWords=['reached','status','done','complete','approved','accepted'];
+  const visibleCols=React.useMemo(()=>{
+    if(!cleanHeaders.length)return[];
+    const pri=[];const rest=[];
+    cleanHeaders.forEach((_,i)=>{
+      const h=(cleanHeaders[i]||'').toLowerCase();
+      if(priorityWords.some(w=>h.includes(w)))pri.push(i);
+      else rest.push(i);
+    });
+    // Priority cols first, then first few regular cols, max 6 total
+    const picked=[...pri,...rest];
+    return picked.slice(0,6);
+  },[cleanHeaders.join(',')]);
 
   const connectGoogle=()=>{
     if(!window.google?.accounts?.oauth2)return;
@@ -427,10 +426,9 @@ function Sheets({db,hubData,team,me}){
     tokenClientRef.current.requestAccessToken();
   };
   const colToLetter=(c)=>{let s='';while(c>=0){s=String.fromCharCode(65+(c%26))+s;c=Math.floor(c/26)-1}return s};
-  const saveCell=async(rowIdx,colIdx,value)=>{
+  const saveCell=async(rowIdx,realCol,value)=>{
     if(!activeSheet||!gToken)return;
     const sid=getSheetId(activeSheet.url);if(!sid)return;
-    const realCol=origColIdx(colIdx);
     setSaving(true);
     const range=colToLetter(realCol)+(rowIdx+2);
     try{
@@ -450,6 +448,7 @@ function Sheets({db,hubData,team,me}){
     setSaving(false);
   };
   const jumpTo=(pct)=>{if(tableRef.current)tableRef.current.scrollTop=tableRef.current.scrollHeight*pct};
+  const fmtHeader=h=>(h||'').replace(/^\d+\.\s*/,'').replace(/[:\?]$/,'').trim();
 
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -460,71 +459,98 @@ function Sheets({db,hubData,team,me}){
       </div>
     </div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 18px"}}/>
-
     {!gToken&&<div style={{padding:"8px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FECACA",marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
       <span style={{color:"#E44258",fontSize:12,fontWeight:600}}>&#9888; View only</span>
-      <span style={{color:"#676879",fontSize:12}}>Connect Google to edit cells. Changes sync to Google Sheets instantly.</span>
+      <span style={{color:"#676879",fontSize:12}}>Connect Google to edit cells.</span>
     </div>}
-
     <div style={{display:"flex",gap:4,marginBottom:14,flexWrap:"wrap"}}>
       {sheets.map(s=>{
         const isAct=(s._fbKey||s.id)===active;
         const rc=Math.max(((sheetData[s.id]||[]).length||0)-1,0);
-        return<button key={s._fbKey} onClick={()=>{setActive(s._fbKey||s.id);setEditCell(null)}} style={{
+        return<button key={s._fbKey} onClick={()=>{setActive(s._fbKey||s.id);setEditCell(null);setExpandedRow(null)}} style={{
           padding:"7px 14px",border:isAct?"2px solid #579BFC":"1px solid "+C.rl,
           borderRadius:8,background:isAct?"#EBF5FF":"#fff",cursor:"pointer",fontFamily:"inherit",
           fontSize:12,fontWeight:isAct?700:500,color:isAct?"#323338":"#676879",display:"flex",alignItems:"center",gap:6
         }}>
           {s.name}
-          <span style={{fontSize:10,color:rc?C.gn:C.mt,fontFamily:"monospace",marginLeft:"auto"}}>{rc}</span>
+          <span style={{fontSize:10,color:rc?C.gn:C.mt,fontFamily:"monospace"}}>{rc}</span>
         </button>
       })}
     </div>
-
-    {activeSheet&&visHeaders.length>0?<Card style={{overflow:"hidden"}}>
+    {activeSheet&&visibleCols.length>0?<Card style={{overflow:"hidden"}}>
       <div style={{padding:"8px 14px",borderBottom:"1px solid "+C.rl,display:"flex",justifyContent:"space-between",alignItems:"center",background:"#F5F6F8"}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <span style={{fontWeight:700,fontSize:13}}>{activeSheet.name}</span>
-          <span style={{fontSize:11,color:C.sc}}>{rows.length} rows</span>
-          {gToken&&<span style={{fontSize:10,color:C.mt}}>double-click to edit</span>}
+          <span style={{fontSize:11,color:C.sc}}>{allRows.length} rows &#183; {cleanHeaders.length} cols</span>
+          {gToken&&<span style={{fontSize:10,color:C.mt}}>double-click to edit &#183; click row to expand</span>}
+          {!gToken&&<span style={{fontSize:10,color:C.mt}}>click row to expand</span>}
         </div>
         <div style={{display:"flex",alignItems:"center",gap:6}}>
           {[['25%',.25],['50%',.5],['75%',.75],['End',1]].map(([l,p])=><button key={l} onClick={()=>jumpTo(p)} style={{padding:"3px 8px",border:"1px solid "+C.rl,borderRadius:5,background:"#fff",fontSize:10,fontWeight:600,color:C.sc,cursor:"pointer",fontFamily:"inherit"}}>{l}</button>)}
           {activeSheet.url&&<a href={activeSheet.url} target="_blank" rel="noreferrer" style={{fontSize:11,color:C.tl,textDecoration:"none",fontWeight:600,marginLeft:6}}>Open &#8599;</a>}
         </div>
       </div>
-      <div ref={tableRef} style={{overflowY:"auto",maxHeight:"72vh"}}>
+      <div ref={tableRef} style={{overflowY:"auto",overflowX:"hidden",maxHeight:"72vh"}}>
         <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"fixed"}}>
-          <colgroup>{visHeaders.map((_,i)=>{
-            const isPri=priorityWords.some(w=>(visHeaders[i]||'').toLowerCase().includes(w));
-            return<col key={i} style={{width:isPri?"100px":i===0?"70px":"150px"}}/>
+          <colgroup>{visibleCols.map((ci,i)=>{
+            const isPri=priorityWords.some(w=>(cleanHeaders[ci]||'').toLowerCase().includes(w));
+            return<col key={i} style={{width:isPri?"90px":(100/visibleCols.length)+"%"}}/>
           })}</colgroup>
-          <thead><tr>{visHeaders.map((h,i)=>{
-            const isPri=priorityWords.some(w=>(h||'').toLowerCase().includes(w));
+          <thead><tr>{visibleCols.map((ci,i)=>{
+            const h=cleanHeaders[ci]||'';
+            const isPri=priorityWords.some(w=>h.toLowerCase().includes(w));
             return<th key={i} style={{
-              padding:"6px 8px",textAlign:"left",borderBottom:"2px solid "+C.rl,
+              padding:"7px 10px",textAlign:"left",borderBottom:"2px solid "+C.rl,
               fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.04em",
               color:isPri?"#0073EA":"#323338",background:isPri?"#E8F0FE":"#F5F6F8",
               position:"sticky",top:0,zIndex:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"
-            }}>{(h||'').replace(/^\d+\.\s*/,'').trim()}</th>
+            }}>{fmtHeader(h)}</th>
           })}</tr></thead>
-          <tbody>{rows.map((row,i)=><tr key={i} style={{background:i%2===0?"#fff":"#FAFBFC"}}>
-            {visHeaders.map((_,j)=>{
-              const isEditing=editCell&&editCell.r===i&&editCell.c===j;
-              const isPri=priorityWords.some(w=>(visHeaders[j]||'').toLowerCase().includes(w));
-              return<td key={j} onDoubleClick={()=>{if(gToken){setEditCell({r:i,c:j});setEditVal(row[j]||'')}}} style={{
-                padding:isEditing?"2px":"4px 8px",borderBottom:"1px solid #F0F1F3",
-                verticalAlign:"top",color:"#323338",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
-                cursor:gToken?"text":"default",background:isEditing?"#EBF5FF":isPri?"#F0F7FF":"inherit",
-                fontSize:12,fontWeight:isPri?600:"normal"
-              }}>
-                {isEditing?<input autoFocus value={editVal} onChange={e=>setEditVal(e.target.value)}
-                  onBlur={()=>saveCell(i,j,editVal)}
-                  onKeyDown={e=>{if(e.key==='Enter')saveCell(i,j,editVal);if(e.key==='Escape')setEditCell(null)}}
-                  style={{width:"100%",padding:"3px 6px",border:"2px solid #579BFC",borderRadius:4,fontSize:12,fontFamily:"inherit",outline:"none",background:"#fff"}}
-                />:(row[j]||'')}
-              </td>
-            })}</tr>)}</tbody>
+          <tbody>{allRows.map((row,i)=>{
+            const isExpanded=expandedRow===i;
+            return<React.Fragment key={i}>
+              <tr onClick={()=>setExpandedRow(isExpanded?null:i)} style={{background:isExpanded?"#EBF5FF":i%2===0?"#fff":"#FAFBFC",cursor:"pointer"}}>
+                {visibleCols.map((ci,j)=>{
+                  const isEditing=editCell&&editCell.r===i&&editCell.c===ci;
+                  const isPri=priorityWords.some(w=>(cleanHeaders[ci]||'').toLowerCase().includes(w));
+                  const val=row[ci]||'';
+                  return<td key={j} onDoubleClick={e=>{e.stopPropagation();if(gToken){setEditCell({r:i,c:ci});setEditVal(val)}}} style={{
+                    padding:isEditing?"2px":"4px 10px",borderBottom:"1px solid #F0F1F3",
+                    overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                    color:"#323338",fontSize:12,fontWeight:isPri?600:"normal",
+                    background:isEditing?"#D0E8F2":isPri?"#F0F7FF":"inherit",
+                    cursor:gToken?"text":"pointer"
+                  }}>
+                    {isEditing?<input autoFocus value={editVal} onChange={e=>setEditVal(e.target.value)}
+                      onClick={e=>e.stopPropagation()}
+                      onBlur={()=>saveCell(i,ci,editVal)}
+                      onKeyDown={e=>{if(e.key==='Enter')saveCell(i,ci,editVal);if(e.key==='Escape')setEditCell(null)}}
+                      style={{width:"100%",padding:"3px 6px",border:"2px solid #579BFC",borderRadius:4,fontSize:12,fontFamily:"inherit",outline:"none",background:"#fff"}}
+                    />:val}
+                  </td>
+                })}
+              </tr>
+              {isExpanded&&<tr><td colSpan={visibleCols.length} style={{padding:0,background:"#F8FAFC",borderBottom:"2px solid #579BFC"}}>
+                <div style={{padding:"14px 16px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 24px"}}>
+                  {cleanHeaders.map((h,ci)=>{
+                    const val=row[ci]||'';
+                    const isEditing=editCell&&editCell.r===i&&editCell.c===ci;
+                    return<div key={ci} style={{display:"flex",flexDirection:"column",gap:2}}>
+                      <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:C.sc,letterSpacing:"0.04em"}}>{fmtHeader(h)}</span>
+                      {isEditing?<input autoFocus value={editVal} onChange={e=>setEditVal(e.target.value)}
+                        onBlur={()=>saveCell(i,ci,editVal)}
+                        onKeyDown={e=>{if(e.key==='Enter')saveCell(i,ci,editVal);if(e.key==='Escape')setEditCell(null)}}
+                        style={{padding:"4px 8px",border:"2px solid #579BFC",borderRadius:4,fontSize:12,fontFamily:"inherit",outline:"none",background:"#fff"}}
+                      />:<span onDoubleClick={()=>{if(gToken){setEditCell({r:i,c:ci});setEditVal(val)}}} style={{
+                        fontSize:13,color:val?"#323338":"#C3C6D4",padding:"4px 0",cursor:gToken?"text":"default",
+                        wordBreak:"break-word",lineHeight:1.4
+                      }}>{val||'—'}</span>}
+                    </div>
+                  })}
+                </div>
+              </td></tr>}
+            </React.Fragment>
+          })}</tbody>
         </table>
       </div>
     </Card>:activeSheet?<Card><div style={{padding:"40px 24px",textAlign:"center",color:C.mt}}>
