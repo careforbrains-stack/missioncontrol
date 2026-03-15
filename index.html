@@ -94,6 +94,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="https://accounts.google.com/gsi/client"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script type="text/babel">
 const{useState,useEffect,useRef,useCallback}=React;
@@ -197,19 +198,68 @@ function globalConnectGoogle(callback){
   _tokenClient.requestAccessToken();
 }
 
+// Convert SVG certificate to PDF base64
+async function svgToPdfBase64(svgString){
+  const {jsPDF}=window.jspdf;
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    const svgBlob=new Blob([svgString],{type:'image/svg+xml;charset=utf-8'});
+    const url=URL.createObjectURL(svgBlob);
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      canvas.width=2000;canvas.height=1440;
+      const ctx=canvas.getContext('2d');
+      ctx.fillStyle='#fff';ctx.fillRect(0,0,2000,1440);
+      ctx.drawImage(img,0,0,2000,1440);
+      URL.revokeObjectURL(url);
+      const imgData=canvas.toDataURL('image/jpeg',0.95);
+      const pdf=new jsPDF({orientation:'landscape',unit:'px',format:[1000,720]});
+      pdf.addImage(imgData,'JPEG',0,0,1000,720);
+      const pdfBase64=pdf.output('datauristring').split(',')[1];
+      resolve(pdfBase64);
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('SVG render failed'))};
+    img.src=url;
+  });
+}
+
 // Send email via Gmail API directly — no third party, no branding
-async function sendGmail(token, to, subject, htmlBody, fromName='CareForBrains', replyTo='careforbrains@gmail.com'){
-  const boundary='boundary_'+Date.now();
-  const raw=[
-    'MIME-Version: 1.0',
-    'Content-Type: text/html; charset=utf-8',
-    'From: '+fromName+' <'+replyTo+'>',
-    'To: '+to,
-    'Reply-To: '+replyTo,
-    'Subject: =?UTF-8?B?'+btoa(unescape(encodeURIComponent(subject)))+'?=',
-    '',
-    htmlBody
-  ].join('\r\n');
+async function sendGmail(token, to, subject, htmlBody, fromName='CareForBrains', replyTo='careforbrains@gmail.com', pdfAttachment=null){
+  let raw;
+  if(pdfAttachment){
+    const boundary='cfb_'+Date.now();
+    raw=[
+      'MIME-Version: 1.0',
+      'Content-Type: multipart/mixed; boundary='+boundary,
+      'From: '+fromName+' <'+replyTo+'>',
+      'To: '+to,
+      'Reply-To: '+replyTo,
+      'Subject: =?UTF-8?B?'+btoa(unescape(encodeURIComponent(subject)))+'?=',
+      '',
+      '--'+boundary,
+      'Content-Type: text/html; charset=utf-8',
+      '',
+      htmlBody,
+      '--'+boundary,
+      'Content-Type: application/pdf; name="'+pdfAttachment.name+'"',
+      'Content-Disposition: attachment; filename="'+pdfAttachment.name+'"',
+      'Content-Transfer-Encoding: base64',
+      '',
+      pdfAttachment.data,
+      '--'+boundary+'--'
+    ].join('\r\n');
+  }else{
+    raw=[
+      'MIME-Version: 1.0',
+      'Content-Type: text/html; charset=utf-8',
+      'From: '+fromName+' <'+replyTo+'>',
+      'To: '+to,
+      'Reply-To: '+replyTo,
+      'Subject: =?UTF-8?B?'+btoa(unescape(encodeURIComponent(subject)))+'?=',
+      '',
+      htmlBody
+    ].join('\r\n');
+  }
   const b64=btoa(unescape(encodeURIComponent(raw))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   const r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{
     method:'POST',
@@ -973,11 +1023,14 @@ function Emails({db,hubData,team,me}){
   const validSelected=manualMode?[{i:0,row:[manualName,manualEmail],email:manualEmail.trim(),name:manualName.trim()}]:selectedRows.filter(r=>eIdx>=0&&okEmail((r.row[eIdx]||'').trim()));
   const allChecked=rows.length>0&&rows.every((_,i)=>checked[i]);
 
-  const downloadCert=(name,hours,program)=>{
+  const downloadCert=async(name,hours,program)=>{
     const svg=generateCertSVG(name,hours||'50',program||'Volunteer',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
-    const fixedSvg=svg.replace('style="width:100%;height:auto;display:block"','width="1000" height="750"');const blob=new Blob([fixedSvg],{type:'image/svg+xml'});
+    const pdfB64=await svgToPdfBase64(svg);
+    const byteChars=atob(pdfB64);const byteArr=new Uint8Array(byteChars.length);
+    for(let i=0;i<byteChars.length;i++)byteArr[i]=byteChars.charCodeAt(i);
+    const blob=new Blob([byteArr],{type:'application/pdf'});
     const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=url;a.download=`CareForBrains_Certificate_${name.replace(/\s+/g,'_')}.svg`;a.click();URL.revokeObjectURL(url);
+    const a=document.createElement('a');a.href=url;a.download=`CareForBrains_Certificate_${name.replace(/\s+/g,'_')}.pdf`;a.click();URL.revokeObjectURL(url);
   };
 
   const sendEmails=async()=>{
@@ -992,7 +1045,13 @@ function Emails({db,hubData,team,me}){
       const emailSubject=fill(subj,row).replace('{{name}}',name);
       const emailBody=typeof tmpl.body==='function'?tmpl.body(name):('<div style="font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;color:#333;white-space:pre-wrap">'+fill(template==='custom'?customBody:(tmpl.body||''),row).replace(/{{name}}/g,name)+'</div>');
       try{
-        await sendGmail(_gToken,email,emailSubject,emailBody,'CareForBrains','careforbrains@gmail.com');
+        let pdfAttachment=null;
+        if(tmpl.hasCert){
+          const svg=generateCertSVG(name,'50','Volunteer',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
+          const pdfB64=await svgToPdfBase64(svg);
+          pdfAttachment={name:'CareForBrains_Certificate_'+name.replace(/\s+/g,'_')+'.pdf',data:pdfB64};
+        }
+        await sendGmail(_gToken,email,emailSubject,emailBody,'CareForBrains','careforbrains@gmail.com',pdfAttachment);
         ns[validSelected[i].i]='sent';
         logEvent(db,'email_sent',{user:me,to:email,template:tmpl.name||'custom',subject:emailSubject});
       }catch(e){ns[validSelected[i].i]='failed';console.error(e)}
