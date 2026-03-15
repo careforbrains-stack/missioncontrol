@@ -7,54 +7,69 @@
 <link rel="icon" href="https://raw.githubusercontent.com/careforbrains-stack/careforbrains-website/main/logo.png">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&display=swap" rel="stylesheet">
 <style>
+:root{--ease-out-expo:cubic-bezier(.16,1,.3,1);--ease-spring:cubic-bezier(.34,1.56,.64,1)}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{min-height:100%;background:#F7F8FA}
 body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;color:#1A1D21;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
-img{image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges}
 #root{min-height:100vh}
-button,input,select,textarea{font-family:inherit;transition:all .2s ease}
+button,input,select,textarea{font-family:inherit;transition:all .25s var(--ease-out-expo)}
 button{cursor:pointer}
 button:disabled{opacity:.4;cursor:not-allowed}
-button:not(:disabled):active{transform:scale(.97)}
+button:not(:disabled):active{transform:scale(.96)}
 ::selection{background:rgba(87,155,252,.2)}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:rgba(50,51,56,.15);border-radius:8px}
-::-webkit-scrollbar-thumb:hover{background:rgba(50,51,56,.25)}
+::-webkit-scrollbar-thumb{background:rgba(50,51,56,.12);border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:rgba(50,51,56,.22)}
 
-.sidebar-shell{background:linear-gradient(180deg,#1C2038 0%,#292F4C 100%);color:#fff;box-shadow:2px 0 20px rgba(0,0,0,.08)}
-.sidebar-brand{border-bottom:1px solid rgba(255,255,255,.07);padding:20px 18px}
-.sidebar-profile{border-bottom:1px solid rgba(255,255,255,.07)}
-.sidebar-label{color:rgba(255,255,255,.3)}
-.nav-btn{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:13px;font-weight:500;color:rgba(255,255,255,.5);background:transparent;border:none;border-left:3px solid transparent;width:100%;text-align:left;font-family:inherit;transition:all .2s ease;letter-spacing:-.01em}
-.nav-btn:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.04);transform:translateX(2px)}
-.nav-btn.active{color:#fff;background:rgba(87,155,252,.12);border-left-color:#579BFC;font-weight:700;letter-spacing:-.01em}
+/* SIDEBAR */
+.sidebar-shell{background:linear-gradient(180deg,#1C2038,#292F4C);color:#fff;box-shadow:3px 0 24px rgba(0,0,0,.1)}
+.sidebar-brand{border-bottom:1px solid rgba(255,255,255,.06)}
+.sidebar-profile{border-bottom:1px solid rgba(255,255,255,.06)}
+.sidebar-label{color:rgba(255,255,255,.28)}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:13px;font-weight:500;color:rgba(255,255,255,.45);background:transparent;border:none;border-left:3px solid transparent;width:100%;text-align:left;font-family:inherit;transition:all .3s var(--ease-spring);letter-spacing:-.01em}
+.nav-btn:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.04);transform:translateX(3px)}
+.nav-btn.active{color:#fff;background:rgba(87,155,252,.15);border-left-color:#579BFC;font-weight:700;transform:translateX(0)}
 
-.login-panel{background:#fff;border:1px solid #E6E9EF;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.04),0 20px 50px rgba(0,0,0,.06)}
-.mission-card{background:#fff;border:1px solid #E6E9EF;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.03);transition:all .2s ease}
-.mission-card:hover{border-color:#D0D4DC;box-shadow:0 4px 16px rgba(0,0,0,.05)}
-.mission-btn{border-radius:8px;font-weight:600;border:none;padding:8px 18px;font-size:12.5px;letter-spacing:-.01em;transition:all .15s ease}
+/* SURFACES */
+.login-panel{background:#fff;border:1px solid #E6E9EF;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.04),0 24px 60px rgba(0,0,0,.06)}
+.mission-card{background:#fff;border:1px solid #E6E9EF;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.03);transition:all .3s var(--ease-out-expo)}
+.mission-card:hover{border-color:#D0D4DC;box-shadow:0 6px 24px rgba(0,0,0,.06)}
+
+/* BUTTONS */
+.mission-btn{border-radius:8px;font-weight:600;border:none;padding:8px 18px;font-size:12.5px;letter-spacing:-.01em;transition:all .25s var(--ease-spring)}
 .mission-btn:not(.mission-btn-primary){background:#F5F6F8;color:#323338;border:1px solid #E6E9EF}
-.mission-btn:not(.mission-btn-primary):hover{background:#ECEDF5;border-color:#D0D4DC}
-.mission-btn-primary{background:#579BFC;color:#fff;border:1px solid #4B8AE8;box-shadow:0 2px 8px rgba(87,155,252,.25)}
-.mission-btn-primary:hover{background:#4B8AE8;box-shadow:0 4px 14px rgba(87,155,252,.35);transform:translateY(-1px)}
-.mission-field{border:1px solid #E6E9EF;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;background:#fff;color:#323338;box-shadow:0 1px 2px rgba(0,0,0,.03)}
-.mission-field:focus{border-color:#579BFC;box-shadow:0 0 0 3px rgba(87,155,252,.12)}
+.mission-btn:not(.mission-btn-primary):hover{background:#ECEDF5;border-color:#D0D4DC;transform:translateY(-1px)}
+.mission-btn-primary{background:#579BFC;color:#fff;border:1px solid #4B8AE8;box-shadow:0 3px 12px rgba(87,155,252,.25)}
+.mission-btn-primary:hover{background:#4B8AE8;box-shadow:0 6px 20px rgba(87,155,252,.35);transform:translateY(-2px)}
 
-.topbar-shell{background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(230,233,239,.8)}
+/* FIELDS */
+.mission-field{border:1px solid #E6E9EF;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;background:#fff;color:#323338;box-shadow:inset 0 1px 2px rgba(0,0,0,.03);transition:all .25s var(--ease-out-expo)}
+.mission-field:focus{border-color:#579BFC;box-shadow:0 0 0 3px rgba(87,155,252,.12),inset 0 1px 2px rgba(0,0,0,.02)}
+
+/* TOPBAR */
+.topbar-shell{background:rgba(255,255,255,.88);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);border-bottom:1px solid rgba(230,233,239,.7);box-shadow:0 1px 8px rgba(0,0,0,.02)}
 .topbar-title{font-weight:600;color:#323338;letter-spacing:-.02em}
-.live-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;background:#E8FFF3;border:1px solid #C3F0D8}
-.live-pill-dot{width:7px;height:7px;border-radius:50%;background:#00CA72;box-shadow:0 0 6px rgba(0,202,114,.4);animation:pulse 2s ease-in-out infinite}
-.stat-card{padding:22px;border-radius:12px;background:#fff;border:1px solid #E6E9EF;box-shadow:0 1px 3px rgba(0,0,0,.03);transition:all .2s ease;position:relative;overflow:hidden}
-.stat-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.05);transform:translateY(-2px)}
-.stat-card::after{content:"";position:absolute;bottom:-30px;right:-30px;width:80px;height:80px;border-radius:50%;background:rgba(87,155,252,.06);pointer-events:none}
-.team-tile{border-radius:12px;background:#fff;border:1px solid #E6E9EF;box-shadow:0 1px 3px rgba(0,0,0,.03);transition:all .2s ease}
-.team-tile:hover{border-color:#579BFC;box-shadow:0 6px 20px rgba(87,155,252,.12);transform:translateY(-2px)}
 
-.page-enter{animation:slideUp .3s cubic-bezier(.16,1,.3,1) both}
+/* LIVE PILL */
+.live-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;background:#E8FFF3;border:1px solid #C3F0D8}
+.live-pill-dot{width:7px;height:7px;border-radius:50%;background:#00CA72;box-shadow:0 0 8px rgba(0,202,114,.5);animation:pulseDot 2s ease-in-out infinite}
+
+/* STAT CARDS */
+.stat-card{padding:22px;border-radius:12px;background:#fff;border:1px solid #E6E9EF;box-shadow:0 1px 4px rgba(0,0,0,.03);transition:all .35s var(--ease-spring);position:relative;overflow:hidden}
+.stat-card:hover{box-shadow:0 8px 28px rgba(0,0,0,.06);transform:translateY(-3px)}
+.stat-card::after{content:"";position:absolute;bottom:-25px;right:-25px;width:80px;height:80px;border-radius:50%;background:rgba(87,155,252,.06);pointer-events:none}
+
+/* TEAM TILES */
+.team-tile{border-radius:12px;background:#fff;border:1px solid #E6E9EF;box-shadow:0 1px 4px rgba(0,0,0,.03);transition:all .35s var(--ease-spring)}
+.team-tile:hover{border-color:#579BFC;box-shadow:0 8px 28px rgba(87,155,252,.12);transform:translateY(-3px) scale(1.01)}
+
+/* PAGE ANIMATIONS */
+.page-enter{animation:pageSlideUp .4s var(--ease-out-expo) both}
 .section-shell{position:relative}
-@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+
+@keyframes pageSlideUp{from{opacity:0;transform:translateY(16px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.6)}}
 @media(max-width:900px){.sidebar-shell{display:none!important}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -123,7 +138,7 @@ async function fetchSheetValues(url,key){
   }
 }
 
-const C={bg:"#fff",bgA:"#F5F6F8",dk:"#292F4C",fg:"#323338",sc:"#676879",mt:"#C3C6D4",tl:"#579BFC",td:"#0073EA",tg:"rgba(87,155,252,0.08)",rl:"#E6E9EF",cd:"#FFF",cb:"#E6E9EF",rd:"#E44258",gn:"#00CA72"};
+const C={bg:"#F8FAFC",bgA:"#EDF2F8",dk:"#091A26",fg:"#0B1A26",sc:"#3A5068",mt:"#7A8FA4",tl:"#1490B0",td:"#0C6B8E",tg:"rgba(20,144,176,0.12)",rl:"#CDDAE6",cd:"#FFF",cb:"#C8D8E6",rd:"#EF4444",gn:"#10B981"};
 const F={sf:"'Playfair Display',Georgia,serif",sn:"'Plus Jakarta Sans',-apple-system,sans-serif"};
 const SHEET_SOURCES={general:{id:"general",label:"CareForBrains",tag:"GENERAL"},stem:{id:"stem",label:"STEM",tag:"STEM"}};
 const SHEET_AUTO_SYNC_MS=1000*60*15;
@@ -156,7 +171,10 @@ function logEvent(db,type,data){
   });
 }
 
-function Av({m,s=38}){const[e,setE]=useState(false);if(m?.img&&!e)return React.createElement('img',{src:m.img,alt:m.name||'',loading:'lazy',style:{width:s,height:s,borderRadius:s>30?10:6,objectFit:'cover',flexShrink:0,background:m.color||'#E6E9EF',imageRendering:'auto',border:'2px solid rgba(255,255,255,.7)',boxShadow:'0 2px 8px rgba(0,0,0,.08)'},onError:()=>setE(true)});return<div style={{width:s,height:s,borderRadius:s>30?10:6,background:m?.color||C.tl,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:s*.36,flexShrink:0,boxShadow:"0 2px 8px rgba(0,0,0,.08)",letterSpacing:"-0.02em"}}>{m?.name?.[0]||"?"}</div>}
+function Av({m,s=38}){
+  const initials=(m?.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2);
+  return<div style={{width:s,height:s,borderRadius:s>30?10:7,background:m?.color||'#579BFC',display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:s*.34,flexShrink:0,letterSpacing:"-0.02em",textTransform:"uppercase",userSelect:"none",boxShadow:"0 2px 8px "+(m?.color||'#579BFC')+"33"}}>{initials}</div>
+}
 function Tag({t}){const m={high:{b:"#FEE2E2",c:C.rd},medium:{b:"#FEF3C7",c:"#D97706"},low:{b:"#DBEAFE",c:"#2563EB"},done:{b:"#D1FAE5",c:C.gn}};const v=m[t]||m.medium;return<span style={{display:"inline-flex",padding:"2px 8px",borderRadius:4,fontSize:9.5,fontWeight:700,background:v.b,color:v.c,textTransform:"uppercase",letterSpacing:"0.04em",fontFamily:"monospace"}}>{t}</span>}
 function Btn({primary,children,onClick,style:sx,className='',...p}){return<button className={`mission-btn ${primary?'mission-btn-primary':''} ${className}`.trim()} onClick={onClick} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"7px 16px",borderRadius:8,fontSize:12,fontWeight:600,cursor:"pointer",...sx}} {...p}>{children}</button>}
 function Inp({className='',...p}){return<input className={`mission-field ${className}`.trim()} style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:10,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",...(p.style||{})}} {...p}/>}
@@ -182,17 +200,17 @@ function Login({onLogin,passwords,team}){
       if(firebase.apps.length){logEvent(firebase.database(),'login',{user:sel,ip:'unknown'})}
     });
     onLogin(sel)};
-  return(<div className="login-shell" style={{minHeight:"100vh",background:"#F5F6F8",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.sn,padding:"32px 20px"}}>
+  return(<div className="login-shell" style={{minHeight:"100vh",background:"#F8FAFC",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.sn,padding:"32px 20px"}}>
     <div style={{width:440,maxWidth:"90vw"}}>
       <div style={{textAlign:"center",marginBottom:32}}>
         <img src={LOGO} alt="" style={{width:48,height:48,borderRadius:12,marginBottom:10}}/>
         <h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400}}>Mission Control</h1>
-        <div style={{marginTop:8,display:"inline-flex",alignItems:"center",gap:6,padding:"4px 12px",borderRadius:20,background:"#E8FFF3",fontSize:11,fontWeight:600,color:"#00CA72"}}><span style={{width:6,height:6,borderRadius:3,background:"#00CA72",display:"inline-block"}}></span> Synced in real time</div>
+        <div style={{marginTop:8,display:"inline-flex",alignItems:"center",gap:6,padding:"4px 12px",borderRadius:20,background:"rgba(20,144,176,0.08)",border:"1px solid rgba(20,144,176,0.15)",fontSize:11,fontWeight:600,color:"#1490B0"}}><span style={{width:6,height:6,borderRadius:3,background:"#1490B0",display:"inline-block"}}></span> Synced in real time</div>
       </div>
       <div className="login-panel page-enter" style={{padding:28}}>
         {!sel?<div>
           <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.12em",color:C.mt,marginBottom:14}}>Sign in as</div>
-          {team.map(m=><button key={m.id} onClick={()=>setSel(m.id)} style={{display:"flex",alignItems:"center",gap:12,width:"100%",padding:"14px 16px",border:"1px solid "+C.rl,borderRadius:12,background:"#fff",cursor:"pointer",marginBottom:8,fontFamily:"inherit",textAlign:"left",transition:"all .2s ease",boxShadow:"0 1px 3px rgba(0,0,0,.03)"}} onMouseEnter={e=>{e.currentTarget.style.borderColor='#579BFC';e.currentTarget.style.boxShadow='0 4px 16px rgba(87,155,252,.1)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.rl;e.currentTarget.style.boxShadow='0 1px 3px rgba(0,0,0,.03)'}}>
+          {team.map(m=><button key={m.id} onClick={()=>setSel(m.id)} style={{display:"flex",alignItems:"center",gap:12,width:"100%",padding:"14px 16px",border:"1px solid "+C.rl,borderRadius:12,background:"#fff",cursor:"pointer",marginBottom:8,fontFamily:"inherit",textAlign:"left",transition:"all .3s cubic-bezier(0.16,1,0.3,1)",boxShadow:"0 1px 3px rgba(9,26,38,.03)"}} onMouseEnter={e=>{e.currentTarget.style.borderColor='#1490B0';e.currentTarget.style.boxShadow='0 4px 20px rgba(20,144,176,.1)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.rl;e.currentTarget.style.boxShadow='0 1px 3px rgba(9,26,38,.03)'}}>
             <Av m={m} s={36}/><div style={{flex:1}}><div style={{fontWeight:700,fontSize:14}}>{m.name}</div><div style={{fontSize:10.5,color:C.mt}}>{m.role}</div></div>
             {m.admin&&<span style={{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:4,background:C.tg,color:C.tl,fontFamily:"monospace"}}>ADMIN</span>}
           </button>)}
@@ -201,7 +219,7 @@ function Login({onLogin,passwords,team}){
           <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Av m={team.find(t=>t.id===sel)} s={44}/><div style={{fontWeight:700,fontSize:16}}>{team.find(t=>t.id===sel)?.name}</div></div>
           <div style={{marginBottom:14}}><Lbl>Password</Lbl><input type="password" style={{width:"100%",padding:"11px 14px",background:C.cd,border:"1px solid "+C.rl,borderRadius:8,color:C.fg,fontSize:14,fontFamily:"inherit",outline:"none"}} value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==='Enter'&&go()} autoFocus/></div>
           {err&&<div style={{color:C.rd,fontSize:12,fontWeight:600,marginBottom:10}}>{err}</div>}
-          <button onClick={go} style={{width:"100%",padding:"12px",borderRadius:10,background:"#579BFC",color:"#fff",fontWeight:700,fontSize:13.5,border:"none",cursor:"pointer",fontFamily:"inherit",boxShadow:"0 3px 12px rgba(87,155,252,.3)",transition:"all .2s ease",letterSpacing:"-0.01em"}}>Sign In</button>
+          <button onClick={go} style={{width:"100%",padding:"12px",borderRadius:10,background:"#091A26",color:"#fff",fontWeight:700,fontSize:13.5,border:"none",cursor:"pointer",fontFamily:"inherit",boxShadow:"0 3px 12px rgba(9,26,38,.2)",transition:"all .3s cubic-bezier(0.34,1.56,0.64,1)",letterSpacing:"-0.01em"}}>Sign In</button>
         </div>}
       </div>
     </div>
@@ -217,7 +235,7 @@ function Sidebar({tab,setTab,me,team,logout}){
       <img src={LOGO} alt="" style={{width:30,height:30,borderRadius:8}}/><div><span style={{fontWeight:700,fontSize:13.5,display:"block",color:"#F8FAFC"}}>Mission Control</span><span style={{fontSize:9.5,color:"rgba(248,250,252,.58)"}}>CareForBrains</span></div>
     </div>
     <div className="sidebar-profile" style={{padding:"14px 18px 8px",display:"flex",alignItems:"center",gap:10}}>
-      <Av m={meD} s={32}/><div><div style={{fontWeight:700,fontSize:12.5,color:"#F8FAFC"}}>{fn(meD?.name)}</div><div style={{fontSize:9.5,color:"#579BFC",fontWeight:600,fontFamily:"monospace"}}>{isA?'ADMIN':'MEMBER'}</div></div>
+      <Av m={meD} s={32}/><div><div style={{fontWeight:700,fontSize:12.5,color:"#F8FAFC"}}>{fn(meD?.name)}</div><div style={{fontSize:9.5,color:"#38C0D4",fontWeight:600,fontFamily:"monospace"}}>{isA?'ADMIN':'MEMBER'}</div></div>
     </div>
     <div className="sidebar-label" style={{fontSize:9.5,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.12em",padding:"14px 18px 4px"}}>Workspace</div>
     <nav style={{flex:1,overflowY:"auto",padding:"4px 0"}}>
@@ -538,8 +556,8 @@ function Sheets({db,hubData,team,me}){
         const rc=Math.max(((sheetData[s.id]||[]).length||0)-1,0);
         const closed=!!(s.note||'');
         return<button key={s._fbKey} onClick={()=>{setActive(s._fbKey||s.id);setEditCell(null)}} style={{
-          padding:"7px 14px",border:isAct?"2px solid #579BFC":"1px solid "+C.rl,
-          borderRadius:8,background:isAct?"#EBF5FF":"#fff",cursor:"pointer",fontFamily:"inherit",
+          padding:"7px 14px",border:isAct?"2px solid #1490B0":"1px solid "+C.rl,
+          borderRadius:8,background:isAct?"rgba(20,144,176,0.06)":"#fff",cursor:"pointer",fontFamily:"inherit",
           fontSize:12,fontWeight:isAct?700:500,color:isAct?"#323338":"#676879",
           display:"flex",alignItems:"center",gap:6,opacity:closed&&!isAct?0.5:1
         }}>
@@ -567,11 +585,11 @@ function Sheets({db,hubData,team,me}){
           <colgroup>{visibleCols.map((ci,i)=><col key={i} style={{width:isPriCol(cleanHeaders[ci])?"80px":(100/visibleCols.length)+"%"}}/>)}<col style={{width:"36px"}}/></colgroup>
           <thead><tr>{visibleCols.map((ci,i)=>{
             const h=cleanHeaders[ci]||'';const pri=isPriCol(h);
-            return<th key={i} style={{padding:"7px 10px",textAlign:"left",borderBottom:"2px solid "+C.rl,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.04em",color:pri?"#0073EA":"#323338",background:pri?"#E8F0FE":"#F5F6F8",position:"sticky",top:0,zIndex:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fmtH(h)}</th>
+            return<th key={i} style={{padding:"7px 10px",textAlign:"left",borderBottom:"2px solid "+C.rl,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.04em",color:pri?"#0C6B8E":"#323338",background:pri?"rgba(20,144,176,0.08)":"#F5F6F8",position:"sticky",top:0,zIndex:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fmtH(h)}</th>
           })}<th style={{width:36,padding:0,borderBottom:"2px solid "+C.rl,background:"#F5F6F8",position:"sticky",top:0,zIndex:2}}></th></tr></thead>
           <tbody>{allRows.map((row,i)=>{
             const isViewing=editCell&&editCell.view===i;
-            return<React.Fragment key={i}><tr style={{background:isViewing?"#EBF5FF":i%2===0?"#fff":"#FAFBFC"}}>
+            return<React.Fragment key={i}><tr style={{background:isViewing?"rgba(20,144,176,0.06)":i%2===0?"#fff":"#FAFBFC"}}>
             {visibleCols.map((ci,j)=>{
               const isEditing=editCell&&editCell.r===i&&editCell.c===ci&&!editCell.view;
               const pri=isPriCol(cleanHeaders[ci]);
@@ -588,15 +606,15 @@ function Sheets({db,hubData,team,me}){
                 {isEditing?<input autoFocus value={editVal} onChange={e=>setEditVal(e.target.value)}
                   onBlur={()=>saveCell(i,ci,editVal)}
                   onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();saveCell(i,ci,editVal)}if(e.key==='Escape')setEditCell(null)}}
-                  style={{width:"100%",padding:"3px 6px",border:"2px solid #579BFC",borderRadius:4,fontSize:12,fontFamily:"inherit",outline:"none",background:"#fff"}}
+                  style={{width:"100%",padding:"3px 6px",border:"2px solid #1490B0",borderRadius:4,fontSize:12,fontFamily:"inherit",outline:"none",background:"#fff"}}
                 />:pri?(val||'—'):val}
               </td>
             })}
             <td style={{width:32,padding:"4px",borderBottom:"1px solid #F0F1F3",textAlign:"center"}}>
-              <button onClick={()=>setEditCell(isViewing?null:{view:i})} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:isViewing?"#579BFC":"#C3C6D4",padding:2}} title="View all fields">&#9776;</button>
+              <button onClick={()=>setEditCell(isViewing?null:{view:i})} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:isViewing?"#1490B0":"#C3C6D4",padding:2}} title="View all fields">&#9776;</button>
             </td>
             </tr>
-            {isViewing&&<tr><td colSpan={visibleCols.length+1} style={{padding:0,background:"#F8FAFC",borderBottom:"2px solid #579BFC"}}>
+            {isViewing&&<tr><td colSpan={visibleCols.length+1} style={{padding:0,background:"#F8FAFC",borderBottom:"2px solid #1490B0"}}>
               <div style={{padding:"12px 16px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px 20px"}}>
                 {cleanHeaders.map((h,ci)=>{
                   const val=row[ci]||'';
@@ -606,7 +624,7 @@ function Sheets({db,hubData,team,me}){
                     {isFieldEdit?<input autoFocus value={editVal} onChange={e=>setEditVal(e.target.value)}
                       onBlur={()=>saveCell(i,ci,editVal)}
                       onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();saveCell(i,ci,editVal)}if(e.key==='Escape')setEditCell({view:i})}}
-                      style={{flex:1,padding:"3px 6px",border:"2px solid #579BFC",borderRadius:4,fontSize:12,fontFamily:"inherit",outline:"none",background:"#fff"}}
+                      style={{flex:1,padding:"3px 6px",border:"2px solid #1490B0",borderRadius:4,fontSize:12,fontFamily:"inherit",outline:"none",background:"#fff"}}
                     />:<span onDoubleClick={()=>{if(gToken){setEditCell({r:i,c:ci,view:i});setEditVal(val)}}} style={{
                       fontSize:12,color:val?"#323338":"#C3C6D4",cursor:gToken?"text":"default",wordBreak:"break-word"
                     }}>{val||'—'}</span>}
@@ -816,13 +834,13 @@ function Logs({hubData,team}){
   const filtered=filter==='all'?logs:logs.filter(l=>l.type===filter);
   const getName=id=>{const m=team.find(t=>t.id===id);return m?fn(m.name):id||'?'};
   const typeLabel={login:'Login',sheet_edit:'Sheet Edit',task_assign:'Task Assigned'};
-  const typeColor={login:'#579BFC',sheet_edit:'#00CA72',task_assign:'#FDAB3D'};
+  const typeColor={login:'#1490B0',sheet_edit:'#10B981',task_assign:'#F59E0B'};
 
   return(<div>
     <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>Admin</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Activity Log</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 18px"}}/>
     <div style={{display:"flex",gap:6,marginBottom:14}}>
-      {[['all','All'],['login','Logins'],['sheet_edit','Edits'],['task_assign','Tasks']].map(([v,l])=><button key={v} onClick={()=>setFilter(v)} style={{padding:"6px 14px",border:filter===v?"2px solid #579BFC":"1px solid "+C.rl,borderRadius:8,background:filter===v?"#EBF5FF":"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:filter===v?700:500,color:filter===v?"#323338":"#676879"}}>{l}</button>)}
+      {[['all','All'],['login','Logins'],['sheet_edit','Edits'],['task_assign','Tasks']].map(([v,l])=><button key={v} onClick={()=>setFilter(v)} style={{padding:"6px 14px",border:filter===v?"2px solid #1490B0":"1px solid "+C.rl,borderRadius:8,background:filter===v?"rgba(20,144,176,0.06)":"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:filter===v?700:500,color:filter===v?"#323338":"#676879"}}>{l}</button>)}
       <span style={{fontSize:11,color:C.mt,alignSelf:"center",marginLeft:8}}>{filtered.length} events</span>
     </div>
     <Card style={{overflow:"hidden"}}>
@@ -934,12 +952,12 @@ function App(){
     case 'logs':return isA?<Logs hubData={hubData} team={team}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     default:return<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>}};
 
-  return(<div style={{display:"flex",minHeight:"100vh",fontFamily:F.sn,color:C.fg,background:"#F5F6F8"}}>    <Sidebar tab={safeTab} setTab={setTab} me={me} team={team} logout={logout}/>
+  return(<div style={{display:"flex",minHeight:"100vh",fontFamily:F.sn,color:C.fg,background:"#F8FAFC"}}>    <Sidebar tab={safeTab} setTab={setTab} me={me} team={team} logout={logout}/>
     <div style={{marginLeft:240,flex:1,minHeight:"100vh"}}>
       <div className="topbar-shell" style={{position:"sticky",top:0,padding:"12px 36px",display:"flex",alignItems:"center",justifyContent:"space-between",zIndex:50}}>
         <span className="topbar-title" style={{fontFamily:F.sf,fontSize:19,fontWeight:400}}>{titles[safeTab]}</span>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
-          <span className="live-pill" style={{fontSize:10,color:"#00CA72",fontWeight:700}}><span className="live-pill-dot"></span>LIVE</span>
+          <span className="live-pill" style={{fontSize:10,color:"#1490B0",fontWeight:700}}><span className="live-pill-dot"></span>LIVE</span>
           <span style={{fontSize:11,color:C.mt,fontFamily:"monospace"}}>{time}</span></div></div>
       <div style={{padding:"28px 36px 40px",width:"100%",maxWidth:"none"}}><div key={safeTab} className="page-enter section-shell"><V/></div></div>
     </div>
