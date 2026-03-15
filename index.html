@@ -344,8 +344,12 @@ function Assign({db,tasks,team,me}){
 function Cal({db,events,tasks,team,me}){
   const isA=team.find(t=>t.id===me)?.admin;const[cur,setCur]=useState(new Date());const[modal,setModal]=useState(false);const[form,setForm]=useState({title:'',date:'',assignee:me,notes:''});const[sel,setSel]=useState(null);
   const y=cur.getFullYear(),mo=cur.getMonth(),f=new Date(y,mo,1).getDay(),dim=new Date(y,mo+1,0).getDate(),pd=new Date(y,mo,0).getDate();const today=new Date();const mos=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const cells=[];for(let i=f-1;i>=0;i--)cells.push({d:pd-i,c:false});for(let i=1;i<=dim;i++)cells.push({d:i,c:true});while(cells.length<42)cells.push({d:cells.length-f-dim+1,c:false});
-  const ds=d=>`${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const cells=[];
+  const prevDates=[];for(let i=f-1;i>=0;i--)prevDates.push({d:pd-i,c:false,mo:mo-1,y:mo===0?y-1:y});
+  const curDates=[];for(let i=1;i<=dim;i++)curDates.push({d:i,c:true,mo,y});
+  const nextDates=[];let nd=1;while(prevDates.length+curDates.length+nextDates.length<42)nextDates.push({d:nd++,c:false,mo:mo+1,y:mo===11?y+1:y});
+  cells.push(...prevDates,...curDates,...nextDates);
+  const cellDate=c=>{const m=c.mo<0?11:c.mo>11?0:c.mo;const yr=c.mo<0?c.y-1:c.mo>11?c.y+1:c.y;return`${yr}-${String(m+1).padStart(2,'0')}-${String(c.d).padStart(2,'0')}`};
   const tasksOn=s=>tasks.filter(t=>t.due===s);
   const itemsOn=s=>{
     const eventItems=events.filter(e=>e.date===s).map(e=>({...e,kind:'event'}));
@@ -368,7 +372,7 @@ function Cal({db,events,tasks,team,me}){
       <button onClick={()=>setCur(new Date(y,mo+1))} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:14,color:C.sc}}>&#8594;</button></div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:1,background:C.rl,border:"1px solid "+C.rl,borderRadius:8,overflow:"hidden",marginBottom:22}}>
       {['S','M','T','W','T','F','S'].map((d,i)=><div key={i} style={{background:C.bgA,padding:8,textAlign:"center",fontFamily:"monospace",fontSize:10,color:C.mt}}>{d}</div>)}
-      {cells.map((c,i)=>{const s=c.c?ds(c.d):'';const items=itemsOn(s);return(<div key={i} onClick={()=>c.c&&setSel(s)} style={{background:isTd(c.d,c.c)?C.bgA:C.cd,minHeight:74,padding:"5px 6px",cursor:"pointer",fontSize:12,color:!c.c?C.mt:C.fg}}>
+      {cells.map((c,i)=>{const s=cellDate(c);const items=itemsOn(s);return(<div key={i} onClick={()=>setSel(s)} style={{background:isTd(c.d,c.c)?C.bgA:C.cd,minHeight:74,padding:"5px 6px",cursor:"pointer",fontSize:12,color:!c.c?C.mt:C.fg}}>
         <div style={{fontFamily:"monospace",fontSize:11,fontWeight:isTd(c.d,c.c)?800:"inherit"}}>{c.d}</div>
         {items.slice(0,3).map(item=>item.kind==='task'
           ?<div key={`t-${item._fbKey}`} style={{padding:"1px 4px",fontSize:8.5,fontWeight:700,borderRadius:4,background:taskTone(item).b,color:taskTone(item).c,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fn(team.find(t=>t.id===item.assignee)?.name)}: {item.text}</div>
