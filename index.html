@@ -489,7 +489,7 @@ function Sheets({db,hubData,team,me}){
           <span style={{fontWeight:700,fontSize:13}}>{activeSheet.name}</span>
           {activeSheet.note&&<span style={{padding:"2px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:"#F3F4F6",color:"#9CA3AF"}}>{activeSheet.note}</span>}
           <span style={{fontSize:11,color:C.sc}}>{allRows.length} rows</span>
-          {gToken&&<span style={{fontSize:10,color:C.mt}}>click cell to edit</span>}
+          {gToken&&<span style={{fontSize:10,color:C.mt}}>double-click to edit &#183; &#9776; to view all</span>}
         </div>
         <div style={{display:"flex",alignItems:"center",gap:6}}>
           {[['25%',.25],['50%',.5],['75%',.75],['End',1]].map(([l,p])=><button key={l} onClick={()=>jumpTo(p)} style={{padding:"3px 8px",border:"1px solid "+C.rl,borderRadius:5,background:"#fff",fontSize:10,fontWeight:600,color:C.sc,cursor:"pointer",fontFamily:"inherit"}}>{l}</button>)}
@@ -498,18 +498,20 @@ function Sheets({db,hubData,team,me}){
       </div>
       <div ref={tableRef} style={{overflowY:"auto",overflowX:"hidden",maxHeight:"72vh"}}>
         <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"fixed"}}>
-          <colgroup>{visibleCols.map((ci,i)=><col key={i} style={{width:isPriCol(cleanHeaders[ci])?"80px":(100/visibleCols.length)+"%"}}/>)}</colgroup>
+          <colgroup>{visibleCols.map((ci,i)=><col key={i} style={{width:isPriCol(cleanHeaders[ci])?"80px":(100/visibleCols.length)+"%"}}/>)}<col style={{width:"36px"}}/></colgroup>
           <thead><tr>{visibleCols.map((ci,i)=>{
             const h=cleanHeaders[ci]||'';const pri=isPriCol(h);
             return<th key={i} style={{padding:"7px 10px",textAlign:"left",borderBottom:"2px solid "+C.rl,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.04em",color:pri?"#0073EA":"#323338",background:pri?"#E8F0FE":"#F5F6F8",position:"sticky",top:0,zIndex:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fmtH(h)}</th>
-          })}</tr></thead>
-          <tbody>{allRows.map((row,i)=><tr key={i} style={{background:i%2===0?"#fff":"#FAFBFC"}}>
+          })}<th style={{width:36,padding:0,borderBottom:"2px solid "+C.rl,background:"#F5F6F8",position:"sticky",top:0,zIndex:2}}></th></tr></thead>
+          <tbody>{allRows.map((row,i)=>{
+            const isViewing=editCell&&editCell.view===i;
+            return<React.Fragment key={i}><tr style={{background:isViewing?"#EBF5FF":i%2===0?"#fff":"#FAFBFC"}}>
             {visibleCols.map((ci,j)=>{
-              const isEditing=editCell&&editCell.r===i&&editCell.c===ci;
+              const isEditing=editCell&&editCell.r===i&&editCell.c===ci&&!editCell.view;
               const pri=isPriCol(cleanHeaders[ci]);
               const val=row[ci]||'';
               const pStyle=pri?priCellStyle(val):{};
-              return<td key={j} onClick={()=>{if(gToken&&!isEditing){setEditCell({r:i,c:ci});setEditVal(val)}}} style={{
+              return<td key={j} onDoubleClick={()=>{if(gToken){setEditCell({r:i,c:ci});setEditVal(val)}}} style={{
                 padding:isEditing?"2px":"4px 8px",borderBottom:"1px solid #F0F1F3",
                 overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
                 fontSize:12,fontWeight:pri?700:"normal",textAlign:pri?"center":"left",
@@ -519,11 +521,34 @@ function Sheets({db,hubData,team,me}){
               }}>
                 {isEditing?<input autoFocus value={editVal} onChange={e=>setEditVal(e.target.value)}
                   onBlur={()=>saveCell(i,ci,editVal)}
-                  onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();saveCell(i,ci,editVal)}if(e.key==='Escape')setEditCell(null);if(e.key==='Tab'){e.preventDefault();saveCell(i,ci,editVal)}}}
+                  onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();saveCell(i,ci,editVal)}if(e.key==='Escape')setEditCell(null)}}
                   style={{width:"100%",padding:"3px 6px",border:"2px solid #579BFC",borderRadius:4,fontSize:12,fontFamily:"inherit",outline:"none",background:"#fff"}}
                 />:pri?(val||'—'):val}
               </td>
-            })}</tr>)}</tbody>
+            })}
+            <td style={{width:32,padding:"4px",borderBottom:"1px solid #F0F1F3",textAlign:"center"}}>
+              <button onClick={()=>setEditCell(isViewing?null:{view:i})} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:isViewing?"#579BFC":"#C3C6D4",padding:2}} title="View all fields">&#9776;</button>
+            </td>
+            </tr>
+            {isViewing&&<tr><td colSpan={visibleCols.length+1} style={{padding:0,background:"#F8FAFC",borderBottom:"2px solid #579BFC"}}>
+              <div style={{padding:"12px 16px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px 20px"}}>
+                {cleanHeaders.map((h,ci)=>{
+                  const val=row[ci]||'';
+                  const isFieldEdit=editCell&&editCell.r===i&&editCell.c===ci&&editCell.view===i;
+                  return<div key={ci} style={{display:"flex",gap:6,alignItems:"baseline",padding:"3px 0",borderBottom:"1px solid #ECEDF5"}}>
+                    <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:"#676879",minWidth:100,flexShrink:0}}>{fmtH(h)}</span>
+                    {isFieldEdit?<input autoFocus value={editVal} onChange={e=>setEditVal(e.target.value)}
+                      onBlur={()=>saveCell(i,ci,editVal)}
+                      onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();saveCell(i,ci,editVal)}if(e.key==='Escape')setEditCell({view:i})}}
+                      style={{flex:1,padding:"3px 6px",border:"2px solid #579BFC",borderRadius:4,fontSize:12,fontFamily:"inherit",outline:"none",background:"#fff"}}
+                    />:<span onDoubleClick={()=>{if(gToken){setEditCell({r:i,c:ci,view:i});setEditVal(val)}}} style={{
+                      fontSize:12,color:val?"#323338":"#C3C6D4",cursor:gToken?"text":"default",wordBreak:"break-word"
+                    }}>{val||'—'}</span>}
+                  </div>
+                })}
+              </div>
+            </td></tr>}
+            </React.Fragment>})}</tbody>
         </table>
       </div>
     </Card>:activeSheet?<Card><div style={{padding:"40px 24px",textAlign:"center",color:C.mt}}>
