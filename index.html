@@ -8,47 +8,53 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{min-height:100%;background:#fff}
-body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;color:#1A1D21;-webkit-font-smoothing:antialiased}
+html,body{min-height:100%;background:#F7F8FA}
+body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;color:#1A1D21;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+img{image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges}
 #root{min-height:100vh}
-button,input,select,textarea{font-family:inherit;transition:border-color .15s,background .15s,box-shadow .15s}
+button,input,select,textarea{font-family:inherit;transition:all .2s ease}
 button{cursor:pointer}
 button:disabled{opacity:.4;cursor:not-allowed}
-::selection{background:#D0E8F2}
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:8px}
+button:not(:disabled):active{transform:scale(.97)}
+::selection{background:rgba(87,155,252,.2)}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(50,51,56,.15);border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:rgba(50,51,56,.25)}
 
-.sidebar-shell{background:#292F4C;color:#fff}
-.sidebar-brand{border-bottom:1px solid rgba(255,255,255,.08)}
-.sidebar-profile{border-bottom:1px solid rgba(255,255,255,.08)}
-.sidebar-label{color:rgba(255,255,255,.35)}
-.nav-btn{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:13px;font-weight:500;color:rgba(255,255,255,.6);background:transparent;border:none;border-left:3px solid transparent;width:100%;text-align:left;font-family:inherit;transition:all .15s}
-.nav-btn:hover{color:#fff;background:rgba(255,255,255,.06)}
-.nav-btn.active{color:#fff;background:rgba(255,255,255,.1);border-left-color:#579BFC;font-weight:700}
+.sidebar-shell{background:linear-gradient(180deg,#1C2038 0%,#292F4C 100%);color:#fff;box-shadow:2px 0 20px rgba(0,0,0,.08)}
+.sidebar-brand{border-bottom:1px solid rgba(255,255,255,.07);padding:20px 18px}
+.sidebar-profile{border-bottom:1px solid rgba(255,255,255,.07)}
+.sidebar-label{color:rgba(255,255,255,.3)}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:13px;font-weight:500;color:rgba(255,255,255,.5);background:transparent;border:none;border-left:3px solid transparent;width:100%;text-align:left;font-family:inherit;transition:all .2s ease;letter-spacing:-.01em}
+.nav-btn:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.04);transform:translateX(2px)}
+.nav-btn.active{color:#fff;background:rgba(87,155,252,.12);border-left-color:#579BFC;font-weight:700;letter-spacing:-.01em}
 
-.login-panel{background:#fff;border:1px solid #E6E9EF;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
-.mission-card{background:#fff;border:1px solid #E6E9EF;border-radius:10px;transition:border-color .15s}
-.mission-card:hover{border-color:#C3CAD9}
-.mission-btn{border-radius:8px;font-weight:600;border:none;padding:7px 16px;font-size:12px}
+.login-panel{background:#fff;border:1px solid #E6E9EF;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.04),0 20px 50px rgba(0,0,0,.06)}
+.mission-card{background:#fff;border:1px solid #E6E9EF;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.03);transition:all .2s ease}
+.mission-card:hover{border-color:#D0D4DC;box-shadow:0 4px 16px rgba(0,0,0,.05)}
+.mission-btn{border-radius:8px;font-weight:600;border:none;padding:8px 18px;font-size:12.5px;letter-spacing:-.01em;transition:all .15s ease}
 .mission-btn:not(.mission-btn-primary){background:#F5F6F8;color:#323338;border:1px solid #E6E9EF}
-.mission-btn:not(.mission-btn-primary):hover{background:#ECEDF5}
-.mission-btn-primary{background:#579BFC;color:#fff;border:1px solid #579BFC}
-.mission-btn-primary:hover{background:#4B8AE8}
-.mission-field{border:1px solid #E6E9EF;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;background:#fff;color:#323338}
-.mission-field:focus{border-color:#579BFC;box-shadow:0 0 0 2px rgba(87,155,252,.15)}
+.mission-btn:not(.mission-btn-primary):hover{background:#ECEDF5;border-color:#D0D4DC}
+.mission-btn-primary{background:#579BFC;color:#fff;border:1px solid #4B8AE8;box-shadow:0 2px 8px rgba(87,155,252,.25)}
+.mission-btn-primary:hover{background:#4B8AE8;box-shadow:0 4px 14px rgba(87,155,252,.35);transform:translateY(-1px)}
+.mission-field{border:1px solid #E6E9EF;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;background:#fff;color:#323338;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.mission-field:focus{border-color:#579BFC;box-shadow:0 0 0 3px rgba(87,155,252,.12)}
 
-.topbar-shell{background:#fff;border-bottom:1px solid #E6E9EF}
-.topbar-title{font-weight:600;color:#323338}
-.live-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:#E8FFF3;border:1px solid #C3F0D8}
-.live-pill-dot{width:7px;height:7px;border-radius:50%;background:#00CA72;animation:pulse 2s infinite}
-.stat-card{padding:20px;border-radius:10px;background:#fff;border:1px solid #E6E9EF}
-.team-tile{border-radius:10px;background:#fff;border:1px solid #E6E9EF;transition:border-color .15s,box-shadow .15s}
-.team-tile:hover{border-color:#579BFC;box-shadow:0 4px 12px rgba(87,155,252,.1)}
+.topbar-shell{background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(230,233,239,.8)}
+.topbar-title{font-weight:600;color:#323338;letter-spacing:-.02em}
+.live-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;background:#E8FFF3;border:1px solid #C3F0D8}
+.live-pill-dot{width:7px;height:7px;border-radius:50%;background:#00CA72;box-shadow:0 0 6px rgba(0,202,114,.4);animation:pulse 2s ease-in-out infinite}
+.stat-card{padding:22px;border-radius:12px;background:#fff;border:1px solid #E6E9EF;box-shadow:0 1px 3px rgba(0,0,0,.03);transition:all .2s ease;position:relative;overflow:hidden}
+.stat-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.05);transform:translateY(-2px)}
+.stat-card::after{content:"";position:absolute;bottom:-30px;right:-30px;width:80px;height:80px;border-radius:50%;background:rgba(87,155,252,.06);pointer-events:none}
+.team-tile{border-radius:12px;background:#fff;border:1px solid #E6E9EF;box-shadow:0 1px 3px rgba(0,0,0,.03);transition:all .2s ease}
+.team-tile:hover{border-color:#579BFC;box-shadow:0 6px 20px rgba(87,155,252,.12);transform:translateY(-2px)}
 
-.page-enter{animation:slideUp .25s ease both}
+.page-enter{animation:slideUp .3s cubic-bezier(.16,1,.3,1) both}
 .section-shell{position:relative}
-@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
 @media(max-width:900px){.sidebar-shell{display:none!important}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -150,13 +156,13 @@ function logEvent(db,type,data){
   });
 }
 
-function Av({m,s=38}){const[e,setE]=useState(false);if(m?.img&&!e)return React.createElement('img',{src:m.img,alt:'',style:{width:s,height:s,borderRadius:8,objectFit:'cover',flexShrink:0,background:m.color},onError:()=>setE(true)});return<div style={{width:s,height:s,borderRadius:8,background:m?.color||C.tl,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:s*.38,flexShrink:0}}>{m?.name?.[0]||"?"}</div>}
+function Av({m,s=38}){const[e,setE]=useState(false);if(m?.img&&!e)return React.createElement('img',{src:m.img,alt:m.name||'',loading:'lazy',style:{width:s,height:s,borderRadius:s>30?10:6,objectFit:'cover',flexShrink:0,background:m.color||'#E6E9EF',imageRendering:'auto',border:'2px solid rgba(255,255,255,.7)',boxShadow:'0 2px 8px rgba(0,0,0,.08)'},onError:()=>setE(true)});return<div style={{width:s,height:s,borderRadius:s>30?10:6,background:m?.color||C.tl,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:s*.36,flexShrink:0,boxShadow:"0 2px 8px rgba(0,0,0,.08)",letterSpacing:"-0.02em"}}>{m?.name?.[0]||"?"}</div>}
 function Tag({t}){const m={high:{b:"#FEE2E2",c:C.rd},medium:{b:"#FEF3C7",c:"#D97706"},low:{b:"#DBEAFE",c:"#2563EB"},done:{b:"#D1FAE5",c:C.gn}};const v=m[t]||m.medium;return<span style={{display:"inline-flex",padding:"2px 8px",borderRadius:4,fontSize:9.5,fontWeight:700,background:v.b,color:v.c,textTransform:"uppercase",letterSpacing:"0.04em",fontFamily:"monospace"}}>{t}</span>}
 function Btn({primary,children,onClick,style:sx,className='',...p}){return<button className={`mission-btn ${primary?'mission-btn-primary':''} ${className}`.trim()} onClick={onClick} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"7px 16px",borderRadius:8,fontSize:12,fontWeight:600,cursor:"pointer",...sx}} {...p}>{children}</button>}
 function Inp({className='',...p}){return<input className={`mission-field ${className}`.trim()} style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:10,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",...(p.style||{})}} {...p}/>}
 function Sel({style:sx,className='',...p}){return<select className={`mission-field ${className}`.trim()} style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:10,color:C.fg,fontSize:13,fontFamily:"inherit",...(sx||{})}} {...p}/>}
 function Lbl({children}){return<label style={{display:"block",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginBottom:5}}>{children}</label>}
-function Card({children,style:sx,className=''}){return<div className={`mission-card ${className}`.trim()} style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:16,overflow:"hidden",marginBottom:14,...(sx||{})}}>{children}</div>}
+function Card({children,style:sx,className=''}){return<div className={`mission-card ${className}`.trim()} style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:12,overflow:"hidden",marginBottom:14,...(sx||{})}}>{children}</div>}
 function CardH({children,right}){return<div style={{padding:"12px 18px",borderBottom:"1px solid "+C.bgA,display:"flex",alignItems:"center",justifyContent:"space-between"}}><span style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>{children}</span>{right}</div>}
 
 // === FIREBASE HELPERS ===
@@ -186,7 +192,7 @@ function Login({onLogin,passwords,team}){
       <div className="login-panel page-enter" style={{padding:28}}>
         {!sel?<div>
           <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.12em",color:C.mt,marginBottom:14}}>Sign in as</div>
-          {team.map(m=><button key={m.id} onClick={()=>setSel(m.id)} style={{display:"flex",alignItems:"center",gap:12,width:"100%",padding:"12px 14px",border:"1px solid "+C.rl,borderRadius:12,background:"rgba(255,255,255,.88)",cursor:"pointer",marginBottom:8,fontFamily:"inherit",textAlign:"left",boxShadow:"0 12px 24px rgba(9,26,38,.04)"}}>
+          {team.map(m=><button key={m.id} onClick={()=>setSel(m.id)} style={{display:"flex",alignItems:"center",gap:12,width:"100%",padding:"14px 16px",border:"1px solid "+C.rl,borderRadius:12,background:"#fff",cursor:"pointer",marginBottom:8,fontFamily:"inherit",textAlign:"left",transition:"all .2s ease",boxShadow:"0 1px 3px rgba(0,0,0,.03)"}} onMouseEnter={e=>{e.currentTarget.style.borderColor='#579BFC';e.currentTarget.style.boxShadow='0 4px 16px rgba(87,155,252,.1)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.rl;e.currentTarget.style.boxShadow='0 1px 3px rgba(0,0,0,.03)'}}>
             <Av m={m} s={36}/><div style={{flex:1}}><div style={{fontWeight:700,fontSize:14}}>{m.name}</div><div style={{fontSize:10.5,color:C.mt}}>{m.role}</div></div>
             {m.admin&&<span style={{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:4,background:C.tg,color:C.tl,fontFamily:"monospace"}}>ADMIN</span>}
           </button>)}
@@ -195,7 +201,7 @@ function Login({onLogin,passwords,team}){
           <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Av m={team.find(t=>t.id===sel)} s={44}/><div style={{fontWeight:700,fontSize:16}}>{team.find(t=>t.id===sel)?.name}</div></div>
           <div style={{marginBottom:14}}><Lbl>Password</Lbl><input type="password" style={{width:"100%",padding:"11px 14px",background:C.cd,border:"1px solid "+C.rl,borderRadius:8,color:C.fg,fontSize:14,fontFamily:"inherit",outline:"none"}} value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==='Enter'&&go()} autoFocus/></div>
           {err&&<div style={{color:C.rd,fontSize:12,fontWeight:600,marginBottom:10}}>{err}</div>}
-          <button onClick={go} style={{width:"100%",padding:"12px",borderRadius:8,background:"#579BFC",color:"#fff",fontWeight:700,fontSize:13,border:"none",cursor:"pointer",fontFamily:"inherit"}}>Sign In</button>
+          <button onClick={go} style={{width:"100%",padding:"12px",borderRadius:10,background:"#579BFC",color:"#fff",fontWeight:700,fontSize:13.5,border:"none",cursor:"pointer",fontFamily:"inherit",boxShadow:"0 3px 12px rgba(87,155,252,.3)",transition:"all .2s ease",letterSpacing:"-0.01em"}}>Sign In</button>
         </div>}
       </div>
     </div>
