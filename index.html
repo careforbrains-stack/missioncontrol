@@ -942,11 +942,21 @@ function Emails({db,hubData,team,me}){
                 <th style={{padding:"6px 10px",borderBottom:"2px solid "+C.rl,background:"#F5F6F8",position:"sticky",top:0,width:36}}><input type="checkbox" checked={allChecked} onChange={()=>{if(allChecked)setChecked({});else{const n={};rows.forEach((_,i)=>n[i]=true);setChecked(n)}}}/></th>
                 <th style={{padding:"6px 10px",borderBottom:"2px solid "+C.rl,background:"#F5F6F8",position:"sticky",top:0,textAlign:"left",fontSize:10,fontWeight:700,color:"#323338"}}>Name</th>
                 <th style={{padding:"6px 10px",borderBottom:"2px solid "+C.rl,background:"#F5F6F8",position:"sticky",top:0,textAlign:"left",fontSize:10,fontWeight:700,color:"#323338"}}>Email</th>
+                <th style={{padding:"6px 10px",borderBottom:"2px solid "+C.rl,background:"#F5F6F8",position:"sticky",top:0,textAlign:"center",fontSize:10,fontWeight:700,color:"#323338"}}>Status</th>
               </tr></thead>
-              <tbody>{rows.map((row,i)=>{const email=eIdx>=0?(row[eIdx]||'').trim():'';const name=nIdx>=0?(row[nIdx]||'').trim():'';const valid=okEmail(email);return<tr key={i} style={{background:checked[i]?"rgba(87,155,252,.06)":"transparent",opacity:valid?1:.5}}>
+              <tbody>{rows.map((row,i)=>{const email=eIdx>=0?(row[eIdx]||'').trim():'';const name=nIdx>=0?(row[nIdx]||'').trim():'';const valid=okEmail(email);
+                const statusWords=['reached','respond','contacted','reply'];
+                const statusColIdx=cols.findIndex(h=>statusWords.some(w=>(h||'').toLowerCase().includes(w)));
+                const statusVal=statusColIdx>=0?(row[statusColIdx]||'').trim().toLowerCase():'';
+                const responded=statusVal==='yes'||statusVal==='y'||statusVal==='done'||statusVal==='true';
+                const rowBg=checked[i]?"rgba(87,155,252,.06)":responded?"rgba(0,202,114,.06)":"transparent";
+                return<tr key={i} style={{background:rowBg,opacity:valid?1:.5}}>
                 <td style={{padding:"5px 10px",borderBottom:"1px solid #F0F1F3",textAlign:"center"}}><input type="checkbox" checked={!!checked[i]} disabled={!valid} onChange={e=>{const n={...checked};if(e.target.checked)n[i]=true;else delete n[i];setChecked(n)}}/></td>
                 <td style={{padding:"5px 10px",borderBottom:"1px solid #F0F1F3"}}>{name||'\u2014'}</td>
                 <td style={{padding:"5px 10px",borderBottom:"1px solid #F0F1F3",color:valid?"#323338":"#E44258"}}>{email||'No email'}</td>
+                <td style={{padding:"5px 10px",borderBottom:"1px solid #F0F1F3",textAlign:"center"}}>
+                  {statusColIdx>=0?<span style={{padding:"2px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:responded?"#D1FAE5":"#FEE2E2",color:responded?"#065F46":"#991B1B"}}>{responded?'YES':'NO'}</span>:<span style={{color:C.mt}}>—</span>}
+                </td>
               </tr>})}</tbody>
             </table>
           </div>
