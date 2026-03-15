@@ -681,115 +681,118 @@ function Sheets({db,hubData,team,me}){
 }
 
 // === EMAILS ===
+const DISCORD_LINK='https://discord.com/invite/2Zra5JChnz';
+const CANVAS_LINK='https://canvas.instructure.com/enroll/W6LGYH';
+
 const EMAIL_TEMPLATES={
   vol_welcome:{
     name:'Volunteer Welcome',
     icon:'\u2728',
-    subject:'Welcome to the CareForBrains Volunteer Program!',
+    subject:'Welcome to CareForBrains \u2014 Let\u2019s Get Started',
     body:`Hi {{name}},
 
-Welcome to the CareForBrains Volunteering Program! We're excited to have you on board.
+Welcome to the CareForBrains Volunteering Program! We\u2019re thrilled to have you join 800+ volunteers making a real difference in mental health awareness.
 
-This is a virtual, self-paced program where you'll:
-- Explore important mental health topics
-- Spread awareness in your community
-- Learn about self-care strategies and mental health services
+YOUR PROGRAM OVERVIEW
+This is a fully virtual, self-paced program. Here\u2019s what you\u2019ll do:
+\u2022 Complete mental health awareness modules at your own pace
+\u2022 Create outreach content for your community
+\u2022 Earn verified volunteer hours toward the Presidential Volunteer Service Award (PVSA)
 
-If you're in the U.S., you may also be eligible for the Presidential Volunteer Service Award (PVSA).
+E-CARD VOLUNTEERING (NEW)
+Design mental health e-cards using Canva \u2014 each card = 30 minutes of volunteer credit. No limit. These go into our Heart Care Mental Health Kits for underserved youth.
 
-NEW: E-Card Volunteering Opportunity
-Create mental health e-cards using Canva — each card counts as 30 minutes of volunteer work with no limit on how many you can make. These cards will be added to our Heart Care Mental Health Kits for underserved youth.
+Submit cards here: [CARD_SUBMISSION_FORM]
 
-IMPORTANT — Join these platforms to stay connected:
-- Discord (mandatory): https://discord.gg/careforbrains
-- Canvas (mandatory): Check your email for the enrollment link
+IMPORTANT \u2014 JOIN THESE NOW
+\u2022 Discord (required): `+DISCORD_LINK+`
+\u2022 Canvas Course (required): `+CANVAS_LINK+`
 
-All updates and resources are shared exclusively through Discord and Canvas. Missing these may result in missing important deadlines.
+All updates, resources, and deadlines are shared exclusively on Discord and Canvas. If you\u2019re not on both, you\u2019ll miss critical information.
 
-Questions? Email us at careforbrains@gmail.com
+Questions? Reply to this email or reach us at careforbrains@gmail.com
 
-Best,
+Welcome aboard,
 Tanmay Vasudeva
-Founder, CareForBrains`
+Founder & CEO, CareForBrains`
   },
   vol_done:{
     name:'Volunteer Completion',
     icon:'\uD83C\uDF93',
-    subject:'Congratulations on completing the CareForBrains Volunteer Program!',
+    subject:'Congratulations, {{name}} \u2014 You Did It',
     hasCert:true,
     body:`Hi {{name}},
 
-Thank you for your hard work and dedication. Your contributions have been invaluable, and we truly appreciate everything you've done.
+Congratulations on completing the CareForBrains Volunteer Program. Your dedication has directly contributed to making mental health resources more accessible. Thank you.
 
-Since you have completed the program, you qualify for the Free Option, which includes:
-- A CareForBrains Certificate of Achievement
-- Verified volunteer hours for school and personal records
-- Signed forms for educational and professional purposes
+WHAT YOU\u2019VE EARNED (FREE)
+\u2022 CareForBrains Certificate of Achievement (attached)
+\u2022 Verified volunteer hours for school, college applications, and personal records
+\u2022 Signed documentation for educational and professional purposes
 
-MEMBERSHIP OPTION ($36 one-time fee) includes everything above PLUS:
-- One free PVSA award at any level (Bronze, Silver, or Gold) including certificate and medallion
-- A personalized letter of recommendation
-- Access to future exclusive benefits and services
+MEMBERSHIP UPGRADE \u2014 $36 (one-time)
+Everything above, plus:
+\u2022 Presidential Volunteer Service Award (PVSA) \u2014 Bronze, Silver, or Gold level with official certificate and medallion
+\u2022 Personalized letter of recommendation from CareForBrains leadership
+\u2022 Priority access to future programs and exclusive opportunities
 
-If you'd like to upgrade, visit: [MEMBERSHIP_LINK]
-Please allow 1-2 business days for processing.
+Upgrade here: [MEMBERSHIP_LINK]
+(Please include your full name when purchasing. Allow 1\u20132 business days for processing.)
 
 Your certificate is attached to this email.
 
-Once again, thank you for your incredible commitment!
-
-Best regards,
+With gratitude,
 Tanmay Vasudeva
-Founder, CareForBrains`
+Founder & CEO, CareForBrains`
   },
   ecard_done:{
     name:'E-Card Completion',
     icon:'\uD83C\uDFA8',
-    subject:'Thank you for your E-Card contributions!',
+    subject:'Your E-Card Hours Are Verified, {{name}}',
     hasCert:true,
     body:`Hi {{name}},
 
-Thank you for your hard work and dedication to the CareForBrains E-Card Program. Your contributions have been invaluable.
+Thank you for your outstanding contribution to the CareForBrains E-Card Program. Your cards will be included in our Heart Care Mental Health Kits reaching underserved youth.
 
-Since you have completed {{cards}} cards, you qualify for the Free Option, which includes:
-- A CareForBrains Certificate of Achievement
-- Verified volunteer hours ({{hours}} hours) for school and personal records
-- Signed forms for educational and professional purposes
+YOUR RESULTS
+\u2022 Cards completed: {{cards}}
+\u2022 Volunteer hours earned: {{hours}}
 
-MEMBERSHIP OPTION ($36 one-time fee) includes everything above PLUS:
-- One free PVSA award at any level (Bronze, Silver, or Gold)
-- A personalized letter of recommendation
-- Access to future exclusive benefits
+WHAT YOU\u2019VE EARNED (FREE)
+\u2022 CareForBrains Certificate of Achievement (attached)
+\u2022 Verified volunteer hours for school and personal records
+\u2022 Signed documentation for educational and professional purposes
 
-Upgrade here: [MEMBERSHIP_LINK]
+MEMBERSHIP UPGRADE \u2014 $36 (one-time)
+Everything above, plus PVSA award, letter of recommendation, and priority program access.
 
-Your certificate is attached to this email.
+Upgrade: [MEMBERSHIP_LINK]
 
-Best regards,
+Your certificate is attached.
+
+Thank you for making a difference,
 Tanmay Vasudeva
-Founder, CareForBrains`
+Founder & CEO, CareForBrains`
   },
   chapter_welcome:{
-    name:'Chapter Application Response',
+    name:'Chapter Application',
     icon:'\uD83C\uDF10',
-    subject:'Your CareForBrains Chapter Application',
+    subject:'Your CareForBrains Chapter Is Approved, {{name}}',
     body:`Hi {{name}},
 
-Thank you for applying to start a CareForBrains chapter! We've reviewed your application and would love to move forward.
+Great news \u2014 your application to launch a CareForBrains chapter has been approved. Welcome to the team.
 
-Next steps:
-1. Join our Chapter Directors Discord channel
-2. Attend the next Chapter Director meeting
-3. Set up your chapter's Instagram account
-4. Review the Chapter Handbook
+NEXT STEPS
+1. Join the Chapter Directors Discord channel: `+DISCORD_LINK+`
+2. Set up your chapter\u2019s Instagram account (format: @careforbrains.[city])
+3. Attend the next Chapter Director meeting (details in Discord)
+4. Review the Chapter Handbook (shared in Discord)
 
-We'll be in touch with meeting details and resources shortly.
+You\u2019ll be leading mental health awareness efforts in your community. We\u2019ll provide the resources, training, and support \u2014 you bring the passion.
 
-Welcome to the CareForBrains family!
-
-Best,
+Welcome to the CareForBrains family,
 Tanmay Vasudeva
-Founder, CareForBrains`
+Founder & CEO, CareForBrains`
   },
   custom:{
     name:'Custom Email',
@@ -799,39 +802,46 @@ Founder, CareForBrains`
   }
 };
 
-// Certificate generator - returns a data URL of the certificate image
 function generateCertSVG(name,hours,program,date){
   return`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 800" width="1100" height="800">
 <defs>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&amp;family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&amp;family=Plus+Jakarta+Sans:wght@400;600;700&amp;display=swap');
-  </style>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&amp;family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&amp;family=Great+Vibes&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap');</style>
+  <pattern id="bg" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#FDFAF3"/><circle cx="20" cy="20" r=".4" fill="#D4C5A0" opacity=".3"/></pattern>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#B8960C"/><stop offset=".5" stop-color="#D4AF37"/><stop offset="1" stop-color="#B8960C"/></linearGradient>
+  <linearGradient id="navy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0F2340"/><stop offset="1" stop-color="#1C3A5F"/></linearGradient>
 </defs>
-<rect width="1100" height="800" fill="#FDFAF5"/>
-<rect x="20" y="20" width="1060" height="760" fill="none" stroke="#1C3A5F" stroke-width="3" rx="4"/>
-<rect x="30" y="30" width="1040" height="740" fill="none" stroke="#1C3A5F" stroke-width="1" rx="2"/>
-<rect x="40" y="40" width="1020" height="720" fill="none" stroke="#C8A96E" stroke-width="0.5" stroke-dasharray="4,4"/>
-<text x="550" y="140" text-anchor="middle" font-family="Playfair Display,serif" font-size="62" font-weight="700" fill="#1C3A5F" letter-spacing="2">Certificate</text>
-<text x="550" y="185" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="28" font-style="italic" fill="#3A5068">of Achievement</text>
-<line x1="400" y1="210" x2="700" y2="210" stroke="#C8A96E" stroke-width="1.5"/>
-<circle cx="550" cy="210" r="3" fill="#C8A96E"/>
-<circle cx="400" cy="210" r="2" fill="#C8A96E"/>
-<circle cx="700" cy="210" r="2" fill="#C8A96E"/>
-<text x="550" y="270" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="16" fill="#3A5068" letter-spacing="1">This certificate is proudly presented to</text>
-<text x="550" y="350" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="52" font-style="italic" fill="#1C3A5F">${name}</text>
-<line x1="300" y1="375" x2="800" y2="375" stroke="#E6E9EF" stroke-width="1"/>
-<text x="550" y="430" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="16" fill="#3A5068">for completing <tspan font-weight="700">${hours} hours</tspan> of service in the</text>
-<text x="550" y="460" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="16" fill="#3A5068"><tspan font-weight="700">CareForBrains ${program} Program</tspan></text>
-<text x="550" y="500" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="14" fill="#7A8FA4">making an impact in mental health awareness</text>
-<line x1="180" y1="580" x2="380" y2="580" stroke="#1C3A5F" stroke-width="1"/>
-<text x="280" y="610" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="24" font-style="italic" fill="#1C3A5F">Tanmay Vasudeva</text>
-<text x="280" y="635" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="11" fill="#3A5068" letter-spacing="2" font-weight="700">TANMAY VASUDEVA</text>
-<text x="280" y="655" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="11" fill="#7A8FA4">Founder, CareForBrains</text>
-<line x1="720" y1="580" x2="920" y2="580" stroke="#1C3A5F" stroke-width="1"/>
-<text x="820" y="610" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="24" font-style="italic" fill="#1C3A5F">Ezra Weng</text>
-<text x="820" y="635" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="11" fill="#3A5068" letter-spacing="2" font-weight="700">EZRA WENG</text>
-<text x="820" y="655" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="11" fill="#7A8FA4">Co-Founder, CareForBrains</text>
-<text x="550" y="720" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="12" fill="#C3C6D4">${date} \u2022 CareForBrains 501(c)(3)</text>
+<rect width="1100" height="800" fill="url(#bg)"/>
+<rect x="16" y="16" width="1068" height="768" fill="none" stroke="url(#gold)" stroke-width="4" rx="2"/>
+<rect x="24" y="24" width="1052" height="752" fill="none" stroke="url(#navy)" stroke-width="2.5" rx="1"/>
+<rect x="32" y="32" width="1036" height="736" fill="none" stroke="url(#gold)" stroke-width=".8" rx="1"/>
+<line x1="80" y1="50" x2="80" y2="750" stroke="url(#gold)" stroke-width=".3" opacity=".4"/>
+<line x1="1020" y1="50" x2="1020" y2="750" stroke="url(#gold)" stroke-width=".3" opacity=".4"/>
+<line x1="50" y1="80" x2="1050" y2="80" stroke="url(#gold)" stroke-width=".3" opacity=".4"/>
+<line x1="50" y1="720" x2="1050" y2="720" stroke="url(#gold)" stroke-width=".3" opacity=".4"/>
+<g opacity=".15"><circle cx="80" cy="80" r="20" fill="none" stroke="#B8960C" stroke-width=".5"/><circle cx="1020" cy="80" r="20" fill="none" stroke="#B8960C" stroke-width=".5"/><circle cx="80" cy="720" r="20" fill="none" stroke="#B8960C" stroke-width=".5"/><circle cx="1020" cy="720" r="20" fill="none" stroke="#B8960C" stroke-width=".5"/></g>
+<text x="550" y="155" text-anchor="middle" font-family="Playfair Display,serif" font-size="72" font-weight="900" fill="url(#navy)" letter-spacing="6">CERTIFICATE</text>
+<text x="550" y="200" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="26" font-weight="300" fill="#1C3A5F" letter-spacing="8" font-style="italic">OF ACHIEVEMENT</text>
+<line x1="380" y1="225" x2="720" y2="225" stroke="url(#gold)" stroke-width="1.5"/>
+<circle cx="550" cy="225" r="4" fill="#D4AF37"/>
+<circle cx="380" cy="225" r="2.5" fill="#D4AF37"/>
+<circle cx="720" cy="225" r="2.5" fill="#D4AF37"/>
+<text x="550" y="280" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="14" fill="#5A6B7E" letter-spacing="4" font-weight="500">THIS CERTIFICATE IS PROUDLY PRESENTED TO</text>
+<text x="550" y="370" text-anchor="middle" font-family="Great Vibes,cursive" font-size="62" fill="#0F2340">${name}</text>
+<line x1="280" y1="395" x2="820" y2="395" stroke="#D4AF37" stroke-width=".8" opacity=".5"/>
+<text x="550" y="450" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="15" fill="#5A6B7E" letter-spacing="1">for completing <tspan font-weight="700" fill="#0F2340">${hours} hours</tspan> of dedicated service in the</text>
+<text x="550" y="480" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="16" fill="#0F2340" font-weight="700" letter-spacing="1">CareForBrains ${program} Program</text>
+<text x="550" y="515" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="15" fill="#8A9AAE" font-style="italic">raising awareness and making an impact in mental health</text>
+<line x1="160" y1="600" x2="380" y2="600" stroke="#0F2340" stroke-width="1"/>
+<text x="270" y="635" text-anchor="middle" font-family="Great Vibes,cursive" font-size="32" fill="#0F2340">Tanmay Vasudeva</text>
+<text x="270" y="660" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="10" fill="#5A6B7E" letter-spacing="3" font-weight="600">FOUNDER &amp; CEO</text>
+<text x="270" y="678" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="9" fill="#8A9AAE" letter-spacing="2">CAREFORBRAINS</text>
+<line x1="720" y1="600" x2="940" y2="600" stroke="#0F2340" stroke-width="1"/>
+<text x="830" y="635" text-anchor="middle" font-family="Great Vibes,cursive" font-size="32" fill="#0F2340">Ezra Weng</text>
+<text x="830" y="660" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="10" fill="#5A6B7E" letter-spacing="3" font-weight="600">CO-FOUNDER &amp; COO</text>
+<text x="830" y="678" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="9" fill="#8A9AAE" letter-spacing="2">CAREFORBRAINS</text>
+<line x1="450" y1="590" x2="650" y2="590" stroke="url(#gold)" stroke-width=".5"/>
+<text x="550" y="620" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="9" fill="#B8960C" letter-spacing="2">501(c)(3) NONPROFIT</text>
+<text x="550" y="740" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="11" fill="#B0B8C4">${date}</text>
 </svg>`;
 }
 
@@ -995,7 +1005,7 @@ function Emails({db,hubData,team,me}){
 
       {tmpl.hasCert&&<Card style={{marginBottom:14}}><CardH>Certificate Preview</CardH>
         <div style={{padding:"16px 18px",textAlign:"center"}}>
-          <div dangerouslySetInnerHTML={{__html:generateCertSVG(validSelected[0]?.row?.[nIdx]||'Your Name','50','Volunteer',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}))}} style={{maxWidth:500,margin:"0 auto"}}/>
+          <div dangerouslySetInnerHTML={{__html:generateCertSVG(validSelected[0]?.row?.[nIdx]||'Your Name','50','Volunteer',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}))}} style={{maxWidth:550,margin:"0 auto",display:"block"}}/>
           <div style={{marginTop:10,fontSize:11,color:C.mt}}>Certificate auto-fills with each recipient's name and hours</div>
         </div>
       </Card>}
