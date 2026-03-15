@@ -1138,14 +1138,14 @@ function Logs({hubData,team}){
   const[filter,setFilter]=useState('all');
   const filtered=filter==='all'?logs:logs.filter(l=>l.type===filter);
   const getName=id=>{const m=team.find(t=>t.id===id);return m?fn(m.name):id||'?'};
-  const typeLabel={login:'Login',sheet_edit:'Sheet Edit',task_assign:'Task Assigned'};
-  const typeColor={login:'#1490B0',sheet_edit:'#10B981',task_assign:'#F59E0B'};
+  const typeLabel={login:'Login',sheet_edit:'Sheet Edit',task_assign:'Task Assigned',email_sent:'Email Sent'};
+  const typeColor={login:'#1490B0',sheet_edit:'#10B981',task_assign:'#F59E0B',email_sent:'#A25DDC'};
 
   return(<div>
     <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>Admin</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Activity Log</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 18px"}}/>
     <div style={{display:"flex",gap:6,marginBottom:14}}>
-      {[['all','All'],['login','Logins'],['sheet_edit','Edits'],['task_assign','Tasks']].map(([v,l])=><button key={v} onClick={()=>setFilter(v)} style={{padding:"6px 14px",border:filter===v?"2px solid #1490B0":"1px solid "+C.rl,borderRadius:8,background:filter===v?"rgba(20,144,176,0.06)":"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:filter===v?700:500,color:filter===v?"#323338":"#676879"}}>{l}</button>)}
+      {[['all','All'],['login','Logins'],['sheet_edit','Edits'],['task_assign','Tasks'],['email_sent','Emails']].map(([v,l])=><button key={v} onClick={()=>setFilter(v)} style={{padding:"6px 14px",border:filter===v?"2px solid #1490B0":"1px solid "+C.rl,borderRadius:8,background:filter===v?"rgba(20,144,176,0.06)":"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:filter===v?700:500,color:filter===v?"#323338":"#676879"}}>{l}</button>)}
       <span style={{fontSize:11,color:C.mt,alignSelf:"center",marginLeft:8}}>{filtered.length} events</span>
     </div>
     <Card style={{overflow:"hidden"}}>
@@ -1175,6 +1175,9 @@ function Logs({hubData,team}){
                 Assigned <span style={{fontWeight:600}}>"{(l.task||'').slice(0,40)}"</span> to <span style={{fontWeight:600}}>{getName(l.assignee)}</span>
                 <span style={{marginLeft:6,padding:"1px 6px",borderRadius:3,fontSize:10,fontWeight:700,background:l.priority==='high'?"#FEE2E2":l.priority==='low'?"#DBEAFE":"#FEF3C7",color:l.priority==='high'?"#991B1B":l.priority==='low'?"#1E40AF":"#92400E"}}>{l.priority}</span>
               </span>}
+              {l.type==='email_sent'&&<span>
+                Sent <span style={{fontWeight:600}}>"{(l.subject||'').slice(0,35)}"</span> to <span style={{fontFamily:"monospace",color:"#676879"}}>{l.to||'—'}</span>
+              </span>}
             </td>
           </tr>)}</tbody>
         </table>
@@ -1184,13 +1187,47 @@ function Logs({hubData,team}){
 }
 
 // === SETTINGS ===
-function Settings({db,passwords,team}){
+function Settings({db,passwords,team,hubData}){
   const[pu,setPu]=useState('tanmay');const[np,setNp]=useState('');
+  const emailCfg=normEmailCfg(hubData.emailjs);
+  const[eCfg,setECfg]=useState(()=>({
+    publicKey:emailCfg.profiles?.general?.publicKey||'',
+    serviceId:emailCfg.profiles?.general?.serviceId||'',
+    templateId:emailCfg.profiles?.general?.templateId||'',
+    fromName:emailCfg.profiles?.general?.fromName||'CareForBrains',
+    replyTo:emailCfg.profiles?.general?.replyTo||'careforbrains@gmail.com'
+  }));
+  const senderReady=!!(eCfg.publicKey&&eCfg.serviceId&&eCfg.templateId);
   const chPw=()=>{if(!np)return;db.ref('hub/passwords/'+pu).set(np);setNp('');alert('Updated')};
+  const saveEmail=()=>{
+    const cfg=normEmailCfg(hubData.emailjs);
+    cfg.profiles.general={...cfg.profiles.general,...eCfg,id:'general',label:'General'};
+    db.ref('hub/emailjs').set(cfg);
+    alert('EmailJS config saved!');
+  };
   const resetFb=()=>{if(!confirm('Sign out everywhere on this device?'))return;localStorage.removeItem(LK);window.location.reload()};
   return(<div>
     <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>Settings</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Configuration</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+
+    <Card><CardH right={<span style={{fontSize:10,fontFamily:"monospace",color:senderReady?C.gn:C.rd}}>{senderReady?'CONNECTED':'NOT SET UP'}</span>}>EmailJS Setup</CardH>
+      <div style={{padding:"14px 18px"}}>
+        <div style={{background:C.bgA,borderRadius:8,padding:12,marginBottom:14,fontSize:12,color:C.sc,lineHeight:1.7}}>
+          To send emails from Mission Control:<br/>1. Sign up at <strong>emailjs.com</strong> (free = 200 emails/month)<br/>2. Add Gmail service (connect careforbrains@gmail.com)<br/>3. Create a template with variables: {'{{to_email}}'}, {'{{from_name}}'}, {'{{reply_to}}'}, {'{{subject}}'}, {'{{message}}'}<br/>4. Paste the 3 IDs below
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+          <div><Lbl>From Name</Lbl><Inp value={eCfg.fromName} onChange={e=>setECfg({...eCfg,fromName:e.target.value})}/></div>
+          <div><Lbl>Reply-To Email</Lbl><Inp value={eCfg.replyTo} onChange={e=>setECfg({...eCfg,replyTo:e.target.value})}/></div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:12}}>
+          <div><Lbl>Public Key</Lbl><Inp value={eCfg.publicKey} onChange={e=>setECfg({...eCfg,publicKey:e.target.value})} placeholder="e.g. xK3j8..."/></div>
+          <div><Lbl>Service ID</Lbl><Inp value={eCfg.serviceId} onChange={e=>setECfg({...eCfg,serviceId:e.target.value})} placeholder="e.g. service_abc123"/></div>
+          <div><Lbl>Template ID</Lbl><Inp value={eCfg.templateId} onChange={e=>setECfg({...eCfg,templateId:e.target.value})} placeholder="e.g. template_abc123"/></div>
+        </div>
+        <Btn primary onClick={saveEmail}>Save EmailJS Config</Btn>
+      </div>
+    </Card>
+
     <Card><CardH>Passwords</CardH><div style={{padding:"14px 18px"}}><div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
       <div><Lbl>Member</Lbl><Sel style={{width:160}} value={pu} onChange={e=>setPu(e.target.value)}>{team.map(m=><option key={m.id} value={m.id}>{fn(m.name)}</option>)}</Sel></div>
       <div style={{flex:1}}><Lbl>New Password</Lbl><Inp type="password" value={np} onChange={e=>setNp(e.target.value)}/></div>
@@ -1253,7 +1290,7 @@ function App(){
     case 'sheets':return<Sheets db={db} hubData={hubData} team={team} me={me}/>;
     case 'emails':return canEmail?<Emails db={db} hubData={hubData} team={team} me={me}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'board':return<Board db={db} announcements={announcements} team={team} me={me}/>;
-    case 'settings':return isA?<Settings db={db} passwords={passwords} team={team}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
+    case 'settings':return isA?<Settings db={db} passwords={passwords} team={team} hubData={hubData}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'logs':return isA?<Logs hubData={hubData} team={team}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     default:return<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>}};
 
