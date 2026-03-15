@@ -182,7 +182,20 @@ const fmtSyncTime=ts=>{
 
 let _gToken=null;
 let _activeSheet='';
+let _tokenClient=null;
 const colToLetter=c=>{let s='';while(c>=0){s=String.fromCharCode(65+(c%26))+s;c=Math.floor(c/26)-1}return s};
+
+function globalConnectGoogle(callback){
+  if(!window.google?.accounts?.oauth2)return;
+  if(!_tokenClient){
+    _tokenClient=window.google.accounts.oauth2.initTokenClient({
+      client_id:GOOGLE_CLIENT_ID,
+      scope:'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/gmail.send',
+      callback:resp=>{if(resp.access_token){_gToken=resp.access_token;if(callback)callback(resp.access_token)}}
+    });
+  }
+  _tokenClient.requestAccessToken();
+}
 
 // Send email via Gmail API directly — no third party, no branding
 async function sendGmail(token, to, subject, htmlBody, fromName='CareForBrains', replyTo='careforbrains@gmail.com'){
@@ -501,7 +514,6 @@ function Sheets({db,hubData,team,me}){
   const[editVal,setEditVal]=useState('');
   const[saving,setSaving]=useState(false);
   const tableRef=useRef(null);
-  const tokenClientRef=useRef(null);
   const scrollRef=useRef(0);
   useEffect(()=>{
     const el=tableRef.current;
@@ -553,16 +565,8 @@ function Sheets({db,hubData,team,me}){
   };
 
   const connectGoogle=()=>{
-    if(!window.google?.accounts?.oauth2)return;
-    if(!tokenClientRef.current){
-      tokenClientRef.current=window.google.accounts.oauth2.initTokenClient({
-        client_id:GOOGLE_CLIENT_ID,scope:'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/gmail.send',
-        callback:resp=>{if(resp.access_token){setGToken(resp.access_token);resyncWithToken(resp.access_token)}}
-      });
-    }
-    tokenClientRef.current.requestAccessToken();
+    globalConnectGoogle(token=>{setGToken(token);resyncWithToken(token)});
   };
-  window._connectGoogle=connectGoogle;
 
   const saveCell=async(rowIdx,realCol,value)=>{
     if(!activeSheet||!gToken)return;
@@ -951,7 +955,8 @@ function Emails({db,hubData,team,me}){
   const sheetData=hubData.sheetData||{};
   const emailCfg=normEmailCfg(hubData.emailjs);
   const sender=emailCfg.profiles[emailCfg.defaultProfile]||emailCfg.profiles.general||{};
-  const senderReady=!!_gToken;
+  const[gConnected,setGConnected]=useState(!!_gToken);
+  const senderReady=!!_gToken||gConnected;
 
   const tmpl=EMAIL_TEMPLATES[template]||EMAIL_TEMPLATES.custom;
   const subj=template==='custom'?customSubj:tmpl.subject;
@@ -1015,7 +1020,7 @@ function Emails({db,hubData,team,me}){
 
     {!senderReady&&<div style={{padding:"12px 16px",borderRadius:10,background:"#FFF5F5",border:"1px solid #FECACA",marginBottom:16,fontSize:12.5,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
       <span><span style={{color:"#E44258",fontWeight:700}}>&#9888; Not connected.</span><span style={{color:"#676879",marginLeft:6}}>Connect Google to send emails directly from careforbrains@gmail.com.</span></span>
-      <Btn primary onClick={()=>{if(window._connectGoogle)window._connectGoogle()}} style={{flexShrink:0}}>Connect Google</Btn>
+      <Btn primary onClick={()=>globalConnectGoogle(()=>setGConnected(true))} style={{flexShrink:0}}>Connect Google</Btn>
     </div>}
 
     <div style={{display:"flex",gap:8,marginBottom:20}}>
@@ -1251,7 +1256,7 @@ function Settings({db,passwords,team,hubData}){
           Just click <strong>"Connect Google"</strong> on the Sheets or Comms tab. One connection gives you both spreadsheet editing and email sending.
         </div>
         {_gToken?<div style={{display:"flex",alignItems:"center",gap:8}}><span style={{width:8,height:8,borderRadius:4,background:C.gn}}></span><span style={{fontSize:13,fontWeight:600}}>Connected &mdash; ready to send</span></div>
-        :<Btn primary onClick={()=>{if(window._connectGoogle)window._connectGoogle()}}>Connect Google Now</Btn>}
+        :<Btn primary onClick={()=>globalConnectGoogle()}>Connect Google Now</Btn>}
       </div>
     </Card>
 
