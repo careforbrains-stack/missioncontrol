@@ -131,6 +131,9 @@ const fmtSyncTime=ts=>{
   return new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric'});
 };
 
+let _gToken=null;
+const colToLetter=c=>{let s='';while(c>=0){s=String.fromCharCode(65+(c%26))+s;c=Math.floor(c/26)-1}return s};
+
 function Av({m,s=38}){const[e,setE]=useState(false);if(m?.img&&!e)return React.createElement('img',{src:m.img,alt:'',style:{width:s,height:s,borderRadius:8,objectFit:'cover',flexShrink:0,background:m.color},onError:()=>setE(true)});return<div style={{width:s,height:s,borderRadius:8,background:m?.color||C.tl,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:s*.38,flexShrink:0}}>{m?.name?.[0]||"?"}</div>}
 function Tag({t}){const m={high:{b:"#FEE2E2",c:C.rd},medium:{b:"#FEF3C7",c:"#D97706"},low:{b:"#DBEAFE",c:"#2563EB"},done:{b:"#D1FAE5",c:C.gn}};const v=m[t]||m.medium;return<span style={{display:"inline-flex",padding:"2px 8px",borderRadius:4,fontSize:9.5,fontWeight:700,background:v.b,color:v.c,textTransform:"uppercase",letterSpacing:"0.04em",fontFamily:"monospace"}}>{t}</span>}
 function Btn({primary,children,onClick,style:sx,className='',...p}){return<button className={`mission-btn ${primary?'mission-btn-primary':''} ${className}`.trim()} onClick={onClick} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"7px 16px",borderRadius:8,fontSize:12,fontWeight:600,cursor:"pointer",...sx}} {...p}>{children}</button>}
@@ -433,10 +436,7 @@ function Sheets({db,hubData,team,me}){
     }
     tokenClientRef.current.requestAccessToken();
   };
-  const colToLetter=c=>{let s='';while(c>=0){s=String.fromCharCode(65+(c%26))+s;c=Math.floor(c/26)-1}return s};
 
-// Google token stored at module level so it survives re-renders
-let _gToken=null;
   const saveCell=async(rowIdx,realCol,value)=>{
     if(!activeSheet||!gToken)return;
     const sid=getSheetId(activeSheet.url);if(!sid)return;
