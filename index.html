@@ -388,6 +388,15 @@ function Sheets({db,hubData,team,me}){
   const[saving,setSaving]=useState(false);
   const tableRef=useRef(null);
   const tokenClientRef=useRef(null);
+  const scrollRef=useRef(0);
+  useEffect(()=>{
+    const el=tableRef.current;
+    if(!el)return;
+    el.scrollTop=scrollRef.current;
+    const onScroll=()=>{scrollRef.current=el.scrollTop};
+    el.addEventListener('scroll',onScroll,{passive:true});
+    return()=>el.removeEventListener('scroll',onScroll);
+  });
 
   const activeSheet=sheets.find(s=>(s._fbKey||s.id)===active)||sheets[0]||null;
   const activeVals=activeSheet?sheetData[activeSheet.id]:null;
@@ -432,6 +441,7 @@ let _gToken=null;
     if(!activeSheet||!gToken)return;
     const sid=getSheetId(activeSheet.url);if(!sid)return;
     setSaving(true);
+    const scrollPos=tableRef.current?.scrollTop||0;
     try{
       const r=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+sid+'/values/'+colToLetter(realCol)+(rowIdx+2)+'?valueInputOption=USER_ENTERED',{
         method:'PUT',headers:{'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},
@@ -442,6 +452,7 @@ let _gToken=null;
       if(cached[rowIdx+1])cached[rowIdx+1][realCol]=value;
       db.ref('hub/sheetData/'+activeSheet.id).set(cached);
       setEditCell(null);
+      requestAnimationFrame(()=>{if(tableRef.current)tableRef.current.scrollTop=scrollPos});
     }catch(e){
       const msg=String(e);
       if(msg.includes('401')||msg.includes('403'))setGToken(null);
