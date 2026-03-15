@@ -787,7 +787,7 @@ const EMAIL_TEMPLATES={
     subject:'Welcome to CareForBrains \u2014 Let\u2019s Get Started',
     html:true,
     body:function(name){return emailHTML(`
-<p style="font-size:24px;font-weight:700;color:#1C3050;margin:0 0 4px">Welcome, ${'+'name||'+chr(39)+'there'+chr(39)+'}!</p>
+<p style="font-size:24px;font-weight:700;color:#1C3050;margin:0 0 4px">Welcome, ${name||'there'}!</p>
 <p style="font-size:15px;color:#555;line-height:1.7;margin:8px 0 24px">You're now part of <strong>800+ volunteers</strong> making a real difference in mental health through CareForBrains.</p>
 <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="background:#f0f9ff;border-radius:10px;padding:22px 24px">
 <p style="font-size:11px;font-weight:700;letter-spacing:2px;color:#0284c7;margin:0 0 12px">YOUR PROGRAM</p>
