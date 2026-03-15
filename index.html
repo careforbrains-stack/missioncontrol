@@ -354,7 +354,10 @@ function Cal({db,events,tasks,team,me}){
   };
   const isTd=(d,c)=>c&&d===today.getDate()&&mo===today.getMonth()&&y===today.getFullYear();
   const add=()=>{if(!form.title||!form.date)return;const ref=db.ref('hub/events').push();ref.set({...form,id:ref.key});setForm({title:'',date:'',assignee:me,notes:''});setModal(false)};
-  const del=e=>db.ref('hub/events/'+e._fbKey).remove();
+  const delEvent=e=>db.ref('hub/events/'+e._fbKey).remove();
+  const delTask=t=>{if(confirm('Delete task "'+t.text+'"?'))db.ref('hub/tasks/'+t._fbKey).remove()};
+  const toggleTask=t=>{db.ref('hub/tasks/'+t._fbKey+'/done').set(!t.done);if(!t.done)db.ref('hub/tasks/'+t._fbKey+'/doneDate').set(new Date().toISOString().split('T')[0])};
+  const editTaskDue=(t,newDue)=>{db.ref('hub/tasks/'+t._fbKey+'/due').set(newDue)};
   const taskTone=t=>t.done?{b:"#D1FAE5",c:C.gn}:t.priority==='high'?{b:"#FEE2E2",c:C.rd}:t.priority==='low'?{b:"#DBEAFE",c:"#2563EB"}:{b:"#FEF3C7",c:"#D97706"};
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}><div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>03 &#8212; Calendar</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Calendar</h1></div>{isA&&<Btn primary onClick={()=>setModal(true)}>+ Event</Btn>}</div>
@@ -379,16 +382,19 @@ function Cal({db,events,tasks,team,me}){
         {tasksOn(sel).length===0&&events.filter(e=>e.date===sel).length===0&&<div style={{textAlign:"center",padding:20,color:C.mt}}>No events or due tasks</div>}
         {tasksOn(sel).length>0&&<>
           <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.mt,marginBottom:6}}>Due Tasks</div>
-          {tasksOn(sel).sort((a,b)=>(a.done?1:0)-(b.done?1:0)).map(t=>{const assignee=team.find(m=>m.id===t.assignee);const by=team.find(m=>m.id===t.assignedBy);return(<div key={t._fbKey} style={{display:"flex",justifyContent:"space-between",gap:12,padding:"9px 0",borderBottom:"1px solid "+C.bgA,opacity:t.done?0.58:1}}>
-            <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13.5,textDecoration:t.done?"line-through":"none"}}>{t.text}</div>{t.notes&&<div style={{fontSize:12,color:C.sc,marginTop:2}}>{t.notes}</div>}<div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:5}}><span style={{fontSize:10,color:C.mt}}>{assignee?.name||t.assignee}</span>{by&&<span style={{fontSize:10,color:C.mt}}>from {fn(by.name)}</span>}</div></div>
-            <Tag t={t.done?'done':t.priority}/>
+          {tasksOn(sel).sort((a,b)=>(a.done?1:0)-(b.done?1:0)).map(t=>{const assignee=team.find(m=>m.id===t.assignee);const by=team.find(m=>m.id===t.assignedBy);return(<div key={t._fbKey} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:"1px solid "+C.bgA,opacity:t.done?0.5:1}}>
+            {isA&&<div onClick={()=>toggleTask(t)} style={{width:18,height:18,borderRadius:4,border:"1.5px solid "+(t.done?C.gn:C.rl),background:t.done?C.gn:"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:10}}>{t.done?"\u2713":""}</div>}
+            <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13.5,textDecoration:t.done?"line-through":"none"}}>{t.text}</div>{t.notes&&<div style={{fontSize:12,color:C.sc,marginTop:2}}>{t.notes}</div>}<div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:5,alignItems:"center"}}><span style={{fontSize:10,color:C.mt}}>{assignee?.name||t.assignee}</span>{by&&<span style={{fontSize:10,color:C.mt}}>from {fn(by.name)}</span>}<Tag t={t.done?'done':t.priority}/></div></div>
+            {isA&&<div style={{display:"flex",gap:6,flexShrink:0}}>
+              <button onClick={()=>delTask(t)} style={{background:"none",border:"none",cursor:"pointer",color:C.rd,fontSize:13,fontFamily:"inherit",fontWeight:600}} title="Delete task">&#215;</button>
+            </div>}
           </div>)})}
         </>}
         {events.filter(e=>e.date===sel).length>0&&<>
           <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.mt,marginTop:tasksOn(sel).length?14:0,marginBottom:6}}>Events</div>
           {events.filter(e=>e.date===sel).map(e=><div key={e._fbKey} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid "+C.bgA}}>
             <div><div style={{fontWeight:700}}>{e.title}</div><div style={{fontSize:10,color:C.mt}}>{team.find(t=>t.id===e.assignee)?.name}</div></div>
-            {isA&&<button onClick={()=>del(e)} style={{background:"none",border:"none",cursor:"pointer",color:C.rd,fontSize:12,fontFamily:"inherit"}}>Remove</button>}</div>)}
+            {isA&&<button onClick={()=>delEvent(e)} style={{background:"none",border:"none",cursor:"pointer",color:C.rd,fontSize:12,fontFamily:"inherit"}}>Remove</button>}</div>)}
         </>}
       </div></Card>}
     {modal&&<div style={{position:"fixed",inset:0,background:"rgba(9,26,38,0.45)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200}} onClick={e=>e.target===e.currentTarget&&setModal(false)}>
