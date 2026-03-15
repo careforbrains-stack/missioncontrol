@@ -374,7 +374,11 @@ function Contacts({db,team,me}){
 
 // === SHEETS ===
 function Sheets({db,hubData,team,me}){
-  const sheets=fbToArr(hubData.sheets).map(normSheetEntry).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const sheets=fbToArr(hubData.sheets).map(normSheetEntry).sort((a,b)=>{
+    const aClosed=!!(a.note||'');const bClosed=!!(b.note||'');
+    if(aClosed!==bClosed)return aClosed?1:-1;
+    return(a.name||'').localeCompare(b.name||'');
+  });
   const sheetData=hubData.sheetData||{};
   const[active,setActive]=useState(sheets[0]?._fbKey||'');
   const[gToken,setGToken]=useState(null);
@@ -400,7 +404,7 @@ function Sheets({db,hubData,team,me}){
   const cleanHeaders=allHeaders.slice(0,lastUsed);
 
   // Pick which columns to show in the compact table (max 6)
-  const priorityWords=['reached','status','done','complete','approved','accepted'];
+  const priorityWords=['reached','status','done','complete','approved','accepted','respond','reply','contacted','joined','added','attended','insta','disc'];
   const visibleCols=React.useMemo(()=>{
     if(!cleanHeaders.length)return[];
     const pri=[];const rest=[];
@@ -411,7 +415,7 @@ function Sheets({db,hubData,team,me}){
     });
     // Priority cols first, then first few regular cols, max 6 total
     const picked=[...pri,...rest];
-    return picked.slice(0,6);
+    return picked.slice(0,7);
   },[cleanHeaders.join(',')]);
 
   const connectGoogle=()=>{
@@ -467,12 +471,15 @@ function Sheets({db,hubData,team,me}){
       {sheets.map(s=>{
         const isAct=(s._fbKey||s.id)===active;
         const rc=Math.max(((sheetData[s.id]||[]).length||0)-1,0);
+        const hasClosed=!!(s.note||'');
         return<button key={s._fbKey} onClick={()=>{setActive(s._fbKey||s.id);setEditCell(null);setExpandedRow(null)}} style={{
           padding:"7px 14px",border:isAct?"2px solid #579BFC":"1px solid "+C.rl,
           borderRadius:8,background:isAct?"#EBF5FF":"#fff",cursor:"pointer",fontFamily:"inherit",
-          fontSize:12,fontWeight:isAct?700:500,color:isAct?"#323338":"#676879",display:"flex",alignItems:"center",gap:6
+          fontSize:12,fontWeight:isAct?700:500,color:isAct?"#323338":"#676879",display:"flex",alignItems:"center",gap:6,
+          opacity:hasClosed&&!isAct?0.55:1
         }}>
           {s.name}
+          {s.note&&<span style={{padding:"1px 6px",borderRadius:4,fontSize:9,fontWeight:700,background:"#F3F4F6",color:"#9CA3AF",fontFamily:"monospace",textTransform:"uppercase"}}>{s.note}</span>}
           <span style={{fontSize:10,color:rc?C.gn:C.mt,fontFamily:"monospace"}}>{rc}</span>
         </button>
       })}
@@ -481,6 +488,7 @@ function Sheets({db,hubData,team,me}){
       <div style={{padding:"8px 14px",borderBottom:"1px solid "+C.rl,display:"flex",justifyContent:"space-between",alignItems:"center",background:"#F5F6F8"}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <span style={{fontWeight:700,fontSize:13}}>{activeSheet.name}</span>
+          {activeSheet.note&&<span style={{padding:"2px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:"#F3F4F6",color:"#9CA3AF"}}>{activeSheet.note}</span>}
           <span style={{fontSize:11,color:C.sc}}>{allRows.length} rows &#183; {cleanHeaders.length} cols</span>
           {gToken&&<span style={{fontSize:10,color:C.mt}}>double-click to edit &#183; click row to expand</span>}
           {!gToken&&<span style={{fontSize:10,color:C.mt}}>click row to expand</span>}
@@ -494,7 +502,7 @@ function Sheets({db,hubData,team,me}){
         <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"fixed"}}>
           <colgroup>{visibleCols.map((ci,i)=>{
             const isPri=priorityWords.some(w=>(cleanHeaders[ci]||'').toLowerCase().includes(w));
-            return<col key={i} style={{width:isPri?"90px":(100/visibleCols.length)+"%"}}/>
+            return<col key={i} style={{width:isPri?"80px":(100/visibleCols.length)+"%"}}/>
           })}</colgroup>
           <thead><tr>{visibleCols.map((ci,i)=>{
             const h=cleanHeaders[ci]||'';
