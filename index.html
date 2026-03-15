@@ -374,7 +374,6 @@ function Contacts({db,team,me}){
 
 // === SHEETS ===
 function Sheets({db,hubData,team,me}){
-  const isA=team.find(t=>t.id===me)?.admin;
   const sheets=fbToArr(hubData.sheets).map(normSheetEntry).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   const sheetData=hubData.sheetData||{};
   const[active,setActive]=useState(sheets[0]?._fbKey||'');
@@ -390,20 +389,31 @@ function Sheets({db,hubData,team,me}){
   const rawHeaders=Array.isArray(activeVals)&&activeVals.length?activeVals[0]:[];
   const rawRows=Array.isArray(activeVals)&&activeVals.length>1?activeVals.slice(1):[];
 
-  // Reorder: move priority columns (like "reached out", "status") to front
+  // Move priority columns to front
   const priorityWords=['reached','status','done','complete','approved','accepted'];
   const colOrder=React.useMemo(()=>{
     if(!rawHeaders.length)return[];
-    const priority=[];const rest=[];
+    const pri=[];const rest=[];
     rawHeaders.forEach((_,i)=>{
       const h=(rawHeaders[i]||'').toLowerCase();
-      if(priorityWords.some(w=>h.includes(w)))priority.push(i);else rest.push(i);
+      if(priorityWords.some(w=>h.includes(w)))pri.push(i);else rest.push(i);
     });
-    return[...priority,...rest];
+    return[...pri,...rest];
   },[rawHeaders.join(',')]);
   const headers=colOrder.map(i=>rawHeaders[i]);
   const rows=rawRows.map(row=>colOrder.map(i=>row[i]||''));
   const origColIdx=i=>colOrder[i];
+
+  // Strip empty trailing columns
+  const lastUsedCol=React.useMemo(()=>{
+    if(!headers.length)return 0;
+    for(let c=headers.length-1;c>=0;c--){
+      if((headers[c]||'').trim())return c+1;
+      if(rows.some(r=>(r[c]||'').trim()))return c+1;
+    }
+    return headers.length;
+  },[headers.join(','),rows.length]);
+  const visHeaders=headers.slice(0,lastUsedCol);
 
   const connectGoogle=()=>{
     if(!window.google?.accounts?.oauth2)return;
@@ -439,7 +449,7 @@ function Sheets({db,hubData,team,me}){
     }
     setSaving(false);
   };
-  const jumpTo=(pct)=>{if(tableRef.current){const el=tableRef.current;el.scrollTop=el.scrollHeight*pct}};
+  const jumpTo=(pct)=>{if(tableRef.current)tableRef.current.scrollTop=tableRef.current.scrollHeight*pct};
 
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -450,6 +460,12 @@ function Sheets({db,hubData,team,me}){
       </div>
     </div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 18px"}}/>
+
+    {!gToken&&<div style={{padding:"8px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FECACA",marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
+      <span style={{color:"#E44258",fontSize:12,fontWeight:600}}>&#9888; View only</span>
+      <span style={{color:"#676879",fontSize:12}}>Connect Google to edit cells. Changes sync to Google Sheets instantly.</span>
+    </div>}
+
     <div style={{display:"flex",gap:4,marginBottom:14,flexWrap:"wrap"}}>
       {sheets.map(s=>{
         const isAct=(s._fbKey||s.id)===active;
@@ -460,12 +476,12 @@ function Sheets({db,hubData,team,me}){
           fontSize:12,fontWeight:isAct?700:500,color:isAct?"#323338":"#676879",display:"flex",alignItems:"center",gap:6
         }}>
           {s.name}
-          {s.source==='stem'&&<span style={{padding:"1px 5px",borderRadius:3,fontSize:8.5,fontWeight:700,background:"#E8F0FE",color:"#0073EA"}}>STEM</span>}
-          <span style={{fontSize:10,color:rc?C.gn:C.mt,fontFamily:"monospace"}}>{rc}</span>
+          <span style={{fontSize:10,color:rc?C.gn:C.mt,fontFamily:"monospace",marginLeft:"auto"}}>{rc}</span>
         </button>
       })}
     </div>
-    {activeSheet&&headers.length>0?<Card style={{overflow:"hidden"}}>
+
+    {activeSheet&&visHeaders.length>0?<Card style={{overflow:"hidden"}}>
       <div style={{padding:"8px 14px",borderBottom:"1px solid "+C.rl,display:"flex",justifyContent:"space-between",alignItems:"center",background:"#F5F6F8"}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <span style={{fontWeight:700,fontSize:13}}>{activeSheet.name}</span>
@@ -477,32 +493,36 @@ function Sheets({db,hubData,team,me}){
           {activeSheet.url&&<a href={activeSheet.url} target="_blank" rel="noreferrer" style={{fontSize:11,color:C.tl,textDecoration:"none",fontWeight:600,marginLeft:6}}>Open &#8599;</a>}
         </div>
       </div>
-      <div ref={tableRef} style={{overflowX:"auto",overflowY:"auto",maxHeight:"72vh"}}>
-        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"auto"}}>
-          <thead><tr>{headers.map((h,i)=>{
-            const isPriority=priorityWords.some(w=>(h||'').toLowerCase().includes(w));
+      <div ref={tableRef} style={{overflowY:"auto",maxHeight:"72vh"}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"fixed"}}>
+          <colgroup>{visHeaders.map((_,i)=>{
+            const isPri=priorityWords.some(w=>(visHeaders[i]||'').toLowerCase().includes(w));
+            return<col key={i} style={{width:isPri?"100px":i===0?"70px":"150px"}}/>
+          })}</colgroup>
+          <thead><tr>{visHeaders.map((h,i)=>{
+            const isPri=priorityWords.some(w=>(h||'').toLowerCase().includes(w));
             return<th key={i} style={{
-              padding:"6px 10px",textAlign:"left",borderBottom:"2px solid "+C.rl,
+              padding:"6px 8px",textAlign:"left",borderBottom:"2px solid "+C.rl,
               fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.04em",
-              color:isPriority?"#0073EA":"#323338",background:isPriority?"#E8F0FE":"#F5F6F8",
-              position:"sticky",top:0,whiteSpace:"nowrap",zIndex:2
+              color:isPri?"#0073EA":"#323338",background:isPri?"#E8F0FE":"#F5F6F8",
+              position:"sticky",top:0,zIndex:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"
             }}>{(h||'').replace(/^\d+\.\s*/,'').trim()}</th>
           })}</tr></thead>
           <tbody>{rows.map((row,i)=><tr key={i} style={{background:i%2===0?"#fff":"#FAFBFC"}}>
-            {row.map((cell,j)=>{
+            {visHeaders.map((_,j)=>{
               const isEditing=editCell&&editCell.r===i&&editCell.c===j;
-              const isPriority=priorityWords.some(w=>(headers[j]||'').toLowerCase().includes(w));
-              return<td key={j} onDoubleClick={()=>{if(gToken){setEditCell({r:i,c:j});setEditVal(cell||'')}}} style={{
-                padding:isEditing?"2px":"5px 10px",borderBottom:"1px solid #F0F1F3",
-                maxWidth:220,verticalAlign:"top",color:"#323338",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
-                cursor:gToken?"text":"default",background:isEditing?"#EBF5FF":isPriority?"#F0F7FF":"inherit",
-                fontSize:12,fontWeight:isPriority?600:"normal"
+              const isPri=priorityWords.some(w=>(visHeaders[j]||'').toLowerCase().includes(w));
+              return<td key={j} onDoubleClick={()=>{if(gToken){setEditCell({r:i,c:j});setEditVal(row[j]||'')}}} style={{
+                padding:isEditing?"2px":"4px 8px",borderBottom:"1px solid #F0F1F3",
+                verticalAlign:"top",color:"#323338",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                cursor:gToken?"text":"default",background:isEditing?"#EBF5FF":isPri?"#F0F7FF":"inherit",
+                fontSize:12,fontWeight:isPri?600:"normal"
               }}>
                 {isEditing?<input autoFocus value={editVal} onChange={e=>setEditVal(e.target.value)}
                   onBlur={()=>saveCell(i,j,editVal)}
                   onKeyDown={e=>{if(e.key==='Enter')saveCell(i,j,editVal);if(e.key==='Escape')setEditCell(null)}}
-                  style={{width:"100%",padding:"4px 6px",border:"2px solid #579BFC",borderRadius:4,fontSize:12,fontFamily:"inherit",outline:"none",background:"#fff"}}
-                />:(cell||'')}
+                  style={{width:"100%",padding:"3px 6px",border:"2px solid #579BFC",borderRadius:4,fontSize:12,fontFamily:"inherit",outline:"none",background:"#fff"}}
+                />:(row[j]||'')}
               </td>
             })}</tr>)}</tbody>
         </table>
