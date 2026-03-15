@@ -839,9 +839,13 @@ const EMAIL_TEMPLATES={
     subject:'Your E-Card Hours Are Verified, {{name}}',
     html:true,
     hasCert:true,
-    body:function(name){return emailHTML(`
+    body:function(name,cards,hours){return emailHTML(`
 <h2 style="font-size:22px;color:#1C3050;margin:0 0 6px;font-weight:600">Great work, ${name||'there'}!</h2>
-<p style="color:#555;font-size:14px;line-height:1.7;margin:12px 0">Thank you for your contribution to the <strong>CareForBrains E-Card Program</strong>. Your cards will reach underserved youth through our Heart Care Mental Health Kits.</p>
+<p style="color:#555;font-size:14px;line-height:1.7;margin:12px 0">Thank you for your contribution to the <strong>CareForBrains E-Card Program</strong>. Your ${cards||'0'} cards will reach underserved youth through our Heart Care Mental Health Kits.</p>
+<div style="background:#F0F9FF;border-radius:8px;padding:18px 20px;margin:18px 0;border-left:4px solid #0284c7">
+<div style="font-size:12px;font-weight:700;color:#0284c7;letter-spacing:1.5px;margin-bottom:10px">YOUR RESULTS</div>
+<table style="width:100%;font-size:14px;color:#333"><tr><td style="padding:4px 0">Cards completed: <strong>${cards||'0'}</strong></td></tr><tr><td style="padding:4px 0">Volunteer hours earned: <strong>${hours||'0'}</strong></td></tr></table>
+</div>
 
 <div style="background:#F0FDF4;border-radius:8px;padding:18px 20px;margin:18px 0;border-left:4px solid #10B981">
 <div style="font-size:12px;font-weight:700;color:#10B981;letter-spacing:1.5px;margin-bottom:10px">WHAT YOU\u2019VE EARNED (FREE)</div>
@@ -1005,11 +1009,27 @@ function Emails({db,hubData,team,me}){
       const email=manualMode?manualEmail.trim():(row[eIdx]||'').trim();
       const name=manualMode?manualName.trim():(nIdx>=0?(row[nIdx]||'').trim():'');
       const emailSubject=fill(subj,row).replace('{{name}}',name);
-      const emailBody=typeof tmpl.body==='function'?tmpl.body(name):('<div style="font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;color:#333;white-space:pre-wrap">'+fill(template==='custom'?customBody:(tmpl.body||''),row).replace(/{{name}}/g,name)+'</div>');
+      const emailBody=(()=>{
+        if(template==='custom')return '<div style="font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;color:#333;white-space:pre-wrap">'+fill(customBody,row).replace(/{{name}}/g,name)+'</div>';
+        if(template==='ecard_done'){
+          const ci=cols.findIndex(c=>(c||'').toLowerCase().includes('card')&&(c||'').toLowerCase().includes('total'));
+          const cc=ci>=0?parseInt(row[ci])||0:0;
+          const hrs=cc>0?String(Math.round(cc*0.5)):'0';
+          return tmpl.body(name,String(cc),hrs);
+        }
+        return typeof tmpl.body==='function'?tmpl.body(name):'';
+      })();
       try{
         let pdfAttachment=null;
         if(tmpl.hasCert){
-          const svg=generateCertSVG(name,'50','Volunteer',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
+          let certHours='50';let certProgram='Volunteer';
+          if(template==='ecard_done'){
+            certProgram='E-Card';
+            const cardsColIdx=cols.findIndex(h=>(h||'').toLowerCase().includes('card')&&(h||'').toLowerCase().includes('total'));
+            const cardCount=cardsColIdx>=0?parseInt(row[cardsColIdx])||0:0;
+            certHours=cardCount>0?String(Math.round(cardCount*0.5)):certHours;
+          }
+          const svg=generateCertSVG(name,certHours,certProgram,new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
           const pdfB64=await svgToPdfBase64(svg);
           pdfAttachment={name:'CareForBrains_Certificate_'+name.replace(/\s+/g,'_')+'.pdf',data:pdfB64};
         }
@@ -1121,7 +1141,11 @@ function Emails({db,hubData,team,me}){
 
       {tmpl.hasCert&&<Card style={{marginBottom:14}}><CardH>Certificate Preview</CardH>
         <div style={{padding:"16px 18px",textAlign:"center"}}>
-          <div dangerouslySetInnerHTML={{__html:generateCertSVG(validSelected[0]?.row?.[nIdx]||'Your Name','50','Volunteer',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}))}} style={{width:"100%",maxWidth:700,margin:"0 auto"}}/>
+          <div dangerouslySetInnerHTML={{__html:(()=>{
+            let h='50',p='Volunteer';
+            if(template==='ecard_done'){p='E-Card';const ci=cols.findIndex(c=>(c||'').toLowerCase().includes('card')&&(c||'').toLowerCase().includes('total'));const cc=ci>=0?parseInt((validSelected[0]?.row||[])[ci])||0:0;if(cc>0)h=String(Math.round(cc*0.5))}
+            return generateCertSVG(validSelected[0]?.row?.[nIdx]||'Your Name',h,p,new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}))
+          })()}} style={{width:"100%",maxWidth:700,margin:"0 auto"}}/>
           <div style={{marginTop:10,fontSize:11,color:C.mt}}>Certificate auto-fills with each recipient's name and hours</div>
         </div>
       </Card>}
@@ -1160,7 +1184,11 @@ function Emails({db,hubData,team,me}){
       {tmpl.hasCert&&<div style={{marginBottom:14,display:"flex",gap:8,flexWrap:"wrap"}}>
         {validSelected.slice(0,5).map(({row},i)=>{
           const name=nIdx>=0?(row[nIdx]||''):'';
-          return<Btn key={i} onClick={()=>downloadCert(name,'50','Volunteer')} style={{fontSize:11}}>Download cert: {name}</Btn>
+          return<Btn key={i} onClick={()=>{
+            let h='50',p='Volunteer';
+            if(template==='ecard_done'){p='E-Card';const ci=cols.findIndex(c=>(c||'').toLowerCase().includes('card')&&(c||'').toLowerCase().includes('total'));const cc=ci>=0?parseInt(row[ci])||0:0;if(cc>0)h=String(Math.round(cc*0.5))}
+            downloadCert(name,h,p)
+          }} style={{fontSize:11}}>Download cert: {name}</Btn>
         })}
         {validSelected.length>5&&<span style={{fontSize:11,color:C.mt,alignSelf:"center"}}>+{validSelected.length-5} more</span>}
       </div>}
