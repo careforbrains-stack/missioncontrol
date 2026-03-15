@@ -93,7 +93,6 @@ button:disabled{opacity:.4;cursor:not-allowed}
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://accounts.google.com/gsi/client"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script type="text/babel">
@@ -184,6 +183,29 @@ const fmtSyncTime=ts=>{
 let _gToken=null;
 let _activeSheet='';
 const colToLetter=c=>{let s='';while(c>=0){s=String.fromCharCode(65+(c%26))+s;c=Math.floor(c/26)-1}return s};
+
+// Send email via Gmail API directly — no third party, no branding
+async function sendGmail(token, to, subject, htmlBody, fromName='CareForBrains', replyTo='careforbrains@gmail.com'){
+  const boundary='boundary_'+Date.now();
+  const raw=[
+    'MIME-Version: 1.0',
+    'Content-Type: text/html; charset=utf-8',
+    'From: '+fromName+' <'+replyTo+'>',
+    'To: '+to,
+    'Reply-To: '+replyTo,
+    'Subject: =?UTF-8?B?'+btoa(unescape(encodeURIComponent(subject)))+'?=',
+    '',
+    htmlBody
+  ].join('\r\n');
+  const b64=btoa(unescape(encodeURIComponent(raw))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+    body:JSON.stringify({raw:b64})
+  });
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||'Gmail send failed: '+r.status)}
+  return await r.json();
+}
 
 // Audit log - writes to Firebase /hub/logs
 function logEvent(db,type,data){
@@ -534,12 +556,13 @@ function Sheets({db,hubData,team,me}){
     if(!window.google?.accounts?.oauth2)return;
     if(!tokenClientRef.current){
       tokenClientRef.current=window.google.accounts.oauth2.initTokenClient({
-        client_id:GOOGLE_CLIENT_ID,scope:'https://www.googleapis.com/auth/spreadsheets',
+        client_id:GOOGLE_CLIENT_ID,scope:'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/gmail.send',
         callback:resp=>{if(resp.access_token){setGToken(resp.access_token);resyncWithToken(resp.access_token)}}
       });
     }
     tokenClientRef.current.requestAccessToken();
   };
+  window._connectGoogle=connectGoogle;
 
   const saveCell=async(rowIdx,realCol,value)=>{
     if(!activeSheet||!gToken)return;
@@ -928,7 +951,7 @@ function Emails({db,hubData,team,me}){
   const sheetData=hubData.sheetData||{};
   const emailCfg=normEmailCfg(hubData.emailjs);
   const sender=emailCfg.profiles[emailCfg.defaultProfile]||emailCfg.profiles.general||{};
-  const senderReady=!!(sender.publicKey&&sender.serviceId&&sender.templateId);
+  const senderReady=!!_gToken;
 
   const tmpl=EMAIL_TEMPLATES[template]||EMAIL_TEMPLATES.custom;
   const subj=template==='custom'?customSubj:tmpl.subject;
@@ -963,7 +986,7 @@ function Emails({db,hubData,team,me}){
   };
 
   const sendEmails=async()=>{
-    if(!senderReady){alert('Set up EmailJS in the sender config first');return}
+    if(!_gToken){alert('Connect Google first');return}
     if(validSelected.length===0)return;
     setSending(true);setSendStats({done:0,total:validSelected.length});
     const ns={...sent};
@@ -971,18 +994,15 @@ function Emails({db,hubData,team,me}){
       const{row}=validSelected[i];
       const email=manualMode?manualEmail.trim():(row[eIdx]||'').trim();
       const name=manualMode?manualName.trim():(nIdx>=0?(row[nIdx]||'').trim():'');
+      const emailSubject=fill(subj,row).replace('{{name}}',name);
+      const emailBody=typeof tmpl.body==='function'?tmpl.body(name):('<div style="font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;color:#333;white-space:pre-wrap">'+fill(template==='custom'?customBody:(tmpl.body||''),row).replace(/{{name}}/g,name)+'</div>');
       try{
-        await emailjs.send(sender.serviceId,sender.templateId,{
-          to_email:email,to_name:name,
-          subject:fill(subj,row),message:typeof tmpl.body==='function'?tmpl.body(name):fill(template==='custom'?customBody:(tmpl.body||''),row),
-          from_name:sender.fromName||'CareForBrains',
-          reply_to:sender.replyTo||'careforbrains@gmail.com'
-        },{publicKey:sender.publicKey});
+        await sendGmail(_gToken,email,emailSubject,emailBody,'CareForBrains','careforbrains@gmail.com');
         ns[validSelected[i].i]='sent';
-        logEvent(db,'email_sent',{user:me,to:email,template:tmpl.name,subject:fill(subj,row)});
+        logEvent(db,'email_sent',{user:me,to:email,template:tmpl.name||'custom',subject:emailSubject});
       }catch(e){ns[validSelected[i].i]='failed';console.error(e)}
       setSent({...ns});setSendStats({done:i+1,total:validSelected.length});
-      if(i<validSelected.length-1)await wait(1100);
+      if(i<validSelected.length-1)await wait(500);
     }
     setSending(false);
   };
@@ -993,8 +1013,9 @@ function Emails({db,hubData,team,me}){
     <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>07 &#8212; Comms</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Email Center</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 18px"}}/>
 
-    {!senderReady&&<div style={{padding:"12px 16px",borderRadius:10,background:"#FFF5F5",border:"1px solid #FECACA",marginBottom:16,fontSize:12.5}}>
-      <span style={{color:"#E44258",fontWeight:700}}>&#9888; EmailJS not configured.</span><span style={{color:"#676879",marginLeft:6}}>Go to Settings to set up your sender profile before sending emails.</span>
+    {!senderReady&&<div style={{padding:"12px 16px",borderRadius:10,background:"#FFF5F5",border:"1px solid #FECACA",marginBottom:16,fontSize:12.5,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <span><span style={{color:"#E44258",fontWeight:700}}>&#9888; Not connected.</span><span style={{color:"#676879",marginLeft:6}}>Connect Google to send emails directly from careforbrains@gmail.com.</span></span>
+      <Btn primary onClick={()=>{if(window._connectGoogle)window._connectGoogle()}} style={{flexShrink:0}}>Connect Google</Btn>
     </div>}
 
     <div style={{display:"flex",gap:8,marginBottom:20}}>
@@ -1217,42 +1238,20 @@ function Logs({hubData,team}){
 // === SETTINGS ===
 function Settings({db,passwords,team,hubData}){
   const[pu,setPu]=useState('tanmay');const[np,setNp]=useState('');
-  const emailCfg=normEmailCfg(hubData.emailjs);
-  const[eCfg,setECfg]=useState(()=>({
-    publicKey:emailCfg.profiles?.general?.publicKey||'',
-    serviceId:emailCfg.profiles?.general?.serviceId||'',
-    templateId:emailCfg.profiles?.general?.templateId||'',
-    fromName:emailCfg.profiles?.general?.fromName||'CareForBrains',
-    replyTo:emailCfg.profiles?.general?.replyTo||'careforbrains@gmail.com'
-  }));
-  const senderReady=!!(eCfg.publicKey&&eCfg.serviceId&&eCfg.templateId);
   const chPw=()=>{if(!np)return;db.ref('hub/passwords/'+pu).set(np);setNp('');alert('Updated')};
-  const saveEmail=()=>{
-    const cfg=normEmailCfg(hubData.emailjs);
-    cfg.profiles.general={...cfg.profiles.general,...eCfg,id:'general',label:'General'};
-    db.ref('hub/emailjs').set(cfg);
-    alert('EmailJS config saved!');
-  };
   const resetFb=()=>{if(!confirm('Sign out everywhere on this device?'))return;localStorage.removeItem(LK);window.location.reload()};
   return(<div>
     <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>Settings</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Configuration</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
 
-    <Card><CardH right={<span style={{fontSize:10,fontFamily:"monospace",color:senderReady?C.gn:C.rd}}>{senderReady?'CONNECTED':'NOT SET UP'}</span>}>EmailJS Setup</CardH>
+    <Card><CardH right={<span style={{fontSize:10,fontFamily:"monospace",color:_gToken?C.gn:C.rd}}>{_gToken?'CONNECTED':'NOT CONNECTED'}</span>}>Email (Gmail API)</CardH>
       <div style={{padding:"14px 18px"}}>
         <div style={{background:C.bgA,borderRadius:8,padding:12,marginBottom:14,fontSize:12,color:C.sc,lineHeight:1.7}}>
-          To send emails from Mission Control:<br/>1. Sign up at <strong>emailjs.com</strong> (free = 200 emails/month)<br/>2. Add Gmail service (connect careforbrains@gmail.com)<br/>3. Create a template with variables: {'{{to_email}}'}, {'{{from_name}}'}, {'{{reply_to}}'}, {'{{subject}}'}, {'{{message}}'}<br/>4. Paste the 3 IDs below
+          Emails are sent directly through <strong>Gmail API</strong> from careforbrains@gmail.com. No third-party services, no branding.<br/><br/>
+          Just click <strong>"Connect Google"</strong> on the Sheets or Comms tab. One connection gives you both spreadsheet editing and email sending.
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
-          <div><Lbl>From Name</Lbl><Inp value={eCfg.fromName} onChange={e=>setECfg({...eCfg,fromName:e.target.value})}/></div>
-          <div><Lbl>Reply-To Email</Lbl><Inp value={eCfg.replyTo} onChange={e=>setECfg({...eCfg,replyTo:e.target.value})}/></div>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:12}}>
-          <div><Lbl>Public Key</Lbl><Inp value={eCfg.publicKey} onChange={e=>setECfg({...eCfg,publicKey:e.target.value})} placeholder="e.g. xK3j8..."/></div>
-          <div><Lbl>Service ID</Lbl><Inp value={eCfg.serviceId} onChange={e=>setECfg({...eCfg,serviceId:e.target.value})} placeholder="e.g. service_abc123"/></div>
-          <div><Lbl>Template ID</Lbl><Inp value={eCfg.templateId} onChange={e=>setECfg({...eCfg,templateId:e.target.value})} placeholder="e.g. template_abc123"/></div>
-        </div>
-        <Btn primary onClick={saveEmail}>Save EmailJS Config</Btn>
+        {_gToken?<div style={{display:"flex",alignItems:"center",gap:8}}><span style={{width:8,height:8,borderRadius:4,background:C.gn}}></span><span style={{fontSize:13,fontWeight:600}}>Connected &mdash; ready to send</span></div>
+        :<Btn primary onClick={()=>{if(window._connectGoogle)window._connectGoogle()}}>Connect Google Now</Btn>}
       </div>
     </Card>
 
