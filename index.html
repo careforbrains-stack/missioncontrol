@@ -397,7 +397,15 @@ function getDeviceInfo(){
   else if(ua.includes('Android'))os='Android';
   else if(ua.includes('iPhone')||ua.includes('iPad'))os='iOS';
   const bv=ua.match(new RegExp(browser==='Safari'?'Version/([\\d.]+)':browser+'/([\\d.]+)'));
-  return{browser:browser+(bv?' '+bv[1]:''),os,device:isMobile?'Mobile':'Desktop',screen:screen.width+'x'+screen.height,lang:navigator.language||'',tz:Intl.DateTimeFormat().resolvedOptions().timeZone||''}
+  let canvasFP='N/A';
+  try{const cv=document.createElement('canvas');cv.width=200;cv.height=50;const ctx=cv.getContext('2d');ctx.textBaseline='top';ctx.font='14px Arial';ctx.fillStyle='#f60';ctx.fillRect(125,1,62,20);ctx.fillStyle='#069';ctx.fillText('CFB',2,15);ctx.fillStyle='rgba(102,204,0,0.7)';ctx.fillText('fp',4,30);canvasFP=cv.toDataURL().slice(-32)}catch(e){}
+  let gpu='N/A';
+  try{const gl=document.createElement('canvas').getContext('webgl');const ext=gl.getExtension('WEBGL_debug_renderer_info');if(ext)gpu=gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)}catch(e){}
+  let net='N/A';
+  try{const cn=navigator.connection||navigator.mozConnection;if(cn)net=cn.effectiveType+(cn.type?' ('+cn.type+')':'')}catch(e){}
+  let batt='N/A';
+  try{if(navigator.getBattery)navigator.getBattery().then(b=>{if(_deviceInfo)_deviceInfo.battery=Math.round(b.level*100)+'%'+(b.charging?' charging':'')})}catch(e){}
+  return{browser:browser+(bv?' '+bv[1]:''),os,device:isMobile?'Mobile':'Desktop',screen:screen.width+'x'+screen.height,colorDepth:screen.colorDepth+'bit',lang:navigator.language||'',tz:Intl.DateTimeFormat().resolvedOptions().timeZone||'',cpuCores:navigator.hardwareConcurrency||'N/A',ram:(navigator.deviceMemory||'N/A')+(navigator.deviceMemory?'GB':''),touch:navigator.maxTouchPoints>0?'Yes ('+navigator.maxTouchPoints+')':'No',platform:navigator.platform||'N/A',darkMode:window.matchMedia('(prefers-color-scheme:dark)').matches?'Yes':'No',canvasFP,gpu,network:net,battery:batt,ua:ua.slice(0,150)}
 }
 let _deviceInfo=null;
 function logEvent(db,type,data){
