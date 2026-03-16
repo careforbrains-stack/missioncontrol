@@ -382,11 +382,29 @@ async function sendGmail(token, to, subject, htmlBody, fromName='CareForBrains',
 }
 
 // Audit log - writes to Firebase /hub/logs
+function getDeviceInfo(){
+  const ua=navigator.userAgent;
+  const isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(ua);
+  let browser='Unknown',os='Unknown';
+  if(ua.includes('Firefox/'))browser='Firefox';
+  else if(ua.includes('Edg/'))browser='Edge';
+  else if(ua.includes('OPR/')||ua.includes('Opera'))browser='Opera';
+  else if(ua.includes('Chrome/')&&!ua.includes('Edg'))browser='Chrome';
+  else if(ua.includes('Safari/')&&!ua.includes('Chrome'))browser='Safari';
+  if(ua.includes('Win'))os='Windows';
+  else if(ua.includes('Mac'))os='macOS';
+  else if(ua.includes('Linux'))os='Linux';
+  else if(ua.includes('Android'))os='Android';
+  else if(ua.includes('iPhone')||ua.includes('iPad'))os='iOS';
+  const bv=ua.match(new RegExp(browser==='Safari'?'Version/([\\d.]+)':browser+'/([\\d.]+)'));
+  return{browser:browser+(bv?' '+bv[1]:''),os,device:isMobile?'Mobile':'Desktop',screen:screen.width+'x'+screen.height,lang:navigator.language||'',tz:Intl.DateTimeFormat().resolvedOptions().timeZone||''}
+}
+let _deviceInfo=null;
 function logEvent(db,type,data){
   if(!db)return;
+  if(!_deviceInfo)_deviceInfo=getDeviceInfo();
   const ref=db.ref('hub/logs').push();
-  ref.set({id:ref.key,type,ts:Date.now(),time:new Date().toISOString(),...data});
-  // Keep max 500 logs - prune old ones
+  ref.set({id:ref.key,type,ts:Date.now(),time:new Date().toISOString(),..._deviceInfo,...data});
   db.ref('hub/logs').orderByChild('ts').limitToFirst(1).once('value',snap=>{
     const val=snap.val();if(!val)return;
     db.ref('hub/logs').once('value',all=>{
@@ -1617,51 +1635,72 @@ function Board({db,announcements,team,me}){
 function Logs({hubData,team}){
   const logs=fbToArr(hubData.logs||{}).sort((a,b)=>(b.ts||0)-(a.ts||0));
   const[filter,setFilter]=useState('all');
+  const[expanded,setExpanded]=useState(null);
   const filtered=filter==='all'?logs:logs.filter(l=>l.type===filter);
   const getName=id=>{const m=team.find(t=>t.id===id);return m?fn(m.name):id||'?'};
   const typeLabel={login:'Login',sheet_edit:'Sheet Edit',task_assign:'Task Assigned',email_sent:'Email Sent',message_sent:'Message'};
   const typeColor={login:'#1490B0',sheet_edit:'#10B981',task_assign:'#F59E0B',email_sent:'#A25DDC',message_sent:'#EC4899'};
+  const typeIcon={login:'\uD83D\uDD11',sheet_edit:'\u270F\uFE0F',task_assign:'\uD83D\uDCCB',email_sent:'\u2709\uFE0F',message_sent:'\uD83D\uDCF1'};
+  const fmtTime=t=>{if(!t)return'';const d=new Date(t);return d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true})};
+  const fmtFull=t=>{if(!t)return'';const d=new Date(t);return d.toLocaleString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true})};
+  const ago=ts=>{if(!ts)return'';const s=Math.floor((Date.now()-ts)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago'};
+  const mkInfo=(label,val)=><div style={{padding:"6px 10px",background:"#fff",borderRadius:6,border:"1px solid #E6E9EF"}}><div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:"#8A9AAE",marginBottom:2}}>{label}</div><div style={{fontSize:11,fontFamily:"monospace",color:"#1B2838",wordBreak:"break-all"}}>{val||'N/A'}</div></div>;
 
   return(<div>
     <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>Admin</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Activity Log</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 18px"}}/>
-    <div style={{display:"flex",gap:6,marginBottom:14}}>
-      {[['all','All'],['login','Logins'],['sheet_edit','Edits'],['task_assign','Tasks'],['email_sent','Emails'],['message_sent','Messages']].map(([v,l])=><button key={v} onClick={()=>setFilter(v)} style={{padding:"6px 14px",border:filter===v?"2px solid #1490B0":"1px solid "+C.rl,borderRadius:8,background:filter===v?"rgba(20,144,176,0.06)":"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:filter===v?700:500,color:filter===v?"#323338":"#676879"}}>{l}</button>)}
-      <span style={{fontSize:11,color:C.mt,alignSelf:"center",marginLeft:8}}>{filtered.length} events</span>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:8,marginBottom:16}}>
+      {[['all','All',filtered.length,'#579BFC'],['login','Logins',logs.filter(l=>l.type==='login').length,'#1490B0'],['sheet_edit','Edits',logs.filter(l=>l.type==='sheet_edit').length,'#10B981'],['task_assign','Tasks',logs.filter(l=>l.type==='task_assign').length,'#F59E0B'],['email_sent','Emails',logs.filter(l=>l.type==='email_sent').length,'#A25DDC'],['message_sent','Texts',logs.filter(l=>l.type==='message_sent').length,'#EC4899']].map(([v,l,n,col])=>
+        <button key={v} onClick={()=>setFilter(v)} style={{padding:"10px 8px",border:filter===v?"2px solid "+col:"1px solid "+C.rl,borderRadius:10,background:filter===v?col+"0D":"#fff",cursor:"pointer",fontFamily:"inherit",textAlign:"center",transition:"all .2s"}}>
+          <div style={{fontSize:18,fontWeight:700,color:filter===v?col:"#1B2838"}}>{n}</div>
+          <div style={{fontSize:9,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:filter===v?col:"#8A9AAE",marginTop:2}}>{l}</div>
+        </button>)}
     </div>
     <Card style={{overflow:"hidden"}}>
       <div style={{overflowY:"auto",maxHeight:"72vh"}}>
-        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"fixed"}}>
-          <colgroup><col style={{width:"140px"}}/><col style={{width:"90px"}}/><col style={{width:"80px"}}/><col/></colgroup>
-          <thead><tr>
-            <th style={{padding:"7px 10px",textAlign:"left",borderBottom:"2px solid "+C.rl,fontSize:10,fontWeight:700,textTransform:"uppercase",color:"#323338",background:"#F5F6F8",position:"sticky",top:0,zIndex:2}}>Time</th>
-            <th style={{padding:"7px 10px",textAlign:"left",borderBottom:"2px solid "+C.rl,fontSize:10,fontWeight:700,textTransform:"uppercase",color:"#323338",background:"#F5F6F8",position:"sticky",top:0,zIndex:2}}>Type</th>
-            <th style={{padding:"7px 10px",textAlign:"left",borderBottom:"2px solid "+C.rl,fontSize:10,fontWeight:700,textTransform:"uppercase",color:"#323338",background:"#F5F6F8",position:"sticky",top:0,zIndex:2}}>User</th>
-            <th style={{padding:"7px 10px",textAlign:"left",borderBottom:"2px solid "+C.rl,fontSize:10,fontWeight:700,textTransform:"uppercase",color:"#323338",background:"#F5F6F8",position:"sticky",top:0,zIndex:2}}>Details</th>
-          </tr></thead>
-          <tbody>{filtered.length===0?<tr><td colSpan={4} style={{padding:"40px",textAlign:"center",color:C.mt,fontFamily:F.sf,fontStyle:"italic"}}>No activity yet</td></tr>:
-          filtered.slice(0,200).map(l=><tr key={l._fbKey} style={{background:l.type==='login'?"#FAFBFC":"#fff"}}>
-            <td style={{padding:"6px 10px",borderBottom:"1px solid #F0F1F3",fontSize:11,color:"#676879",fontFamily:"monospace",whiteSpace:"nowrap"}}>{l.time?new Date(l.time).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):''}</td>
-            <td style={{padding:"6px 10px",borderBottom:"1px solid #F0F1F3"}}><span style={{padding:"2px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:(typeColor[l.type]||"#999")+"18",color:typeColor[l.type]||"#999"}}>{typeLabel[l.type]||l.type}</span></td>
-            <td style={{padding:"6px 10px",borderBottom:"1px solid #F0F1F3",fontWeight:600,fontSize:12}}>{getName(l.user)}</td>
-            <td style={{padding:"6px 10px",borderBottom:"1px solid #F0F1F3",fontSize:12,color:"#323338",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-              {l.type==='login'&&<span>IP: <span style={{fontFamily:"monospace",color:"#676879"}}>{l.ip||'—'}</span></span>}
-              {l.type==='sheet_edit'&&<span>
-                <span style={{fontWeight:600}}>{l.sheet}</span>
-                <span style={{color:"#676879"}}> cell {l.cell}</span>
-                {l.oldValue&&<span style={{color:C.rd,textDecoration:"line-through",marginLeft:6}}>{(l.oldValue||'').slice(0,20)}</span>}
-                <span style={{color:C.gn,marginLeft:4}}>{(l.newValue||'').slice(0,30)}</span>
-              </span>}
-              {l.type==='task_assign'&&<span>
-                Assigned <span style={{fontWeight:600}}>"{(l.task||'').slice(0,40)}"</span> to <span style={{fontWeight:600}}>{getName(l.assignee)}</span>
-                <span style={{marginLeft:6,padding:"1px 6px",borderRadius:3,fontSize:10,fontWeight:700,background:l.priority==='high'?"#FEE2E2":l.priority==='low'?"#DBEAFE":"#FEF3C7",color:l.priority==='high'?"#991B1B":l.priority==='low'?"#1E40AF":"#92400E"}}>{l.priority}</span>
-              </span>}
-              {l.type==='email_sent'&&<span>
-                Sent <span style={{fontWeight:600}}>"{(l.subject||'').slice(0,35)}"</span> to <span style={{fontFamily:"monospace",color:"#676879"}}>{l.to||'—'}</span>
-              </span>}
-            </td>
-          </tr>)}</tbody>
-        </table>
+        {filtered.length===0?<div style={{padding:"40px",textAlign:"center",color:C.mt,fontFamily:F.sf,fontStyle:"italic"}}>No activity yet</div>:
+        filtered.slice(0,200).map(l=><div key={l._fbKey}>
+          <div onClick={()=>setExpanded(expanded===l._fbKey?null:l._fbKey)} style={{
+            display:"grid",gridTemplateColumns:"32px 140px 90px 80px 1fr 30px",alignItems:"center",gap:4,
+            padding:"8px 14px",borderBottom:"1px solid #F0F1F3",cursor:"pointer",
+            background:expanded===l._fbKey?"#F8FAFC":"#fff",transition:"background .15s"
+          }}>
+            <span style={{fontSize:16}}>{typeIcon[l.type]||'\u2022'}</span>
+            <div><div style={{fontSize:11,fontFamily:"monospace",color:"#676879"}}>{fmtTime(l.time)}</div><div style={{fontSize:9,color:"#B0B8C4"}}>{ago(l.ts)}</div></div>
+            <span style={{padding:"2px 8px",borderRadius:4,fontSize:9,fontWeight:700,background:(typeColor[l.type]||"#999")+"18",color:typeColor[l.type]||"#999",textAlign:"center"}}>{typeLabel[l.type]||l.type}</span>
+            <span style={{fontWeight:600,fontSize:12}}>{getName(l.user)}</span>
+            <div style={{fontSize:12,color:"#323338",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+              {l.type==='login'&&<span>IP: <span style={{fontFamily:"monospace",color:"#676879"}}>{l.ip||'\u2014'}</span> \u00B7 {l.browser||''} \u00B7 {l.os||''} \u00B7 {l.device||''}</span>}
+              {l.type==='sheet_edit'&&<span><span style={{fontWeight:600}}>{l.sheet}</span> cell {l.cell} {l.oldValue&&<span style={{color:C.rd,textDecoration:"line-through"}}>{(l.oldValue||'').slice(0,20)}</span>} <span style={{color:C.gn}}>{(l.newValue||'').slice(0,30)}</span></span>}
+              {l.type==='task_assign'&&<span>"{(l.task||'').slice(0,40)}" \u2192 {getName(l.assignee)} <span style={{padding:"1px 6px",borderRadius:3,fontSize:9,fontWeight:700,background:l.priority==='high'?"#FEE2E2":l.priority==='low'?"#DBEAFE":"#FEF3C7",color:l.priority==='high'?"#991B1B":l.priority==='low'?"#1E40AF":"#92400E"}}>{l.priority}</span></span>}
+              {l.type==='email_sent'&&<span>"{(l.subject||'').slice(0,35)}" \u2192 {l.to||'\u2014'}</span>}
+              {l.type==='message_sent'&&<span>Texted {l.toName||'\u2014'}: "{(l.message||'').slice(0,40)}"</span>}
+            </div>
+            <span style={{fontSize:10,color:"#B0B8C4",transform:expanded===l._fbKey?"rotate(180deg)":"rotate(0)",transition:"transform .2s"}}>\u25BC</span>
+          </div>
+          {expanded===l._fbKey&&<div style={{padding:"12px 14px 16px 46px",background:"#F8FAFC",borderBottom:"2px solid #E6E9EF",animation:"pageSlide .3s var(--ease-expo) both"}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+              {mkInfo('\uD83D\uDD52 Timestamp',fmtFull(l.time))}
+              {mkInfo('\uD83C\uDF10 IP Address',l.ip)}
+              {mkInfo('\uD83D\uDCBB Device',l.device)}
+              {mkInfo('\uD83D\uDDA5 Browser',l.browser)}
+              {mkInfo('\u2699\uFE0F OS',l.os)}
+              {mkInfo('\uD83D\uDCCF Screen',l.screen)}
+              {mkInfo('\uD83C\uDF0D Timezone',l.tz)}
+              {mkInfo('\uD83D\uDDE3 Language',l.lang)}
+              {mkInfo('\uD83D\uDC64 User ID',l.user)}
+            </div>
+            {l.type==='sheet_edit'&&<div style={{marginTop:8,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+              {mkInfo('Sheet',l.sheet)}{mkInfo('Cell',l.cell)}{mkInfo('Old \u2192 New',(l.oldValue||'empty')+' \u2192 '+(l.newValue||'empty'))}
+            </div>}
+            {l.type==='email_sent'&&<div style={{marginTop:8,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+              {mkInfo('Template',l.template)}{mkInfo('To',l.to)}{mkInfo('Subject',l.subject)}
+            </div>}
+            {l.type==='task_assign'&&<div style={{marginTop:8,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+              {mkInfo('Task',l.task)}{mkInfo('Assignee',getName(l.assignee))}{mkInfo('Priority',l.priority)}
+            </div>}
+          </div>}
+        </div>)}
       </div>
     </Card>
   </div>);
