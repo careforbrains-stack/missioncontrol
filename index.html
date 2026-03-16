@@ -670,7 +670,8 @@ function Assign({db,tasks,team,me}){
             </div>)}
           </div>
           <div style={{flex:1}}><Inp value={msgText} onChange={e=>setMsgText(e.target.value)} placeholder="Type a message..." onKeyDown={e=>{if(e.key==='Enter'&&msgText.trim()&&msgTo)sendMsg()}}/></div>
-          <button onClick={sendMsg} disabled={!msgText.trim()||!msgTo||!_gToken} style={{padding:"10px 20px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,color:"#fff",background:msgText.trim()&&msgTo?"linear-gradient(135deg,#10B981,#059669)":"#E6E9EF"}}>Send</button>
+          {_gToken?<button onClick={sendMsg} disabled={!msgText.trim()||!msgTo} style={{padding:"10px 20px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,color:"#fff",background:msgText.trim()&&msgTo?"linear-gradient(135deg,#10B981,#059669)":"#E6E9EF"}}>Send</button>
+          :<button onClick={()=>globalConnectGoogle()} style={{padding:"10px 20px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,color:"#fff",background:"#579BFC"}}>Connect Google</button>}
         </div>
       </div>}
     </Card>
