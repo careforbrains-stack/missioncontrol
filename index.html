@@ -523,28 +523,117 @@ function TeamBoard({db,tasks,team,me}){
 function Assign({db,tasks,team,me}){
   const[form,setForm]=useState({assignee:'eric',text:'',notes:'',priority:'medium',due:''});
   const[bulk,setBulk]=useState(false);
-  const assign=()=>{if(!form.text.trim())return;const targets=bulk?team.filter(t=>!t.admin).map(t=>t.id):[form.assignee];targets.forEach(a=>{const ref=db.ref('hub/tasks').push();ref.set({id:ref.key,assignee:a,text:form.text.trim(),notes:form.notes.trim(),priority:form.priority,due:form.due,done:false,assignedBy:me,created:new Date().toISOString().split('T')[0]});logEvent(db,'task_assign',{user:me,assignee:a,task:form.text.trim(),priority:form.priority})});setForm({assignee:'eric',text:'',notes:'',priority:'medium',due:''})};
+  const[sent,setSent]=useState(false);
+  const assign=()=>{if(!form.text.trim())return;const targets=bulk?team.filter(t=>!t.admin).map(t=>t.id):[form.assignee];targets.forEach(a=>{const ref=db.ref('hub/tasks').push();ref.set({id:ref.key,assignee:a,text:form.text.trim(),notes:form.notes.trim(),priority:form.priority,due:form.due,done:false,assignedBy:me,created:new Date().toISOString().split('T')[0]});logEvent(db,'task_assign',{user:me,assignee:a,task:form.text.trim(),priority:form.priority})});setSent(true);setTimeout(()=>{setSent(false);setForm({assignee:'eric',text:'',notes:'',priority:'medium',due:''})},1800)};
+  const totalOpen=tasks.filter(t=>!t.done).length;const totalDone=tasks.filter(t=>t.done).length;const totalOverdue=tasks.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;
+  const pColors={high:'#EF4444',medium:'#F59E0B',low:'#3B82F6'};
   return(<div>
-    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>&#9889; Assign Work</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Delegate Tasks</h1></div>
+    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>&#9889; Command Center</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Assign Work</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-      <Card><CardH>New Assignment</CardH>
-        <div style={{padding:"14px 18px"}}>
-          <div style={{marginBottom:12}}><Lbl>Assign to</Lbl><label style={{display:"flex",alignItems:"center",gap:4,fontSize:12,color:C.sc,cursor:"pointer",marginBottom:8}}><input type="checkbox" checked={bulk} onChange={e=>setBulk(e.target.checked)}/> Everyone</label>
-          {!bulk&&<Sel value={form.assignee} onChange={e=>setForm({...form,assignee:e.target.value})}>{team.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</Sel>}</div>
-          <div style={{marginBottom:12}}><Lbl>Task</Lbl><Inp value={form.text} onChange={e=>setForm({...form,text:e.target.value})} placeholder="What needs to be done?" onKeyDown={e=>e.key==='Enter'&&assign()}/></div>
-          <div style={{marginBottom:12}}><Lbl>Notes</Lbl><textarea style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:7,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",minHeight:60,resize:"vertical"}} value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})} placeholder="Links, context..."/></div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-            <div><Lbl>Priority</Lbl><Sel value={form.priority} onChange={e=>setForm({...form,priority:e.target.value})}><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></Sel></div>
-            <div><Lbl>Due Date</Lbl><input type="date" style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:7,fontSize:13,fontFamily:"inherit"}} value={form.due} onChange={e=>setForm({...form,due:e.target.value})}/></div></div>
-          <Btn primary onClick={assign} style={{width:"100%",justifyContent:"center",padding:11}}>{bulk?"Assign to all":"Assign to "+fn(team.find(t=>t.id===form.assignee)?.name)}</Btn>
-        </div></Card>
-      <Card><CardH>Workload</CardH>
-        <div style={{padding:"14px 18px"}}>{team.map(m=>{const ts=tasks.filter(t=>t.assignee===m.id);const op=ts.filter(t=>!t.done).length;const od=ts.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;return(
-          <div key={m.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid "+C.bgA}}>
-            <Av m={m} s={32}/><div style={{flex:1}}><div style={{fontWeight:700,fontSize:13}}>{fn(m.name)}</div></div>
-            <div style={{textAlign:"right"}}><span style={{fontSize:16,fontWeight:700,fontFamily:F.sf}}>{op}</span><span style={{fontSize:10,color:C.mt,marginLeft:4}}>open</span>{od>0&&<div style={{fontSize:10,color:C.rd,fontWeight:600}}>{od} overdue</div>}</div>
-          </div>)})}</div></Card>
+
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
+      {[
+        [totalOpen+totalDone,'Total Tasks','#579BFC'],
+        [totalOpen,'Active','#F59E0B'],
+        [totalDone,'Completed','#10B981'],
+        [totalOverdue,'Overdue','#EF4444']
+      ].map(([n,l,col],i)=><Reveal key={i} delay={i*60} scale>
+        <div style={{background:"#fff",border:"1px solid #E6E9EF",borderRadius:12,padding:"18px",position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:col}}/>
+          <div style={{fontSize:28,fontWeight:700,fontFamily:F.sf,color:"#1B2838"}}>{n}</div>
+          <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:"#8A9AAE",marginTop:4}}>{l}</div>
+        </div>
+      </Reveal>)}
+    </div>
+
+    <div style={{display:"grid",gridTemplateColumns:"1.2fr 1fr",gap:16}}>
+      <Card>
+        <div style={{padding:"16px 20px",borderBottom:"1px solid "+C.bgA,display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:8,height:8,borderRadius:4,background:sent?"#10B981":"#579BFC",animation:sent?"none":"pulseDot 2s ease-in-out infinite"}}/>
+          <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:sent?"#10B981":"#323338"}}>{sent?"Mission Dispatched":"New Mission"}</span>
+        </div>
+        {sent?<div className="send-success" style={{padding:"48px 20px",textAlign:"center"}}>
+          <div style={{width:56,height:56,borderRadius:"50%",background:"#D1FAE5",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px"}}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="3" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          <div style={{fontSize:18,fontWeight:700,color:"#1B2838"}}>Task Assigned</div>
+          <div style={{fontSize:13,color:"#8A9AAE",marginTop:4}}>{bulk?"Sent to all team members":"Sent to "+fn(team.find(t=>t.id===form.assignee)?.name)}</div>
+        </div>:
+        <div style={{padding:"18px 20px"}}>
+          <div style={{marginBottom:14}}>
+            <Lbl>Operator</Lbl>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+              <label style={{display:"flex",alignItems:"center",gap:5,fontSize:12,color:bulk?"#579BFC":C.sc,cursor:"pointer",padding:"6px 12px",border:bulk?"2px solid #579BFC":"1px solid "+C.rl,borderRadius:8,background:bulk?"rgba(87,155,252,.06)":"#fff",transition:"all .2s",fontWeight:bulk?600:400}}>
+                <input type="checkbox" checked={bulk} onChange={e=>setBulk(e.target.checked)} style={{display:"none"}}/>{bulk?"✓ ":""}All Members
+              </label>
+            </div>
+            {!bulk&&<div style={{display:"grid",gridTemplateColumns:"repeat("+Math.min(team.length,5)+",1fr)",gap:6}}>
+              {team.map(m=><div key={m.id} onClick={()=>setForm({...form,assignee:m.id})} style={{
+                padding:"10px 8px",borderRadius:10,border:form.assignee===m.id?"2px solid "+(m.color||C.tl):"1px solid "+C.rl,
+                background:form.assignee===m.id?"rgba(87,155,252,.04)":"#fff",cursor:"pointer",textAlign:"center",
+                transition:"all .25s var(--ease-spring)",transform:form.assignee===m.id?"scale(1.03)":"scale(1)"
+              }}>
+                <Av m={m} s={32}/>
+                <div style={{fontSize:11,fontWeight:form.assignee===m.id?700:500,marginTop:6,color:form.assignee===m.id?"#1B2838":"#8A9AAE"}}>{fn(m.name)}</div>
+              </div>)}
+            </div>}
+          </div>
+          <div style={{marginBottom:14}}><Lbl>Mission Brief</Lbl><Inp value={form.text} onChange={e=>setForm({...form,text:e.target.value})} placeholder="What needs to be done?" onKeyDown={e=>e.key==='Enter'&&assign()}/></div>
+          <div style={{marginBottom:14}}><Lbl>Intel</Lbl><textarea style={{width:"100%",padding:"9px 12px",background:"#fff",border:"1px solid "+C.rl,borderRadius:8,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",minHeight:50,resize:"vertical",transition:"all .3s var(--ease-expo)"}} value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})} placeholder="Links, context, details..." onFocus={e=>e.target.style.borderColor='#579BFC'} onBlur={e=>e.target.style.borderColor=C.rl}/></div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+            <div><Lbl>Threat Level</Lbl>
+              <div style={{display:"flex",gap:6}}>
+                {[['high','High','#EF4444'],['medium','Medium','#F59E0B'],['low','Low','#3B82F6']].map(([v,l,col])=>
+                  <button key={v} onClick={()=>setForm({...form,priority:v})} style={{
+                    flex:1,padding:"8px 4px",border:form.priority===v?"2px solid "+col:"1px solid "+C.rl,borderRadius:8,
+                    background:form.priority===v?col+"14":"#fff",cursor:"pointer",fontSize:11,fontWeight:form.priority===v?700:500,
+                    color:form.priority===v?col:"#8A9AAE",fontFamily:"inherit",transition:"all .2s var(--ease-spring)"
+                  }}>{l}</button>
+                )}
+              </div>
+            </div>
+            <div><Lbl>Deadline</Lbl><input type="date" style={{width:"100%",padding:"9px 12px",background:"#fff",border:"1px solid "+C.rl,borderRadius:8,fontSize:13,fontFamily:"inherit"}} value={form.due} onChange={e=>setForm({...form,due:e.target.value})}/></div>
+          </div>
+          <button onClick={assign} disabled={!form.text.trim()} style={{
+            width:"100%",padding:"13px",borderRadius:10,border:"none",cursor:"pointer",fontFamily:"inherit",
+            fontSize:14,fontWeight:700,letterSpacing:"0.5px",color:"#fff",
+            background:form.text.trim()?"linear-gradient(135deg,#579BFC,#3B82F6)":"#E6E9EF",
+            boxShadow:form.text.trim()?"0 4px 14px rgba(87,155,252,.3)":"none",
+            transition:"all .3s var(--ease-spring)",transform:"translateY(0)"
+          }} onMouseEnter={e=>{if(form.text.trim())e.target.style.transform='translateY(-2px)'}} onMouseLeave={e=>e.target.style.transform='translateY(0)'}>
+            {bulk?"Deploy to All":"Deploy to "+fn(team.find(t=>t.id===form.assignee)?.name)}
+          </button>
+        </div>}
+      </Card>
+
+      <div>
+        <Card>
+          <div style={{padding:"16px 20px",borderBottom:"1px solid "+C.bgA}}>
+            <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:"#323338"}}>Team Status</span>
+          </div>
+          <div style={{padding:"8px 12px"}}>
+            {team.map(m=>{const ts=tasks.filter(t=>t.assignee===m.id);const op=ts.filter(t=>!t.done).length;const dn=ts.filter(t=>t.done).length;const od=ts.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;const total=op+dn;const pct=total>0?Math.round(dn/total*100):0;
+            return(<div key={m.id} style={{padding:"12px 8px",borderBottom:"1px solid "+C.bgA,transition:"all .2s",borderRadius:6}} onMouseEnter={e=>e.currentTarget.style.background='rgba(87,155,252,.03)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                <Av m={m} s={28}/>
+                <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13}}>{fn(m.name)}</div></div>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  {od>0&&<span style={{padding:"2px 7px",borderRadius:4,fontSize:9,fontWeight:700,background:"#FEE2E2",color:"#EF4444"}}>{od} LATE</span>}
+                  <span style={{fontSize:18,fontWeight:700,fontFamily:F.sf,color:op>0?"#1B2838":"#C3C6D4"}}>{op}</span>
+                  <span style={{fontSize:10,color:"#8A9AAE"}}>open</span>
+                </div>
+              </div>
+              <div style={{height:4,background:"#F0F1F3",borderRadius:2,overflow:"hidden"}}>
+                <div style={{height:"100%",borderRadius:2,background:pct===100?"#10B981":"#579BFC",width:pct+"%",transition:"width .8s var(--ease-expo)"}}/>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+                <span style={{fontSize:9,color:"#B0B8C4"}}>{dn} done</span>
+                <span style={{fontSize:9,color:pct===100?"#10B981":"#B0B8C4",fontWeight:pct===100?700:400}}>{pct}%</span>
+              </div>
+            </div>)})}
+          </div>
+        </Card>
+      </div>
     </div>
   </div>);
 }
