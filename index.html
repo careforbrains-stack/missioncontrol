@@ -803,6 +803,37 @@ function Sheets({db,hubData,team,me}){
   const[saving,setSaving]=useState(false);
   const tableRef=useRef(null);
   const scrollRef=useRef(0);
+
+  // Auto-sync: fetch via CSV export for any sheet with no cached data (no auth needed if sheet is shared with "anyone with link")
+  useEffect(()=>{
+    const autoSync=async()=>{
+      for(const s of sheets){
+        const sid=getSheetId(s.url);
+        if(!sid)continue;
+        const cached=sheetData[s.id];
+        if(cached&&Array.isArray(cached)&&cached.length>1)continue; // already has data
+        try{
+          const csvUrl='https://docs.google.com/spreadsheets/d/'+sid+'/export?format=csv';
+          const r=await fetch(csvUrl);
+          if(!r.ok)continue;
+          const text=await r.text();
+          const rows=text.split('\n').map(row=>{
+            const vals=[];let cur='';let inQ=false;
+            for(let i=0;i<row.length;i++){
+              const ch=row[i];
+              if(ch==='"'){inQ=!inQ}
+              else if(ch===','&&!inQ){vals.push(cur.trim());cur=''}
+              else{cur+=ch}
+            }
+            vals.push(cur.trim());
+            return vals;
+          }).filter(r=>r.some(c=>c));
+          if(rows.length>0)db.ref('hub/sheetData/'+s.id).set(rows);
+        }catch(e){console.log('Auto-sync skip:',s.name,e)}
+      }
+    };
+    autoSync();
+  },[]);
   useEffect(()=>{
     const el=tableRef.current;
     if(!el)return;
