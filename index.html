@@ -1124,6 +1124,46 @@ const EMAIL_TEMPLATES={
 <p style="margin:2px 0 0;font-size:12px;color:#888">Founder & CEO, CareForBrains</p>
 </div>`,name)}
   },
+  stem_accept:{
+    name:'STEM Internship Accepted',
+    icon:'\uD83D\uDD2C',
+    subject:'Welcome to CareForBrains STEM Exploration, {{name}}!',
+    html:true,
+    body:function(name){return emailHTML(`
+<p style="font-size:24px;font-weight:700;color:#1C3050;margin:0 0 4px">Welcome, ${name||'there'}!</p>
+<p style="font-size:15px;color:#555;line-height:1.7;margin:8px 0 24px">Congratulations! You have been accepted into the <strong>CareForBrains STEM Exploration Program</strong>. We are excited to have you join us.</p>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="background:#f0f9ff;border-radius:10px;padding:22px 24px">
+<p style="font-size:11px;font-weight:700;letter-spacing:2px;color:#0284c7;margin:0 0 12px">NEXT STEPS</p>
+<p style="font-size:14px;color:#333;margin:0;line-height:2">1. Join our Discord server for all communications<br/>2. Complete the onboarding form (sent separately)<br/>3. Attend the orientation session<br/>4. Review your program materials</p>
+</td></tr></table>
+<p style="font-size:14px;color:#555;line-height:1.7;margin:0 0 24px">If you have any questions, reply to this email or reach us at careforbrainsse@gmail.com</p>
+<p style="font-size:14px;color:#1C3050;font-weight:600;margin:0">CareForBrains STEM Exploration Team</p>
+<p style="font-size:12px;color:#999;margin:2px 0 0">careforbrainsse@gmail.com</p>
+`,name)}
+  },
+  stem_done:{
+    name:'STEM Internship Completion',
+    icon:'\uD83C\uDF93',
+    subject:'Congratulations on completing STEM Exploration, {{name}}!',
+    html:true,
+    hasCert:true,
+    body:function(name){return emailHTML(`
+<p style="font-size:24px;font-weight:700;color:#1C3050;margin:0 0 4px">Congratulations, ${name||'there'}!</p>
+<p style="font-size:15px;color:#555;line-height:1.7;margin:8px 0 24px">You have successfully completed the <strong>CareForBrains STEM Exploration Program</strong>. Your dedication to STEM and mental health awareness has been outstanding.</p>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="background:#f0fdf4;border-radius:10px;padding:22px 24px">
+<p style="font-size:11px;font-weight:700;letter-spacing:2px;color:#059669;margin:0 0 12px">WHAT YOU'VE EARNED</p>
+<p style="font-size:14px;color:#333;margin:0;line-height:2">&#10004; CareForBrains STEM Certificate of Achievement<br/>&#10004; Verified internship hours for school and college applications<br/>&#10004; Letter of recommendation eligibility</p>
+</td></tr></table>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="background:#faf5ff;border-radius:10px;padding:22px 24px">
+<p style="font-size:11px;font-weight:700;letter-spacing:2px;color:#7c3aed;margin:0 0 12px">MEMBERSHIP UPGRADE &mdash; $40</p>
+<p style="font-size:14px;color:#333;margin:0 0 12px;line-height:1.8">Everything above, plus:<br/>&#8226; PVSA Award (Bronze, Silver, or Gold) with medallion<br/>&#8226; Personalized letter of recommendation<br/>&#8226; Priority access to future programs</p>
+<a href="https://www.zeffy.com/en-US/ticketing/careforbrains-memberships-fee-one-time" style="display:inline-block;padding:12px 28px;background:#7c3aed;color:#fff;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">Upgrade Now</a>
+</td></tr></table>
+<p style="font-size:14px;color:#555;line-height:1.7;margin:0 0 24px">Your certificate is attached to this email.</p>
+<p style="font-size:14px;color:#1C3050;font-weight:600;margin:0">CareForBrains STEM Exploration Team</p>
+<p style="font-size:12px;color:#999;margin:2px 0 0">careforbrainsse@gmail.com</p>
+`,name)}
+  },
   custom:{
     name:'Custom Email',
     icon:'\u270F\uFE0F',
@@ -1264,11 +1304,15 @@ function Emails({db,hubData,team,me}){
             const cc=parseInt(ecardCount)||0;
             certHours=cc>0?String(Math.round(cc*0.5)):'0';
           }
+          if(template==='stem_done'){certProgram='STEM Exploration'}
           const svg=generateCertSVG(name,certHours,certProgram,new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
           const pdfB64=await svgToPdfBase64(svg);
           pdfAttachment={name:'CareForBrains_Certificate_'+name.replace(/\s+/g,'_')+'.pdf',data:pdfB64};
         }
-        await sendGmail(_gToken,email,emailSubject,emailBody,'CareForBrains','careforbrains@gmail.com',pdfAttachment);
+        const isStem=template==='stem_accept'||template==='stem_done';
+        const senderName=isStem?'CareForBrains STEM Exploration':'CareForBrains';
+        const senderEmail=isStem?'careforbrainsse@gmail.com':'careforbrains@gmail.com';
+        await sendGmail(_gToken,email,emailSubject,emailBody,senderName,senderEmail,pdfAttachment);
         ns[validSelected[i].i]='sent';
         logEvent(db,'email_sent',{user:me,to:email,template:tmpl.name||'custom',subject:emailSubject});
       }catch(e){ns[validSelected[i].i]='failed';console.error(e)}
@@ -1391,6 +1435,7 @@ function Emails({db,hubData,team,me}){
           <div dangerouslySetInnerHTML={{__html:(()=>{
             let h='50',p='Volunteer';
             if(template==='ecard_done'){p='E-Card';const cc=parseInt(ecardCount)||0;h=cc>0?String(Math.round(cc*0.5)):'0'}
+            if(template==='stem_done'){p='STEM Exploration'}
             return generateCertSVG(validSelected[0]?.row?.[nIdx]||'Your Name',h,p,new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}))
           })()}} style={{width:"100%",maxWidth:700,margin:"0 auto"}}/>
           <div style={{marginTop:10,fontSize:11,color:C.mt}}>Certificate auto-fills with each recipient's name and hours</div>
@@ -1434,6 +1479,7 @@ function Emails({db,hubData,team,me}){
           return<Btn key={i} onClick={()=>{
             let h='50',p='Volunteer';
             if(template==='ecard_done'){p='E-Card';const cc=parseInt(ecardCount)||0;h=cc>0?String(Math.round(cc*0.5)):'0'}
+            if(template==='stem_done'){p='STEM Exploration'}
             downloadCert(name,h,p)
           }} style={{fontSize:11}}>Download cert: {name}</Btn>
         })}
