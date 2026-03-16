@@ -279,6 +279,9 @@ let _activeSheet='';
 let _tokenClient=null;
 const colToLetter=c=>{let s='';while(c>=0){s=String.fromCharCode(65+(c%26))+s;c=Math.floor(c/26)-1}return s};
 
+const SMS_GATEWAYS={att:'txt.att.net',tmobile:'tmomail.net',verizon:'vtext.com',sprint:'messaging.sprintpcs.com'};
+function getSmsEmail(phone,carrier){if(!phone||!carrier||!SMS_GATEWAYS[carrier])return null;const d=phone.replace(/\D/g,'');if(d.length<10)return null;return(d.length===11&&d[0]==='1'?d.slice(1):d)+'@'+SMS_GATEWAYS[carrier]}
+
 function globalConnectGoogle(callback){
   if(!window.google?.accounts?.oauth2)return;
   if(!_tokenClient){
@@ -524,6 +527,20 @@ function Assign({db,tasks,team,me}){
   const[form,setForm]=useState({assignee:'eric',text:'',notes:'',priority:'medium',due:''});
   const[bulk,setBulk]=useState(false);
   const[sent,setSent]=useState(false);
+  const[msgTo,setMsgTo]=useState('');
+  const[msgText,setMsgText]=useState('');
+  const[msgSent,setMsgSent]=useState(false);
+  const doSms=(to,text)=>{const addr=getSmsEmail(to.phone,to.carrier);if(addr&&_gToken)sendGmail(_gToken,addr,'',text,'CareForBrains','careforbrains@gmail.com').catch(e=>console.error(e))};
+  const doEmail=(to,subj,html)=>{if(to.email&&_gToken)sendGmail(_gToken,to.email,subj,html,'CareForBrains','careforbrains@gmail.com').catch(e=>console.error(e))};
+  const sendMsg=()=>{
+    if(!msgText.trim()||!msgTo||!_gToken)return;
+    const m=team.find(t=>t.id===msgTo);if(!m)return;
+    const meName=fn(team.find(t=>t.id===me)?.name);
+    doSms(m,'[CareForBrains] '+msgText.trim()+' - '+meName);
+    doEmail(m,'Message from '+meName,'<div style=\'font-family:sans-serif;padding:20px\'><p>'+msgText.trim()+'</p><p style=\'color:#888;margin-top:16px\'>- '+meName+'</p></div>');
+    logEvent(db,'message_sent',{user:me,to:msgTo,toName:fn(m.name),message:msgText.trim().slice(0,50)});
+    setMsgSent(true);setMsgText('');setTimeout(()=>setMsgSent(false),1800);
+  };
   const assign=()=>{if(!form.text.trim())return;const targets=bulk?team.filter(t=>!t.admin).map(t=>t.id):[form.assignee];targets.forEach(a=>{const ref=db.ref('hub/tasks').push();ref.set({id:ref.key,assignee:a,text:form.text.trim(),notes:form.notes.trim(),priority:form.priority,due:form.due,done:false,assignedBy:me,created:new Date().toISOString().split('T')[0]});logEvent(db,'task_assign',{user:me,assignee:a,task:form.text.trim(),priority:form.priority})});setSent(true);setTimeout(()=>{setSent(false);setForm({assignee:'eric',text:'',notes:'',priority:'medium',due:''})},1800)};
   const totalOpen=tasks.filter(t=>!t.done).length;const totalDone=tasks.filter(t=>t.done).length;const totalOverdue=tasks.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;
   const pColors={high:'#EF4444',medium:'#F59E0B',low:'#3B82F6'};
@@ -635,6 +652,28 @@ function Assign({db,tasks,team,me}){
         </Card>
       </div>
     </div>
+
+    <Card style={{marginTop:16}}>
+      <div style={{padding:"16px 20px",borderBottom:"1px solid "+C.bgA,display:"flex",alignItems:"center",gap:10}}>
+        <div style={{width:8,height:8,borderRadius:4,background:msgSent?"#10B981":"#F59E0B"}}/>
+        <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:"#323338"}}>Quick Message</span>
+      </div>
+      {msgSent?<div className="send-success" style={{padding:"32px 20px",textAlign:"center"}}>
+        <div style={{width:48,height:48,borderRadius:"50%",background:"#D1FAE5",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px"}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="3" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <div style={{fontSize:16,fontWeight:700,color:"#1B2838"}}>Sent!</div>
+      </div>:
+      <div style={{padding:"16px 20px"}}>
+        <div style={{display:"flex",gap:10,alignItems:"flex-end"}}>
+          <div style={{display:"flex",gap:6}}>
+            {team.map(m=><div key={m.id} onClick={()=>setMsgTo(m.id)} style={{cursor:"pointer",textAlign:"center",padding:6,borderRadius:8,border:msgTo===m.id?"2px solid "+(m.color||"#579BFC"):"2px solid transparent",opacity:msgTo===m.id?1:.5,transition:"all .2s"}}>
+              <Av m={m} s={28}/><div style={{fontSize:8,fontWeight:600,marginTop:3}}>{fn(m.name)}</div>
+            </div>)}
+          </div>
+          <div style={{flex:1}}><Inp value={msgText} onChange={e=>setMsgText(e.target.value)} placeholder="Type a message..." onKeyDown={e=>{if(e.key==='Enter'&&msgText.trim()&&msgTo)sendMsg()}}/></div>
+          <button onClick={sendMsg} disabled={!msgText.trim()||!msgTo||!_gToken} style={{padding:"10px 20px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,color:"#fff",background:msgText.trim()&&msgTo?"linear-gradient(135deg,#10B981,#059669)":"#E6E9EF"}}>Send</button>
+        </div>
+      </div>}
+    </Card>
   </div>);
 }
 
@@ -1441,14 +1480,14 @@ function Logs({hubData,team}){
   const[filter,setFilter]=useState('all');
   const filtered=filter==='all'?logs:logs.filter(l=>l.type===filter);
   const getName=id=>{const m=team.find(t=>t.id===id);return m?fn(m.name):id||'?'};
-  const typeLabel={login:'Login',sheet_edit:'Sheet Edit',task_assign:'Task Assigned',email_sent:'Email Sent'};
-  const typeColor={login:'#1490B0',sheet_edit:'#10B981',task_assign:'#F59E0B',email_sent:'#A25DDC'};
+  const typeLabel={login:'Login',sheet_edit:'Sheet Edit',task_assign:'Task Assigned',email_sent:'Email Sent',message_sent:'Message'};
+  const typeColor={login:'#1490B0',sheet_edit:'#10B981',task_assign:'#F59E0B',email_sent:'#A25DDC',message_sent:'#EC4899'};
 
   return(<div>
     <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>Admin</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Activity Log</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 18px"}}/>
     <div style={{display:"flex",gap:6,marginBottom:14}}>
-      {[['all','All'],['login','Logins'],['sheet_edit','Edits'],['task_assign','Tasks'],['email_sent','Emails']].map(([v,l])=><button key={v} onClick={()=>setFilter(v)} style={{padding:"6px 14px",border:filter===v?"2px solid #1490B0":"1px solid "+C.rl,borderRadius:8,background:filter===v?"rgba(20,144,176,0.06)":"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:filter===v?700:500,color:filter===v?"#323338":"#676879"}}>{l}</button>)}
+      {[['all','All'],['login','Logins'],['sheet_edit','Edits'],['task_assign','Tasks'],['email_sent','Emails'],['message_sent','Messages']].map(([v,l])=><button key={v} onClick={()=>setFilter(v)} style={{padding:"6px 14px",border:filter===v?"2px solid #1490B0":"1px solid "+C.rl,borderRadius:8,background:filter===v?"rgba(20,144,176,0.06)":"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:filter===v?700:500,color:filter===v?"#323338":"#676879"}}>{l}</button>)}
       <span style={{fontSize:11,color:C.mt,alignSelf:"center",marginLeft:8}}>{filtered.length} events</span>
     </div>
     <Card style={{overflow:"hidden"}}>
