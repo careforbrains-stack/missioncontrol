@@ -527,6 +527,7 @@ function Assign({db,tasks,team,me}){
   const[form,setForm]=useState({assignee:'eric',text:'',notes:'',priority:'medium',due:''});
   const[bulk,setBulk]=useState(false);
   const[sent,setSent]=useState(false);
+  const[gOk,setGOk]=useState(!!_gToken);
   const[msgTo,setMsgTo]=useState('');
   const[msgText,setMsgText]=useState('');
   const[msgSent,setMsgSent]=useState(false);
@@ -670,8 +671,8 @@ function Assign({db,tasks,team,me}){
             </div>)}
           </div>
           <div style={{flex:1}}><Inp value={msgText} onChange={e=>setMsgText(e.target.value)} placeholder="Type a message..." onKeyDown={e=>{if(e.key==='Enter'&&msgText.trim()&&msgTo)sendMsg()}}/></div>
-          {_gToken?<button onClick={sendMsg} disabled={!msgText.trim()||!msgTo} style={{padding:"10px 20px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,color:"#fff",background:msgText.trim()&&msgTo?"linear-gradient(135deg,#10B981,#059669)":"#E6E9EF"}}>Send</button>
-          :<button onClick={()=>globalConnectGoogle()} style={{padding:"10px 20px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,color:"#fff",background:"#579BFC"}}>Connect Google</button>}
+          {(_gToken||gOk)?<button onClick={sendMsg} disabled={!msgText.trim()||!msgTo} style={{padding:"10px 20px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,color:"#fff",background:msgText.trim()&&msgTo?"linear-gradient(135deg,#10B981,#059669)":"#E6E9EF"}}>Send</button>
+          :<button onClick={()=>globalConnectGoogle(()=>setGOk(true))} style={{padding:"10px 20px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,color:"#fff",background:"#579BFC"}}>Connect Google</button>}
         </div>
       </div>}
     </Card>
