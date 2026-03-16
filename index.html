@@ -365,6 +365,11 @@ async function sendGmail(token, to, subject, htmlBody, fromName='CareForBrains',
   return await r.json();
 }
 
+// SMS via email-to-text carrier gateways (free)
+const SMS_GATEWAYS={att:'txt.att.net',tmobile:'tmomail.net',verizon:'vtext.com',sprint:'messaging.sprintpcs.com',uscellular:'email.uscc.net',metro:'mymetropcs.com',boost:'sms.myboostmobile.com',cricket:'sms.cricketwireless.net'};
+const SMS_LABELS={att:'AT&T',tmobile:'T-Mobile',verizon:'Verizon',sprint:'Sprint',uscellular:'US Cellular',metro:'Metro',boost:'Boost',cricket:'Cricket'};
+function getSmsEmail(phone,carrier){if(!phone||!carrier||!SMS_GATEWAYS[carrier])return null;const digits=phone.replace(/\D/g,'');if(digits.length<10)return null;const num=digits.length===11&&digits[0]==='1'?digits.slice(1):digits;return num+'@'+SMS_GATEWAYS[carrier]}
+
 // Audit log - writes to Firebase /hub/logs
 function logEvent(db,type,data){
   if(!db)return;
@@ -524,7 +529,25 @@ function Assign({db,tasks,team,me}){
   const[form,setForm]=useState({assignee:'eric',text:'',notes:'',priority:'medium',due:''});
   const[bulk,setBulk]=useState(false);
   const[sent,setSent]=useState(false);
-  const assign=()=>{if(!form.text.trim())return;const targets=bulk?team.filter(t=>!t.admin).map(t=>t.id):[form.assignee];targets.forEach(a=>{const ref=db.ref('hub/tasks').push();ref.set({id:ref.key,assignee:a,text:form.text.trim(),notes:form.notes.trim(),priority:form.priority,due:form.due,done:false,assignedBy:me,created:new Date().toISOString().split('T')[0]});logEvent(db,'task_assign',{user:me,assignee:a,task:form.text.trim(),priority:form.priority})});setSent(true);setTimeout(()=>{setSent(false);setForm({assignee:'eric',text:'',notes:'',priority:'medium',due:''})},1800)};
+  const assign=()=>{if(!form.text.trim())return;
+    const targets=bulk?team.filter(t=>!t.admin).map(t=>t.id):[form.assignee];
+    const meD=team.find(t=>t.id===me);
+    targets.forEach(a=>{
+      const ref=db.ref('hub/tasks').push();
+      ref.set({id:ref.key,assignee:a,text:form.text.trim(),notes:form.notes.trim(),priority:form.priority,due:form.due,done:false,assignedBy:me,created:new Date().toISOString().split('T')[0]});
+      logEvent(db,'task_assign',{user:me,assignee:a,task:form.text.trim(),priority:form.priority});
+      // Auto-notify via email + SMS
+      const m=team.find(t=>t.id===a);if(!m||!_gToken)return;
+      const pLabel={high:'HIGH',medium:'MEDIUM',low:'LOW'};
+      const notifBody='<div style="font-family:-apple-system,sans-serif;max-width:500px;padding:20px"><div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#579BFC;margin-bottom:8px">NEW TASK ASSIGNED</div><div style="font-size:18px;font-weight:700;color:#1B2838;margin-bottom:12px">'+form.text.trim()+'</div>'+(form.notes.trim()?'<div style="font-size:13px;color:#5A6B7E;margin-bottom:12px;padding:10px;background:#F5F6F8;border-radius:6px">'+form.notes.trim()+'</div>':'')+'<div style="display:flex;gap:12px;font-size:12px;color:#5A6B7E"><span>Priority: <strong style="color:'+(form.priority==='high'?'#EF4444':form.priority==='low'?'#3B82F6':'#F59E0B')+'">'+pLabel[form.priority]+'</strong></span>'+(form.due?'<span>Due: <strong>'+form.due+'</strong></span>':'')+'</div><div style="margin-top:16px;font-size:12px;color:#8A9AAE">Assigned by '+(meD?.name||me)+' via Mission Control</div></div>';
+      // Send email if they have one
+      if(m.email)sendGmail(_gToken,m.email,'New Task: '+form.text.trim(),notifBody,'CareForBrains','careforbrains@gmail.com').catch(e=>console.error('Email notify failed:',e));
+      // Send SMS if they have phone + carrier
+      const smsAddr=getSmsEmail(m.phone,m.carrier);
+      if(smsAddr){const smsText='[CareForBrains] New task: '+form.text.trim()+(form.due?' (due '+form.due+')':'')+' - '+pLabel[form.priority]+' priority. From '+(fn(meD?.name)||me);sendGmail(_gToken,smsAddr,'',smsText,'CareForBrains','careforbrains@gmail.com').catch(e=>console.error('SMS notify failed:',e))}
+    });
+    setSent(true);setTimeout(()=>{setSent(false);setForm({assignee:'eric',text:'',notes:'',priority:'medium',due:''})},1800)
+  };
   const totalOpen=tasks.filter(t=>!t.done).length;const totalDone=tasks.filter(t=>t.done).length;const totalOverdue=tasks.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;
   const pColors={high:'#EF4444',medium:'#F59E0B',low:'#3B82F6'};
   return(<div>
@@ -603,6 +626,11 @@ function Assign({db,tasks,team,me}){
           }} onMouseEnter={e=>{if(form.text.trim())e.target.style.transform='translateY(-2px)'}} onMouseLeave={e=>e.target.style.transform='translateY(0)'}>
             {bulk?"Deploy to All":"Deploy to "+fn(team.find(t=>t.id===form.assignee)?.name)}
           </button>
+          {_gToken&&<div style={{marginTop:8,display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>
+            <div style={{width:5,height:5,borderRadius:"50%",background:"#10B981"}}/>
+            <span style={{fontSize:10,color:"#8A9AAE"}}>Auto-notify via {(()=>{const m=bulk?null:team.find(t=>t.id===form.assignee);if(bulk)return'email + SMS';const parts=[];if(m?.email)parts.push('email');if(getSmsEmail(m?.phone,m?.carrier))parts.push('SMS');return parts.length?parts.join(' + '):'no contact info'})()}</span>
+          </div>}
+          {!_gToken&&<div style={{marginTop:8,textAlign:"center",fontSize:10,color:"#F59E0B"}}>Connect Google to auto-notify</div>}
         </div>}
       </Card>
 
@@ -710,8 +738,8 @@ function Cal({db,events,tasks,team,me}){
 // === CONTACTS ===
 function Contacts({db,team,me}){
   const isA=team.find(t=>t.id===me)?.admin;const[ed,setEd]=useState(null);const[form,setForm]=useState({});
-  const startEdit=m=>{setEd(m.id);setForm({phone:m.phone||'',email:m.email||''})};
-  const saveEdit=(id,idx)=>{db.ref('hub/team/'+idx+'/phone').set(form.phone||'');db.ref('hub/team/'+idx+'/email').set(form.email||'');setEd(null)};
+  const startEdit=m=>{setEd(m.id);setForm({phone:m.phone||'',email:m.email||'',carrier:m.carrier||''})};
+  const saveEdit=(id,idx)=>{db.ref('hub/team/'+idx+'/phone').set(form.phone||'');db.ref('hub/team/'+idx+'/email').set(form.email||'');db.ref('hub/team/'+idx+'/carrier').set(form.carrier||'');setEd(null)};
   return(<div>
     <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>04 &#8212; Contacts</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Team Directory</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
@@ -719,12 +747,13 @@ function Contacts({db,team,me}){
       <Av m={m}/><div style={{flex:1}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontWeight:700,fontSize:14}}>{m.name}</span>{m.admin&&<span style={{fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:3,background:C.tg,color:C.tl,fontFamily:"monospace"}}>ADMIN</span>}</div>
         <div style={{fontSize:10.5,color:C.mt,fontFamily:"monospace"}}>{m.role}</div>
-        {ed===m.id?<div style={{marginTop:8,display:"flex",flexDirection:"column",gap:6,maxWidth:300}}>
+        {ed===m.id?<div style={{marginTop:8,display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,maxWidth:400}}>
           <Inp placeholder="Phone" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/>
-          <Inp placeholder="Email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/>
-          <div style={{display:"flex",gap:6}}><Btn primary onClick={()=>saveEdit(m.id,idx)}>Save</Btn><Btn onClick={()=>setEd(null)}>Cancel</Btn></div>
-        </div>:<div style={{display:"flex",gap:14,marginTop:4,fontSize:12,color:C.sc}}>
-          {m.phone&&<span>&#9742; {m.phone}</span>}{m.email&&<span>&#9993; {m.email}</span>}
+          <Sel value={form.carrier} onChange={e=>setForm({...form,carrier:e.target.value})}><option value="">Carrier...</option>{Object.entries(SMS_LABELS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</Sel>
+          <Inp placeholder="Email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} style={{gridColumn:"1/3"}}/>
+          <div style={{display:"flex",gap:6,gridColumn:"1/3"}}><Btn primary onClick={()=>saveEdit(m.id,idx)}>Save</Btn><Btn onClick={()=>setEd(null)}>Cancel</Btn></div>
+        </div>:<div style={{display:"flex",gap:14,marginTop:4,fontSize:12,color:C.sc,flexWrap:"wrap"}}>
+          {m.phone&&<span>&#9742; {m.phone}</span>}{m.carrier&&<span style={{fontSize:10,padding:"1px 6px",borderRadius:3,background:"#F0F7FF",color:"#579BFC",fontWeight:600}}>{SMS_LABELS[m.carrier]||m.carrier}</span>}{m.email&&<span>&#9993; {m.email}</span>}
           {!m.phone&&!m.email&&<span style={{color:C.mt,fontStyle:"italic"}}>No contact info</span>}</div>}
       </div>
       {(isA||m.id===me)&&ed!==m.id&&<button onClick={()=>startEdit(m)} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.sc,fontFamily:"inherit"}}>Edit</button>}
