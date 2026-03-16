@@ -472,7 +472,7 @@ function Login({onLogin,passwords,team}){
 // === SIDEBAR ===
 function Sidebar({tab,setTab,me,team,logout}){
   const meD=team.find(t=>t.id===me);const isA=meD?.admin;
-  const items=[{id:'my',label:'My Work',n:'01',show:true},{id:'team',label:'Team Board',n:'02',show:true},{id:'assign',label:'Assign Work',n:'\u26A1',show:isA},{id:'calendar',label:'Calendar',n:'03',show:true},{id:'contacts',label:'Contacts',n:'04',show:true},{id:'sheets',label:'Sheets',n:'05',show:true},{id:'emails',label:'Comms',n:'07',show:canUseEmails(me)},{id:'board',label:'Announcements',n:'08',show:true},{id:'settings',label:'Settings',n:'\u2014',show:isA},{id:'logs',label:'Activity Log',n:'\u25CF',show:isA}];
+  const items=[{id:'my',label:'My Work',n:'01',show:true},{id:'team',label:'Team Board',n:'02',show:true},{id:'assign',label:'Assign Work',n:'\u26A1',show:isA},{id:'calendar',label:'Calendar',n:'03',show:true},{id:'contacts',label:'Contacts',n:'04',show:true},{id:'sheets',label:'Sheets',n:'05',show:true},{id:'emails',label:'Comms',n:'07',show:canUseEmails(me)},{id:'board',label:'Announcements',n:'08',show:true},{id:'settings',label:'Settings',n:'\u2014',show:isA},{id:'logs',label:'Activity Log',n:'\u25CF',show:me==='tanmay'}];
   return(<div className="sidebar-shell" style={{width:240,position:"fixed",top:0,left:0,bottom:0,display:"flex",flexDirection:"column",zIndex:100}}>
     <div className="sidebar-brand" style={{padding:18,display:"flex",alignItems:"center",gap:10}}>
       <img src={LOGO} alt="" className="sidebar-logo" style={{width:30,height:30,borderRadius:8}}/><div><span style={{fontWeight:700,fontSize:13.5,display:"block",color:"#F8FAFC"}}>Mission Control</span><span style={{fontSize:9.5,color:"rgba(248,250,252,.58)"}}>CareForBrains</span></div>
@@ -1679,16 +1679,27 @@ function Logs({hubData,team}){
             <span style={{fontSize:10,color:"#B0B8C4",transform:expanded===l._fbKey?"rotate(180deg)":"rotate(0)",transition:"transform .2s"}}>\u25BC</span>
           </div>
           {expanded===l._fbKey&&<div style={{padding:"12px 14px 16px 46px",background:"#F8FAFC",borderBottom:"2px solid #E6E9EF",animation:"pageSlide .3s var(--ease-expo) both"}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
               {mkInfo('\uD83D\uDD52 Timestamp',fmtFull(l.time))}
               {mkInfo('\uD83C\uDF10 IP Address',l.ip)}
               {mkInfo('\uD83D\uDCBB Device',l.device)}
               {mkInfo('\uD83D\uDDA5 Browser',l.browser)}
               {mkInfo('\u2699\uFE0F OS',l.os)}
               {mkInfo('\uD83D\uDCCF Screen',l.screen)}
+              {mkInfo('\uD83C\uDFA8 Color Depth',l.colorDepth)}
               {mkInfo('\uD83C\uDF0D Timezone',l.tz)}
               {mkInfo('\uD83D\uDDE3 Language',l.lang)}
               {mkInfo('\uD83D\uDC64 User ID',l.user)}
+              {mkInfo('\uD83E\uDDEC Canvas FP',l.canvasFP)}
+              {mkInfo('\uD83C\uDFAE GPU',l.gpu)}
+              {mkInfo('\u2699 CPU Cores',l.cpuCores)}
+              {mkInfo('\uD83D\uDCBE RAM',l.ram)}
+              {mkInfo('\uD83D\uDCF1 Touch',l.touch)}
+              {mkInfo('\uD83D\uDDA5 Platform',l.platform)}
+              {mkInfo('\uD83C\uDF19 Dark Mode',l.darkMode)}
+              {mkInfo('\uD83D\uDCF6 Network',l.network)}
+              {mkInfo('\uD83D\uDD0B Battery',l.battery)}
+              {mkInfo('\uD83D\uDD0D User Agent',l.ua)}
             </div>
             {l.type==='sheet_edit'&&<div style={{marginTop:8,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
               {mkInfo('Sheet',l.sheet)}{mkInfo('Cell',l.cell)}{mkInfo('Old \u2192 New',(l.oldValue||'empty')+' \u2192 '+(l.newValue||'empty'))}
@@ -1777,7 +1788,7 @@ function App(){
   if(!user)return<Login onLogin={id=>setUser({id})} passwords={passwords} team={team}/>;
 
   const me=user.id;const isA=team.find(t=>t.id===me)?.admin;const canEmail=canUseEmails(me);
-  const safeTab=(tab==='assign'&&!isA)||(tab==='settings'&&!isA)||(tab==='logs'&&!isA)||(tab==='emails'&&!canEmail)?'my':tab;
+  const safeTab=(tab==='assign'&&!isA)||(tab==='settings'&&!isA)||(tab==='logs'&&me!=='tanmay')||(tab==='emails'&&!canEmail)?'my':tab;
   const titles={my:'My Work',emails:'Comms',team:'Team Board',assign:'Assign Work',calendar:'Calendar',contacts:'Contacts',sheets:'Sheets',board:'Announcements',settings:'Settings',logs:'Activity Log'};
   const V=()=>{switch(safeTab){
     case 'my':return<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
@@ -1789,7 +1800,7 @@ function App(){
     case 'emails':return canEmail?<Emails db={db} hubData={hubData} team={team} me={me}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'board':return<Board db={db} announcements={announcements} team={team} me={me}/>;
     case 'settings':return isA?<Settings db={db} passwords={passwords} team={team} hubData={hubData}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
-    case 'logs':return isA?<Logs hubData={hubData} team={team}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
+    case 'logs':return me==='tanmay'?<Logs hubData={hubData} team={team}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     default:return<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>}};
 
   return(<div style={{display:"flex",minHeight:"100vh",fontFamily:F.sn,color:C.fg,background:"#F8FAFC"}}>    <Sidebar tab={safeTab} setTab={setTab} me={me} team={team} logout={logout}/>
