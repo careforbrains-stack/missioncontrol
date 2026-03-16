@@ -298,7 +298,7 @@ function globalConnectGoogle(callback){
   if(!_tokenClient){
     _tokenClient=window.google.accounts.oauth2.initTokenClient({
       client_id:GOOGLE_CLIENT_ID,
-      scope:'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/gmail.send',
+      scope:'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/gmail.send openid email',
       callback:resp=>{if(resp.access_token){_gToken=resp.access_token;
         fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{Authorization:'Bearer '+resp.access_token}}).then(r=>r.json()).then(d=>{_gEmail=d.email||null}).catch(()=>{});
         if(callback)callback(resp.access_token)}}
