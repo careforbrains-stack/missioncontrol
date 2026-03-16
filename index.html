@@ -544,11 +544,11 @@ function Assign({db,tasks,team,me,hubData}){
 
   const doEmail=(to,subj,html)=>{if(to.email&&_gToken)sendGmail(_gToken,to.email,subj,html,'CareForBrains','careforbrains@gmail.com').catch(e=>console.error(e))};
   const sendMsg=()=>{
-    if(!msgText.trim()||!msgTo||!_gToken)return;
+    if(!msgText.trim()||!msgTo)return;
     const m=team.find(t=>t.id===msgTo);if(!m)return;
     const meName=fn(team.find(t=>t.id===me)?.name);
 
-    doEmail(m,'Message from '+meName,'<div style="font-family:sans-serif;padding:20px"><p>'+msgText.trim()+'</p><p style="color:#888;margin-top:16px">- '+meName+'</p></div>');
+    if(_gToken)doEmail(m,'Message from '+meName,'<div style="font-family:sans-serif;padding:20px"><p>'+msgText.trim()+'</p><p style="color:#888;margin-top:16px">- '+meName+'</p></div>');
     if(m.phone)sendSMS(hubData.twilio,m.phone,'[CareForBrains] '+msgText.trim()+' - '+meName).catch(e=>console.error('SMS:',e));
     logEvent(db,'message_sent',{user:me,to:msgTo,toName:fn(m.name),message:msgText.trim().slice(0,50)});
     setMsgSent(true);setMsgText('');setTimeout(()=>setMsgSent(false),1800);
