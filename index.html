@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CareForBrains — Mission Control</title>
 <link rel="icon" href="https://raw.githubusercontent.com/careforbrains-stack/careforbrains-website/main/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500&family=Cinzel:wght@400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display+SC:wght@400;700;900&family=EB+Garamond:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Great+Vibes&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--ease-expo:cubic-bezier(.16,1,.3,1);--ease-spring:cubic-bezier(.34,1.56,.64,1);--ease-smooth:cubic-bezier(.23,1,.32,1)}
@@ -85,10 +87,25 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
 @media(max-width:900px){.sidebar-shell{display:none!important}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Font preload - forces browser to download these before SVG needs them */
+.font-preload{position:absolute;left:-9999px;visibility:hidden}
+.fp1{font-family:'Great Vibes',cursive}
+.fp2{font-family:'Cinzel',serif;font-weight:700}
+.fp3{font-family:'Cormorant Garamond',serif;font-style:italic}
+.fp4{font-family:'Montserrat',sans-serif;font-weight:600}
+.fp5{font-family:'EB Garamond',serif}
+
+/* Send success animation */
+@keyframes successPop{0%{transform:scale(0);opacity:0}50%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+@keyframes successCheck{0%{stroke-dashoffset:24}100%{stroke-dashoffset:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.send-success{animation:successPop .5s var(--ease-spring) both}
 </style>
 </head>
 <body>
 <div id="root"></div>
+<div class="font-preload"><span class="fp1">x</span><span class="fp2">x</span><span class="fp3">x</span><span class="fp4">x</span><span class="fp5">x</span></div>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -956,6 +973,7 @@ function Emails({db,hubData,team,me}){
   const[previewIdx,setPreviewIdx]=useState(0);
   const[certPreview,setCertPreview]=useState(null);
   const[ecardCount,setEcardCount]=useState('');
+  const[sendDone,setSendDone]=useState(false);
   const[manualMode,setManualMode]=useState(false);
   const[manualName,setManualName]=useState('');
   const[manualEmail,setManualEmail]=useState('');
@@ -1042,6 +1060,7 @@ function Emails({db,hubData,team,me}){
       if(i<validSelected.length-1)await wait(500);
     }
     setSending(false);
+    setSendDone(true);
   };
 
   const previewRow=manualMode?[manualName,manualEmail]:(validSelected[Math.min(previewIdx,Math.max(validSelected.length-1,0))]?.row||[]);
@@ -1205,15 +1224,29 @@ function Emails({db,hubData,team,me}){
         {validSelected.length>5&&<span style={{fontSize:11,color:C.mt,alignSelf:"center"}}>+{validSelected.length-5} more</span>}
       </div>}
 
+      {sendDone?<div className="send-success" style={{textAlign:"center",padding:"48px 24px"}}>
+        <div style={{width:64,height:64,borderRadius:"50%",background:"#D1FAE5",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}}>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <div style={{fontSize:22,fontWeight:700,color:"#1B2838",marginBottom:6}}>Emails Sent!</div>
+        <div style={{fontSize:14,color:"#5A6B7E",marginBottom:4}}>{Object.values(sent).filter(v=>v==='sent').length} delivered successfully</div>
+        {Object.values(sent).filter(v=>v==='failed').length>0&&<div style={{fontSize:13,color:"#E44258",fontWeight:600}}>{Object.values(sent).filter(v=>v==='failed').length} failed</div>}
+        <div style={{marginTop:20,display:"flex",gap:10,justifyContent:"center"}}>
+          <Btn onClick={()=>{setSendDone(false);setStep(1);setChecked({});setSent({});setSendStats({done:0,total:0})}}>Send More</Btn>
+          <Btn primary onClick={()=>{setSendDone(false);setStep(1);setChecked({});setSent({});setSendStats({done:0,total:0});setSelSheet('');setManualMode(false);setManualName('');setManualEmail('')}}>Done</Btn>
+        </div>
+      </div>:
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div>
-          {sending&&<div style={{fontSize:12,color:C.tl,fontWeight:600}}>Sending {sendStats.done}/{sendStats.total}...</div>}
-          {!sending&&Object.keys(sent).length>0&&<div style={{fontSize:12,color:C.gn,fontWeight:600}}>{Object.values(sent).filter(v=>v==='sent').length} sent &middot; {Object.values(sent).filter(v=>v==='failed').length} failed</div>}
+          {sending&&<div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:20,height:20,border:"3px solid #E6E9EF",borderTopColor:"#579BFC",borderRadius:"50%",animation:"spin .8s linear infinite"}}></div>
+            <span style={{fontSize:13,color:C.tl,fontWeight:600}}>Sending {sendStats.done}/{sendStats.total}...</span>
+          </div>}
         </div>
         <Btn primary onClick={sendEmails} disabled={sending||validSelected.length===0||!senderReady}>
           {sending?'Sending...':'Send to '+validSelected.length+' people'}
         </Btn>
-      </div>
+      </div>}
     </div>}
   </div>);
 }
