@@ -1646,12 +1646,15 @@ function Board({db,announcements,team,me}){
 }
 
 // === LOGS ===
-function Logs({hubData,team}){
+function Logs({hubData,team,db}){
   const logs=fbToArr(hubData.logs||{}).sort((a,b)=>(b.ts||0)-(a.ts||0));
   const[filter,setFilter]=useState('all');
   const[expanded,setExpanded]=useState(null);
   const filtered=filter==='all'?logs:logs.filter(l=>l.type===filter);
   const getName=id=>{const m=team.find(t=>t.id===id);return m?fn(m.name):id||'?'};
+  const deleteLog=key=>{if(db)db.ref('hub/logs/'+key).remove()};
+  const clearAll=()=>{if(!confirm('Delete ALL '+filtered.length+' logs?'))return;filtered.forEach(l=>{if(l._fbKey&&db)db.ref('hub/logs/'+l._fbKey).remove()})};
+  const clearFiltered=()=>{if(!confirm('Delete all '+filtered.length+' '+filter+' logs?'))return;filtered.forEach(l=>{if(l._fbKey&&db)db.ref('hub/logs/'+l._fbKey).remove()});};
   const typeLabel={login:'Login',sheet_edit:'Sheet Edit',task_assign:'Task Assigned',email_sent:'Email Sent',message_sent:'Message'};
   const typeColor={login:'#1490B0',sheet_edit:'#10B981',task_assign:'#F59E0B',email_sent:'#A25DDC',message_sent:'#EC4899'};
   const typeIcon={login:'\uD83D\uDD11',sheet_edit:'\u270F\uFE0F',task_assign:'\uD83D\uDCCB',email_sent:'\u2709\uFE0F',message_sent:'\uD83D\uDCF1'};
@@ -1669,6 +1672,13 @@ function Logs({hubData,team}){
           <div style={{fontSize:18,fontWeight:700,color:filter===v?col:"#1B2838"}}>{n}</div>
           <div style={{fontSize:9,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:filter===v?col:"#8A9AAE",marginTop:2}}>{l}</div>
         </button>)}
+    </div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+      <div/>
+      <div style={{display:"flex",gap:6}}>
+        {filter!=='all'&&<button onClick={clearFiltered} style={{padding:"6px 12px",borderRadius:6,border:"1px solid #FECACA",background:"#FFF5F5",cursor:"pointer",fontFamily:"inherit",fontSize:10,fontWeight:600,color:"#E44258"}}>Clear {filtered.length} {filter==='login'?'logins':filter==='sheet_edit'?'edits':filter==='task_assign'?'tasks':filter==='email_sent'?'emails':'texts'}</button>}
+        <button onClick={clearAll} style={{padding:"6px 12px",borderRadius:6,border:"1px solid #FECACA",background:"#FFF5F5",cursor:"pointer",fontFamily:"inherit",fontSize:10,fontWeight:600,color:"#E44258"}}>Clear All Logs</button>
+      </div>
     </div>
     <Card style={{overflow:"hidden"}}>
       <div style={{overflowY:"auto",maxHeight:"72vh"}}>
@@ -1724,6 +1734,7 @@ function Logs({hubData,team}){
             {l.type==='task_assign'&&<div style={{marginTop:8,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
               {mkInfo('Task',l.task)}{mkInfo('Assignee',getName(l.assignee))}{mkInfo('Priority',l.priority)}
             </div>}
+            <div style={{marginTop:12,textAlign:"right"}}><button onClick={e=>{e.stopPropagation();if(confirm('Delete this log entry?')){deleteLog(l._fbKey);setExpanded(null)}}} style={{padding:"5px 12px",borderRadius:5,border:"1px solid #FECACA",background:"#FFF5F5",cursor:"pointer",fontFamily:"inherit",fontSize:10,fontWeight:600,color:"#E44258"}}>Delete Entry</button></div>
           </div>}
         </div>)}
       </div>
@@ -1803,7 +1814,7 @@ function App(){
     case 'emails':return canEmail?<Emails db={db} hubData={hubData} team={team} me={me}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'board':return<Board db={db} announcements={announcements} team={team} me={me}/>;
     case 'settings':return isA?<Settings db={db} passwords={passwords} team={team} hubData={hubData}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
-    case 'logs':return me==='tanmay'?<Logs hubData={hubData} team={team}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
+    case 'logs':return me==='tanmay'?<Logs hubData={hubData} team={team} db={db}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     default:return<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>}};
 
   return(<div style={{display:"flex",minHeight:"100vh",fontFamily:F.sn,color:C.fg,background:"#F8FAFC"}}>    <Sidebar tab={safeTab} setTab={setTab} me={me} team={team} logout={logout}/>
