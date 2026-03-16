@@ -1425,9 +1425,15 @@ function Emails({db,hubData,team,me}){
     <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>07 &#8212; Comms</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Email Center</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 18px"}}/>
 
-    {!senderReady?<div style={{padding:"12px 16px",borderRadius:10,background:"#FFF5F5",border:"1px solid #FECACA",marginBottom:16,fontSize:12.5,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-      <span><span style={{color:"#E44258",fontWeight:700}}>&#9888; Not connected.</span><span style={{color:"#676879",marginLeft:6}}>Connect a Google account to send emails.</span></span>
-      <Btn primary onClick={()=>globalConnectGoogle(t=>{setGConnected(true);setTimeout(()=>setConnectedEmail(_gEmail||''),500)})} style={{flexShrink:0}}>Connect Google</Btn>
+    {!senderReady?<div style={{padding:"14px 16px",borderRadius:10,background:"#FFF5F5",border:"1px solid #FECACA",marginBottom:16,fontSize:12.5}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <span style={{color:"#E44258",fontWeight:700}}>&#9888; Not connected — sign in to send emails</span>
+        <Btn primary onClick={()=>globalConnectGoogle(t=>{setGConnected(true);setTimeout(()=>setConnectedEmail(_gEmail||''),500)})} style={{flexShrink:0}}>Connect Google</Btn>
+      </div>
+      <div style={{fontSize:11,color:"#676879",lineHeight:1.6}}>
+        <strong>Volunteer emails</strong> &#8594; sign in with <span style={{fontFamily:"monospace",background:"#F5F6F8",padding:"1px 6px",borderRadius:4}}>careforbrains@gmail.com</span><br/>
+        <strong>STEM emails</strong> &#8594; sign in with <span style={{fontFamily:"monospace",background:"#F5F6F8",padding:"1px 6px",borderRadius:4}}>careforbrainsse@gmail.com</span>
+      </div>
     </div>
     :<div style={{padding:"10px 16px",borderRadius:10,background:wrongAccount?"#FFFBEB":"#F0FDF4",border:"1px solid "+(wrongAccount?"#FDE68A":"#BBF7D0"),marginBottom:16,fontSize:12.5,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
       <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -1733,17 +1739,6 @@ function Settings({db,passwords,team,hubData}){
   return(<div>
     <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>Settings</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Configuration</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
-
-    <Card><CardH right={<span style={{fontSize:10,fontFamily:"monospace",color:_gToken?C.gn:C.rd}}>{_gToken?'CONNECTED':'NOT CONNECTED'}</span>}>Email (Gmail API)</CardH>
-      <div style={{padding:"14px 18px"}}>
-        <div style={{background:C.bgA,borderRadius:8,padding:12,marginBottom:14,fontSize:12,color:C.sc,lineHeight:1.7}}>
-          Emails are sent directly through <strong>Gmail API</strong> from careforbrains@gmail.com. No third-party services, no branding.<br/><br/>
-          Just click <strong>"Connect Google"</strong> on the Sheets or Comms tab. One connection gives you both spreadsheet editing and email sending.
-        </div>
-        {_gToken?<div style={{display:"flex",alignItems:"center",gap:8}}><span style={{width:8,height:8,borderRadius:4,background:C.gn}}></span><span style={{fontSize:13,fontWeight:600}}>Connected &mdash; ready to send</span></div>
-        :<Btn primary onClick={()=>globalConnectGoogle()}>Connect Google Now</Btn>}
-      </div>
-    </Card>
 
     <Card><CardH>Passwords</CardH><div style={{padding:"14px 18px"}}><div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
       <div><Lbl>Member</Lbl><Sel style={{width:160}} value={pu} onChange={e=>setPu(e.target.value)}>{team.map(m=><option key={m.id} value={m.id}>{fn(m.name)}</option>)}</Sel></div>
