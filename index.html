@@ -1127,41 +1127,73 @@ const EMAIL_TEMPLATES={
   stem_accept:{
     name:'STEM Internship Accepted',
     icon:'\uD83D\uDD2C',
-    subject:'Welcome to CareForBrains STEM Exploration, {{name}}!',
+    subject:'You\'re In \u2014 Welcome to CareForBrains STEM Exploration, {{name}}',
     html:true,
     body:function(name){return emailHTML(`
-<p style="font-size:24px;font-weight:700;color:#1C3050;margin:0 0 4px">Welcome, ${name||'there'}!</p>
-<p style="font-size:15px;color:#555;line-height:1.7;margin:8px 0 24px">Congratulations! You have been accepted into the <strong>CareForBrains STEM Exploration Program</strong>. We are excited to have you join us.</p>
-<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="background:#f0f9ff;border-radius:10px;padding:22px 24px">
-<p style="font-size:11px;font-weight:700;letter-spacing:2px;color:#0284c7;margin:0 0 12px">NEXT STEPS</p>
-<p style="font-size:14px;color:#333;margin:0;line-height:2">1. Join our Discord server for all communications<br/>2. Complete the onboarding form (sent separately)<br/>3. Attend the orientation session<br/>4. Review your program materials</p>
+<div style="text-align:center;margin:0 0 28px">
+<div style="display:inline-block;padding:6px 18px;border-radius:20px;background:#0284c7;color:#fff;font-size:10px;font-weight:700;letter-spacing:3px">CONGRATULATIONS</div>
+</div>
+<p style="font-size:26px;font-weight:800;color:#1C3050;margin:0 0 2px;text-align:center">Welcome to CareForBrains</p>
+<p style="font-size:16px;color:#0284c7;font-weight:600;text-align:center;margin:0 0 20px">STEM Exploration Program</p>
+<p style="font-size:14px;color:#555;line-height:1.8;margin:0 0 20px">Out of over <strong>5,000 driven applicants</strong>, you have earned your place in the CareForBrains STEM Exploration Program. This is not just a volunteering opportunity. It is a rare chance to explore the power of science, technology, engineering, and mathematics in shaping the future of mental health.</p>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:12px;padding:24px;border-left:4px solid #0284c7">
+<p style="font-size:11px;font-weight:800;letter-spacing:3px;color:#0284c7;margin:0 0 14px">YOUR JOURNEY BEGINS NOW</p>
+<p style="font-size:14px;color:#333;margin:0;line-height:1.8">The program is <strong>now live</strong>. You are in control of your pace \u2014 whether you complete it this week or spread it across the month. All <strong>5 modules and the final project</strong> must be completed to earn your <strong style="color:#0284c7">40 official volunteer hours</strong>.</p>
 </td></tr></table>
-<p style="font-size:14px;color:#555;line-height:1.7;margin:0 0 24px">If you have any questions, reply to this email or reach us at careforbrainsse@gmail.com</p>
-<p style="font-size:14px;color:#1C3050;font-weight:600;margin:0">CareForBrains STEM Exploration Team</p>
-<p style="font-size:12px;color:#999;margin:2px 0 0">careforbrainsse@gmail.com</p>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="background:#f8fafc;border-radius:12px;padding:24px;border:1px solid #e2e8f0">
+<p style="font-size:11px;font-weight:800;letter-spacing:3px;color:#1C3050;margin:0 0 16px">HOW TO GET STARTED</p>
+<table width="100%" style="font-size:14px;color:#333;line-height:1.8"><tr><td style="padding:6px 0;vertical-align:top;width:24px"><strong style="color:#0284c7">1.</strong></td><td style="padding:6px 0">Join the <strong>Canvas classroom</strong> to access all modules and assignments</td></tr><tr><td style="padding:6px 0;vertical-align:top"><strong style="color:#0284c7">2.</strong></td><td style="padding:6px 0">Join the official <strong>Discord</strong> to stay updated and connect with other interns</td></tr><tr><td style="padding:6px 0;vertical-align:top"><strong style="color:#0284c7">3.</strong></td><td style="padding:6px 0">Begin with <strong>Module 1</strong> and unlock your impact</td></tr></table>
+</td></tr></table>
+<div style="text-align:center;margin:0 0 24px">
+<a href="https://canvas.instructure.com/enroll/4JFLL6" style="display:inline-block;padding:14px 32px;background:#0284c7;color:#fff;border-radius:8px;text-decoration:none;font-size:14px;font-weight:700;margin:0 6px">Join Canvas</a>
+<a href="https://discord.com/invite/2Zra5JChnz" style="display:inline-block;padding:14px 32px;background:#5865F2;color:#fff;border-radius:8px;text-decoration:none;font-size:14px;font-weight:700;margin:0 6px">Join Discord</a>
+</div>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px"><tr><td style="background:#fffbeb;border-radius:10px;padding:16px 20px;border-left:4px solid #f59e0b">
+<p style="font-size:13px;color:#92400e;margin:0"><strong>Questions?</strong> Reach out to <a href="mailto:careforbrainsse@gmail.com" style="color:#0284c7">careforbrainsse@gmail.com</a>. We are here to support you.</p>
+</td></tr></table>
+<p style="font-size:15px;color:#1C3050;line-height:1.7;margin:0 0 24px;font-style:italic;text-align:center">This is your time. Step up, explore boldly, and show how STEM can make an impact on minds around the world.</p>
+<div style="border-top:1px solid #e2e8f0;padding-top:20px;display:flex">
+<div style="flex:1"><p style="font-size:14px;color:#1C3050;font-weight:700;margin:0">Tanmay Vasudeva</p><p style="font-size:11px;color:#888;margin:2px 0 0">Chief Executive Officer &amp; Founder</p></div>
+<div style="flex:1;text-align:right"><p style="font-size:14px;color:#1C3050;font-weight:700;margin:0">Zavier Hayat</p><p style="font-size:11px;color:#888;margin:2px 0 0">Program Director, STEM Exploration</p></div>
+</div>
 `,name)}
   },
   stem_done:{
     name:'STEM Internship Completion',
     icon:'\uD83C\uDF93',
-    subject:'Congratulations on completing STEM Exploration, {{name}}!',
+    subject:'You Did It, {{name}} \u2014 STEM Exploration Complete!',
     html:true,
     hasCert:true,
     body:function(name){return emailHTML(`
-<p style="font-size:24px;font-weight:700;color:#1C3050;margin:0 0 4px">Congratulations, ${name||'there'}!</p>
-<p style="font-size:15px;color:#555;line-height:1.7;margin:8px 0 24px">You have successfully completed the <strong>CareForBrains STEM Exploration Program</strong>. Your dedication to STEM and mental health awareness has been outstanding.</p>
-<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="background:#f0fdf4;border-radius:10px;padding:22px 24px">
-<p style="font-size:11px;font-weight:700;letter-spacing:2px;color:#059669;margin:0 0 12px">WHAT YOU'VE EARNED</p>
-<p style="font-size:14px;color:#333;margin:0;line-height:2">&#10004; CareForBrains STEM Certificate of Achievement<br/>&#10004; Verified internship hours for school and college applications<br/>&#10004; Letter of recommendation eligibility</p>
+<div style="text-align:center;margin:0 0 28px">
+<div style="display:inline-block;padding:6px 18px;border-radius:20px;background:#059669;color:#fff;font-size:10px;font-weight:700;letter-spacing:3px">PROGRAM COMPLETE</div>
+</div>
+<p style="font-size:28px;font-weight:800;color:#1C3050;margin:0 0 4px;text-align:center">You\u2019re Officially Done!</p>
+<p style="font-size:15px;color:#555;text-align:center;margin:0 0 24px">Thank you for being part of CareForBrains</p>
+<p style="font-size:14px;color:#555;line-height:1.8;margin:0 0 24px">Hi ${name||'there'}, we\u2019re beyond proud of your journey and commitment to mental health and STEM awareness. You\u2019ve officially completed your course, and that means you\u2019re eligible for awesome perks!</p>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:12px;padding:24px;border-left:4px solid #059669">
+<p style="font-size:11px;font-weight:800;letter-spacing:3px;color:#059669;margin:0 0 14px">FREE OPTION (INCLUDED)</p>
+<table width="100%" style="font-size:14px;color:#333;line-height:2"><tr><td style="padding:4px 0">\u2705 Official CareForBrains Certificate</td></tr><tr><td style="padding:4px 0">\u2705 Verified volunteer hours</td></tr><tr><td style="padding:4px 0">\u2705 Signed forms for school/internships</td></tr></table>
+<p style="font-size:13px;color:#059669;margin:12px 0 0;font-weight:600">Just reply to this email if you\u2019d like a form signed!</p>
 </td></tr></table>
-<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="background:#faf5ff;border-radius:10px;padding:22px 24px">
-<p style="font-size:11px;font-weight:700;letter-spacing:2px;color:#7c3aed;margin:0 0 12px">MEMBERSHIP UPGRADE &mdash; $40</p>
-<p style="font-size:14px;color:#333;margin:0 0 12px;line-height:1.8">Everything above, plus:<br/>&#8226; PVSA Award (Bronze, Silver, or Gold) with medallion<br/>&#8226; Personalized letter of recommendation<br/>&#8226; Priority access to future programs</p>
-<a href="https://www.zeffy.com/en-US/ticketing/careforbrains-memberships-fee-one-time" style="display:inline-block;padding:12px 28px;background:#7c3aed;color:#fff;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">Upgrade Now</a>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="background:linear-gradient(135deg,#faf5ff,#f3e8ff);border-radius:12px;padding:24px;border-left:4px solid #7c3aed">
+<p style="font-size:11px;font-weight:800;letter-spacing:3px;color:#7c3aed;margin:0 0 14px">MEMBERSHIP OPTION \u2014 $40 (ONE-TIME)</p>
+<table width="100%" style="font-size:14px;color:#333;line-height:2"><tr><td style="padding:4px 0">\u2B50 1 FREE PVSA Award (Bronze, Silver, or Gold)</td></tr><tr><td style="padding:4px 0">\u2B50 Personalized letter of recommendation</td></tr><tr><td style="padding:4px 0">\u2B50 Exclusive access to future programs &amp; rewards</td></tr></table>
+<p style="font-size:12px;color:#6b21a8;margin:10px 0 14px;font-style:italic">Note: Delivery of PVSA certificate and letter may take up to 1\u20132 business days.</p>
+<div style="text-align:center"><a href="https://www.zeffy.com/en-US/ticketing/careforbrains-memberships-fee-one-time" style="display:inline-block;padding:14px 36px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border-radius:8px;text-decoration:none;font-size:15px;font-weight:700">Upgrade to Membership</a></div>
 </td></tr></table>
-<p style="font-size:14px;color:#555;line-height:1.7;margin:0 0 24px">Your certificate is attached to this email.</p>
-<p style="font-size:14px;color:#1C3050;font-weight:600;margin:0">CareForBrains STEM Exploration Team</p>
-<p style="font-size:12px;color:#999;margin:2px 0 0">careforbrainsse@gmail.com</p>
+<p style="font-size:14px;color:#555;line-height:1.7;margin:0 0 8px;text-align:center">Thank you again for supporting our mission to make mental health and STEM education more accessible.</p>
+<p style="font-size:14px;color:#555;margin:0 0 20px;text-align:center">Your certificate is attached to this email.</p>
+<div style="border-top:1px solid #e2e8f0;padding-top:20px">
+<p style="font-size:12px;color:#888;margin:0 0 8px">With gratitude,</p>
+<div style="display:flex">
+<div style="flex:1"><p style="font-size:14px;color:#1C3050;font-weight:700;margin:0">Tanmay Vasudeva</p><p style="font-size:11px;color:#888;margin:2px 0 0">Founder &amp; CEO, CareForBrains</p></div>
+<div style="flex:1;text-align:right"><p style="font-size:14px;color:#1C3050;font-weight:700;margin:0">Zavier Hayat</p><p style="font-size:11px;color:#888;margin:2px 0 0">Director of STEM Exploration</p></div>
+</div>
+</div>
+<div style="margin-top:20px;padding-top:14px;border-top:1px solid #e2e8f0;text-align:center">
+<p style="font-size:10px;color:#aaa;margin:0">\u00A9 2025 CareForBrains | All Rights Reserved | <a href="https://careforbrains.org" style="color:#aaa">www.careforbrains.org</a></p>
+</div>
 `,name)}
   },
   custom:{
