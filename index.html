@@ -275,6 +275,7 @@ const fmtSyncTime=ts=>{
 };
 
 let _gToken=null;
+let _gEmail=null;
 let _activeSheet='';
 let _tokenClient=null;
 const colToLetter=c=>{let s='';while(c>=0){s=String.fromCharCode(65+(c%26))+s;c=Math.floor(c/26)-1}return s};
@@ -298,7 +299,9 @@ function globalConnectGoogle(callback){
     _tokenClient=window.google.accounts.oauth2.initTokenClient({
       client_id:GOOGLE_CLIENT_ID,
       scope:'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/gmail.send',
-      callback:resp=>{if(resp.access_token){_gToken=resp.access_token;if(callback)callback(resp.access_token)}}
+      callback:resp=>{if(resp.access_token){_gToken=resp.access_token;
+        fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{Authorization:'Bearer '+resp.access_token}}).then(r=>r.json()).then(d=>{_gEmail=d.email||null}).catch(()=>{});
+        if(callback)callback(resp.access_token)}}
     });
   }
   _tokenClient.requestAccessToken();
@@ -1271,7 +1274,12 @@ function Emails({db,hubData,team,me}){
   const emailCfg=normEmailCfg(hubData.emailjs);
   const sender=emailCfg.profiles[emailCfg.defaultProfile]||emailCfg.profiles.general||{};
   const[gConnected,setGConnected]=useState(!!_gToken);
+  const[connectedEmail,setConnectedEmail]=useState(_gEmail||'');
   const senderReady=!!_gToken||gConnected;
+  const isStemTemplate=template==='stem_accept'||template==='stem_done';
+  const wantsStemEmail=isStemTemplate;
+  const connectedIsStem=(connectedEmail||'').includes('careforbrainsse');
+  const wrongAccount=gConnected&&wantsStemEmail!==connectedIsStem;
 
   const tmpl=EMAIL_TEMPLATES[template]||EMAIL_TEMPLATES.custom;
   const subj=template==='custom'?customSubj:tmpl.subject;
@@ -1361,9 +1369,20 @@ function Emails({db,hubData,team,me}){
     <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>07 &#8212; Comms</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Email Center</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 18px"}}/>
 
-    {!senderReady&&<div style={{padding:"12px 16px",borderRadius:10,background:"#FFF5F5",border:"1px solid #FECACA",marginBottom:16,fontSize:12.5,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-      <span><span style={{color:"#E44258",fontWeight:700}}>&#9888; Not connected.</span><span style={{color:"#676879",marginLeft:6}}>Connect Google to send emails directly from careforbrains@gmail.com.</span></span>
-      <Btn primary onClick={()=>globalConnectGoogle(()=>setGConnected(true))} style={{flexShrink:0}}>Connect Google</Btn>
+    {!senderReady?<div style={{padding:"12px 16px",borderRadius:10,background:"#FFF5F5",border:"1px solid #FECACA",marginBottom:16,fontSize:12.5,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <span><span style={{color:"#E44258",fontWeight:700}}>&#9888; Not connected.</span><span style={{color:"#676879",marginLeft:6}}>Connect a Google account to send emails.</span></span>
+      <Btn primary onClick={()=>globalConnectGoogle(t=>{setGConnected(true);setTimeout(()=>setConnectedEmail(_gEmail||''),500)})} style={{flexShrink:0}}>Connect Google</Btn>
+    </div>
+    :<div style={{padding:"10px 16px",borderRadius:10,background:wrongAccount?"#FFFBEB":"#F0FDF4",border:"1px solid "+(wrongAccount?"#FDE68A":"#BBF7D0"),marginBottom:16,fontSize:12.5,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <div style={{width:8,height:8,borderRadius:4,background:wrongAccount?"#F59E0B":"#10B981"}}/>
+        <span style={{fontWeight:600,color:"#1B2838"}}>Sending as:</span>
+        <span style={{fontFamily:"monospace",fontSize:11,color:"#555"}}>{connectedEmail||'connected'}</span>
+        {wrongAccount&&<span style={{color:"#92400E",fontWeight:600,marginLeft:4}}>&#9888; {wantsStemEmail?'STEM templates should send from careforbrainsse@gmail.com':'Volunteer templates should send from careforbrains@gmail.com'}</span>}
+      </div>
+      <button onClick={()=>{_gToken=null;_gEmail=null;_tokenClient=null;setGConnected(false);setConnectedEmail('');globalConnectGoogle(t=>{setGConnected(true);setTimeout(()=>setConnectedEmail(_gEmail||''),500)})}} style={{padding:"6px 14px",borderRadius:6,border:"1px solid "+(wrongAccount?"#F59E0B":"#D1D5DB"),background:wrongAccount?"#FEF3C7":"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:600,color:wrongAccount?"#92400E":"#555"}}>
+        {wrongAccount?"Switch Account":"Switch Account"}
+      </button>
     </div>}
 
     <div style={{display:"flex",gap:8,marginBottom:20}}>
