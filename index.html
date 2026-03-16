@@ -279,6 +279,18 @@ let _activeSheet='';
 let _tokenClient=null;
 const colToLetter=c=>{let s='';while(c>=0){s=String.fromCharCode(65+(c%26))+s;c=Math.floor(c/26)-1}return s};
 
+async function sendSMS(twilioConfig,to,body){
+  if(!twilioConfig||!twilioConfig.sid||!twilioConfig.token||!twilioConfig.from)return;
+  const auth=btoa(twilioConfig.sid+':'+twilioConfig.token);
+  const phone=to.startsWith('+')?to:'+1'+to.replace(/\D/g,'');
+  const params=new URLSearchParams({To:phone,From:twilioConfig.from,Body:body});
+  const r=await fetch('https://api.twilio.com/2010-04-01/Accounts/'+twilioConfig.sid+'/Messages.json',{
+    method:'POST',headers:{'Authorization':'Basic '+auth,'Content-Type':'application/x-www-form-urlencoded'},body:params
+  });
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||'SMS failed')}
+  return await r.json();
+}
+
 
 function globalConnectGoogle(callback){
   if(!window.google?.accounts?.oauth2)return;
@@ -521,7 +533,7 @@ function TeamBoard({db,tasks,team,me}){
 }
 
 // === ASSIGN WORK ===
-function Assign({db,tasks,team,me}){
+function Assign({db,tasks,team,me,hubData}){
   const[form,setForm]=useState({assignee:'eric',text:'',notes:'',priority:'medium',due:''});
   const[bulk,setBulk]=useState(false);
   const[sent,setSent]=useState(false);
@@ -537,6 +549,7 @@ function Assign({db,tasks,team,me}){
     const meName=fn(team.find(t=>t.id===me)?.name);
 
     doEmail(m,'Message from '+meName,'<div style="font-family:sans-serif;padding:20px"><p>'+msgText.trim()+'</p><p style="color:#888;margin-top:16px">- '+meName+'</p></div>');
+    if(m.phone)sendSMS(hubData.twilio,m.phone,'[CareForBrains] '+msgText.trim()+' - '+meName).catch(e=>console.error('SMS:',e));
     logEvent(db,'message_sent',{user:me,to:msgTo,toName:fn(m.name),message:msgText.trim().slice(0,50)});
     setMsgSent(true);setMsgText('');setTimeout(()=>setMsgSent(false),1800);
   };
@@ -669,8 +682,7 @@ function Assign({db,tasks,team,me}){
             </div>)}
           </div>
           <div style={{flex:1}}><Inp value={msgText} onChange={e=>setMsgText(e.target.value)} placeholder="Type a message..." onKeyDown={e=>{if(e.key==='Enter'&&msgText.trim()&&msgTo)sendMsg()}}/></div>
-          {(_gToken||gOk)?<button onClick={sendMsg} disabled={!msgText.trim()||!msgTo} style={{padding:"10px 20px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,color:"#fff",background:msgText.trim()&&msgTo?"linear-gradient(135deg,#10B981,#059669)":"#E6E9EF"}}>Send</button>
-          :<button onClick={()=>globalConnectGoogle(()=>setGOk(true))} style={{padding:"10px 20px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,color:"#fff",background:"#579BFC"}}>Connect Google</button>}
+          <button onClick={sendMsg} disabled={!msgText.trim()||!msgTo} style={{padding:"10px 20px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,color:"#fff",background:msgText.trim()&&msgTo?"linear-gradient(135deg,#10B981,#059669)":"#E6E9EF"}}>Send</button>
         </div>
       </div>}
     </Card>
@@ -1604,7 +1616,7 @@ function App(){
   const V=()=>{switch(safeTab){
     case 'my':return<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'team':return<TeamBoard db={db} tasks={tasks} team={team} me={me}/>;
-    case 'assign':return isA?<Assign db={db} tasks={tasks} team={team} me={me}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
+    case 'assign':return isA?<Assign db={db} tasks={tasks} team={team} me={me} hubData={hubData}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'calendar':return<Cal db={db} events={events} tasks={tasks} team={team} me={me}/>;
     case 'contacts':return<Contacts db={db} team={team} me={me}/>;
     case 'sheets':return<Sheets db={db} hubData={hubData} team={team} me={me}/>;
