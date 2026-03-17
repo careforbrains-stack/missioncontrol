@@ -437,15 +437,43 @@ function getDeviceInfo(){
   else if(ua.includes('Android'))os='Android';
   else if(ua.includes('iPhone')||ua.includes('iPad'))os='iOS';
   const bv=ua.match(new RegExp(browser==='Safari'?'Version/([\\d.]+)':browser+'/([\\d.]+)'));
+  // Canvas fingerprint
   let canvasFP='N/A';
   try{const cv=document.createElement('canvas');cv.width=200;cv.height=50;const ctx=cv.getContext('2d');ctx.textBaseline='top';ctx.font='14px Arial';ctx.fillStyle='#f60';ctx.fillRect(125,1,62,20);ctx.fillStyle='#069';ctx.fillText('CFB',2,15);ctx.fillStyle='rgba(102,204,0,0.7)';ctx.fillText('fp',4,30);canvasFP=cv.toDataURL().slice(-32)}catch(e){}
-  let gpu='N/A';
-  try{const gl=document.createElement('canvas').getContext('webgl');const ext=gl.getExtension('WEBGL_debug_renderer_info');if(ext)gpu=gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)}catch(e){}
-  let net='N/A';
-  try{const cn=navigator.connection||navigator.mozConnection;if(cn)net=cn.effectiveType+(cn.type?' ('+cn.type+')':'')}catch(e){}
+  // WebGL
+  let gpu='N/A',gpuVendor='N/A';
+  try{const gl=document.createElement('canvas').getContext('webgl');const ext=gl.getExtension('WEBGL_debug_renderer_info');if(ext){gpu=gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);gpuVendor=gl.getParameter(ext.UNMASKED_VENDOR_WEBGL)}}catch(e){}
+  // Network
+  let net='N/A',downlink='N/A';
+  try{const cn=navigator.connection||navigator.mozConnection;if(cn){net=cn.effectiveType+(cn.type?' ('+cn.type+')':'');downlink=(cn.downlink||'?')+'Mbps'}}catch(e){}
+  // Battery (async - updates later)
   let batt='N/A';
-  try{if(navigator.getBattery)navigator.getBattery().then(b=>{if(_deviceInfo)_deviceInfo.battery=Math.round(b.level*100)+'%'+(b.charging?' charging':'')})}catch(e){}
-  return{browser:browser+(bv?' '+bv[1]:''),os,device:isMobile?'Mobile':'Desktop',screen:screen.width+'x'+screen.height,colorDepth:screen.colorDepth+'bit',lang:navigator.language||'',tz:Intl.DateTimeFormat().resolvedOptions().timeZone||'',cpuCores:navigator.hardwareConcurrency||'N/A',ram:(navigator.deviceMemory||'N/A')+(navigator.deviceMemory?'GB':''),touch:navigator.maxTouchPoints>0?'Yes ('+navigator.maxTouchPoints+')':'No',platform:navigator.platform||'N/A',darkMode:window.matchMedia('(prefers-color-scheme:dark)').matches?'Yes':'No',canvasFP,gpu,network:net,battery:batt,ua:ua.slice(0,150)}
+  try{if(navigator.getBattery)navigator.getBattery().then(b=>{if(_deviceInfo){_deviceInfo.battery=Math.round(b.level*100)+'%'+(b.charging?' charging':'');_deviceInfo.batteryCharging=b.charging?'Yes':'No'}})}catch(e){}
+  // Fonts probe - detect common fonts
+  let fontsDetected='N/A';
+  try{const testFonts=['Arial','Courier New','Georgia','Times New Roman','Verdana','Comic Sans MS','Impact','Lucida Console','Palatino','Tahoma','Trebuchet MS'];const d=document.createElement('span');d.style.cssText='position:absolute;left:-9999px;font-size:72px';d.textContent='mmmmmmmmmmlli';document.body.appendChild(d);d.style.fontFamily='monospace';const bw=d.offsetWidth;const detected=[];testFonts.forEach(f=>{d.style.fontFamily='"'+f+'",monospace';if(d.offsetWidth!==bw)detected.push(f)});document.body.removeChild(d);fontsDetected=detected.length+' ('+detected.slice(0,5).join(', ')+(detected.length>5?'...':'')+')'}catch(e){}
+  // Misc
+  const plugins=navigator.plugins?Array.from(navigator.plugins).map(p=>p.name).slice(0,5).join(', '):'N/A';
+  const cookiesEnabled=navigator.cookieEnabled?'Yes':'No';
+  const doNotTrack=navigator.doNotTrack==='1'?'Yes':'No';
+  const adBlock=(()=>{try{const d=document.createElement('div');d.className='adsbox ad-placement';d.style.cssText='position:absolute;left:-9999px;height:1px';document.body.appendChild(d);const blocked=d.offsetHeight===0;document.body.removeChild(d);return blocked?'Likely':'No'}catch(e){return'Unknown'}})();
+  return{
+    browser:browser+(bv?' '+bv[1]:''),os,device:isMobile?'Mobile':'Desktop',
+    screen:screen.width+'x'+screen.height,window:window.innerWidth+'x'+window.innerHeight,
+    colorDepth:screen.colorDepth+'bit',pixelRatio:window.devicePixelRatio||1,
+    lang:navigator.language||'',languages:(navigator.languages||[]).join(', '),
+    tz:Intl.DateTimeFormat().resolvedOptions().timeZone||'',
+    cpuCores:navigator.hardwareConcurrency||'N/A',
+    ram:(navigator.deviceMemory||'N/A')+(navigator.deviceMemory?'GB':''),
+    touch:navigator.maxTouchPoints>0?'Yes ('+navigator.maxTouchPoints+')':'No',
+    platform:navigator.platform||'N/A',
+    darkMode:window.matchMedia('(prefers-color-scheme:dark)').matches?'Yes':'No',
+    canvasFP,gpu,gpuVendor,network:net,downlink,battery:batt,
+    fontsDetected,plugins,cookiesEnabled,doNotTrack,adBlock,
+    referrer:document.referrer||'direct',
+    sessionStart:new Date().toISOString(),
+    ua:ua.slice(0,200)
+  }
 }
 let _deviceInfo=null;
 function logEvent(db,type,data){
@@ -457,7 +485,7 @@ function logEvent(db,type,data){
     const val=snap.val();if(!val)return;
     db.ref('hub/logs').once('value',all=>{
       const count=all.numChildren();
-      if(count>500){const keys=Object.keys(val);keys.forEach(k=>db.ref('hub/logs/'+k).remove())}
+      if(count>2000){const keys=Object.keys(val);keys.forEach(k=>db.ref('hub/logs/'+k).remove())}
     });
   });
 }
@@ -1710,9 +1738,9 @@ function Logs({hubData,team,db}){
   const deleteLog=key=>{if(db)db.ref('hub/logs/'+key).remove()};
   const clearAll=()=>{if(!confirm('Delete ALL '+filtered.length+' logs?'))return;filtered.forEach(l=>{if(l._fbKey&&db)db.ref('hub/logs/'+l._fbKey).remove()})};
   const clearFiltered=()=>{if(!confirm('Delete all '+filtered.length+' '+filter+' logs?'))return;filtered.forEach(l=>{if(l._fbKey&&db)db.ref('hub/logs/'+l._fbKey).remove()});};
-  const typeLabel={login:'Login',sheet_edit:'Sheet Edit',task_assign:'Task Assigned',email_sent:'Email Sent',message_sent:'Message'};
-  const typeColor={login:'#1490B0',sheet_edit:'#10B981',task_assign:'#F59E0B',email_sent:'#A25DDC',message_sent:'#EC4899'};
-  const typeIcon={login:'\uD83D\uDD11',sheet_edit:'\u270F\uFE0F',task_assign:'\uD83D\uDCCB',email_sent:'\u2709\uFE0F',message_sent:'\uD83D\uDCF1'};
+  const typeLabel={login:'Login',logout:'Logout',sheet_edit:'Sheet Edit',task_assign:'Task Assigned',email_sent:'Email Sent',message_sent:'Message',page_view:'Page View'};
+  const typeColor={login:'#1490B0',logout:'#64748B',sheet_edit:'#10B981',task_assign:'#F59E0B',email_sent:'#A25DDC',message_sent:'#EC4899',page_view:'#6366F1'};
+  const typeIcon={login:'\uD83D\uDD11',logout:'\uD83D\uDEAA',sheet_edit:'\u270F\uFE0F',task_assign:'\uD83D\uDCCB',email_sent:'\u2709\uFE0F',message_sent:'\uD83D\uDCF1',page_view:'\uD83D\uDCC4'};
   const fmtTime=t=>{if(!t)return'';const d=new Date(t);return d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true})};
   const fmtFull=t=>{if(!t)return'';const d=new Date(t);return d.toLocaleString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true})};
   const ago=ts=>{if(!ts)return'';const s=Math.floor((Date.now()-ts)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago'};
@@ -1721,8 +1749,8 @@ function Logs({hubData,team,db}){
   return(<div>
     <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>Admin</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Activity Log</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 18px"}}/>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:8,marginBottom:16}}>
-      {[['all','All',filtered.length,'#579BFC'],['login','Logins',logs.filter(l=>l.type==='login').length,'#1490B0'],['sheet_edit','Edits',logs.filter(l=>l.type==='sheet_edit').length,'#10B981'],['task_assign','Tasks',logs.filter(l=>l.type==='task_assign').length,'#F59E0B'],['email_sent','Emails',logs.filter(l=>l.type==='email_sent').length,'#A25DDC'],['message_sent','Texts',logs.filter(l=>l.type==='message_sent').length,'#EC4899']].map(([v,l,n,col])=>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:8,marginBottom:16}}>
+      {[['all','All',filtered.length,'#579BFC'],['login','Logins',logs.filter(l=>l.type==='login').length,'#1490B0'],['page_view','Pages',logs.filter(l=>l.type==='page_view').length,'#6366F1'],['sheet_edit','Edits',logs.filter(l=>l.type==='sheet_edit').length,'#10B981'],['task_assign','Tasks',logs.filter(l=>l.type==='task_assign').length,'#F59E0B'],['email_sent','Emails',logs.filter(l=>l.type==='email_sent').length,'#A25DDC'],['message_sent','Texts',logs.filter(l=>l.type==='message_sent').length,'#EC4899']].map(([v,l,n,col])=>
         <button key={v} onClick={()=>setFilter(v)} style={{padding:"10px 8px",border:filter===v?"2px solid "+col:"1px solid "+C.rl,borderRadius:10,background:filter===v?col+"0D":"#fff",cursor:"pointer",fontFamily:"inherit",textAlign:"center",transition:"all .2s"}}>
           <div style={{fontSize:18,fontWeight:700,color:filter===v?col:"#1B2838"}}>{n}</div>
           <div style={{fontSize:9,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:filter===v?col:"#8A9AAE",marginTop:2}}>{l}</div>
@@ -1750,6 +1778,8 @@ function Logs({hubData,team,db}){
             <span style={{fontWeight:600,fontSize:12}}>{getName(l.user)}</span>
             <div style={{fontSize:12,color:"#323338",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
               {l.type==='login'&&<span>IP: <span style={{fontFamily:"monospace",color:"#676879"}}>{l.ip||'\u2014'}</span> \u00B7 {l.browser||''} \u00B7 {l.os||''} \u00B7 {l.device||''}</span>}
+              {l.type==='logout'&&<span>Session ended</span>}
+              {l.type==='page_view'&&<span>{l.from||'?'} \u2192 <span style={{fontWeight:600}}>{l.page||'?'}</span></span>}
               {l.type==='sheet_edit'&&<span><span style={{fontWeight:600}}>{l.sheet}</span> cell {l.cell} {l.oldValue&&<span style={{color:C.rd,textDecoration:"line-through"}}>{(l.oldValue||'').slice(0,20)}</span>} <span style={{color:C.gn}}>{(l.newValue||'').slice(0,30)}</span></span>}
               {l.type==='task_assign'&&<span>"{(l.task||'').slice(0,40)}" \u2192 {getName(l.assignee)} <span style={{padding:"1px 6px",borderRadius:3,fontSize:9,fontWeight:700,background:l.priority==='high'?"#FEE2E2":l.priority==='low'?"#DBEAFE":"#FEF3C7",color:l.priority==='high'?"#991B1B":l.priority==='low'?"#1E40AF":"#92400E"}}>{l.priority}</span></span>}
               {l.type==='email_sent'&&<span>"{(l.subject||'').slice(0,35)}" \u2192 {l.to||'\u2014'}</span>}
@@ -1765,19 +1795,31 @@ function Logs({hubData,team,db}){
               {mkInfo('\uD83D\uDDA5 Browser',l.browser)}
               {mkInfo('\u2699\uFE0F OS',l.os)}
               {mkInfo('\uD83D\uDCCF Screen',l.screen)}
+              {mkInfo('\uD83D\uDD32 Window',l.window)}
               {mkInfo('\uD83C\uDFA8 Color Depth',l.colorDepth)}
+              {mkInfo('\uD83D\uDD0D Pixel Ratio',l.pixelRatio)}
               {mkInfo('\uD83C\uDF0D Timezone',l.tz)}
               {mkInfo('\uD83D\uDDE3 Language',l.lang)}
+              {mkInfo('\uD83C\uDF10 All Languages',l.languages)}
               {mkInfo('\uD83D\uDC64 User ID',l.user)}
               {mkInfo('\uD83E\uDDEC Canvas FP',l.canvasFP)}
               {mkInfo('\uD83C\uDFAE GPU',l.gpu)}
+              {mkInfo('\uD83C\uDFED GPU Vendor',l.gpuVendor)}
               {mkInfo('\u2699 CPU Cores',l.cpuCores)}
               {mkInfo('\uD83D\uDCBE RAM',l.ram)}
               {mkInfo('\uD83D\uDCF1 Touch',l.touch)}
               {mkInfo('\uD83D\uDDA5 Platform',l.platform)}
               {mkInfo('\uD83C\uDF19 Dark Mode',l.darkMode)}
               {mkInfo('\uD83D\uDCF6 Network',l.network)}
+              {mkInfo('\u2B07 Downlink',l.downlink)}
               {mkInfo('\uD83D\uDD0B Battery',l.battery)}
+              {mkInfo('\uD83D\uDDA4 Fonts',l.fontsDetected)}
+              {mkInfo('\uD83E\uDDE9 Plugins',l.plugins)}
+              {mkInfo('\uD83C\uDF6A Cookies',l.cookiesEnabled)}
+              {mkInfo('\uD83D\uDEAB Do Not Track',l.doNotTrack)}
+              {mkInfo('\uD83D\uDEE1 Ad Blocker',l.adBlock)}
+              {mkInfo('\u2934 Referrer',l.referrer)}
+              {mkInfo('\u23F1 Session Start',l.sessionStart)}
               {mkInfo('\uD83D\uDD0D User Agent',l.ua)}
             </div>
             {l.type==='sheet_edit'&&<div style={{marginTop:8,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
@@ -1788,6 +1830,9 @@ function Logs({hubData,team,db}){
             </div>}
             {l.type==='task_assign'&&<div style={{marginTop:8,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
               {mkInfo('Task',l.task)}{mkInfo('Assignee',getName(l.assignee))}{mkInfo('Priority',l.priority)}
+            </div>}
+            {l.type==='page_view'&&<div style={{marginTop:8,display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              {mkInfo('From Page',l.from)}{mkInfo('To Page',l.page)}
             </div>}
             <div style={{marginTop:12,textAlign:"right"}}><button onClick={e=>{e.stopPropagation();if(confirm('Delete this log entry?')){deleteLog(l._fbKey);setExpanded(null)}}} style={{padding:"5px 12px",borderRadius:5,border:"1px solid #FECACA",background:"#FFF5F5",cursor:"pointer",fontFamily:"inherit",fontSize:10,fontWeight:600,color:"#E44258"}}>Delete Entry</button></div>
           </div>}
@@ -1868,7 +1913,20 @@ function App(){
     return()=>clearInterval(iv);
   },[!!hubData?.sheets]);
 
-  const logout=()=>{localStorage.removeItem(LK);setUser(null);setTab('my')};
+  const logout=()=>{
+    if(dbRef.current&&user)logEvent(dbRef.current,'logout',{user:user.id});
+    localStorage.removeItem(LK);setUser(null);setTab('my');
+  };
+
+  // Track tab switches (page views)
+  const prevTab=useRef(tab);
+  useEffect(()=>{
+    if(!dbRef.current||!user)return;
+    if(tab!==prevTab.current){
+      logEvent(dbRef.current,'page_view',{user:user.id,page:tab,from:prevTab.current});
+      prevTab.current=tab;
+    }
+  },[tab]);
 
   
   if(!hubData)return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.sn}}><div style={{textAlign:"center"}}><img src={LOGO} alt="" style={{width:40,height:40,borderRadius:10,marginBottom:10,opacity:0.5}}/><div style={{fontSize:13,color:C.mt}}>Connecting...</div></div></div>);
