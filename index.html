@@ -306,6 +306,7 @@ const fmtSyncTime=ts=>{
 
 let _gToken=null;
 let _gEmail=null;
+let _lastSheetEdit={};
 let _activeSheet='';
 let _tokenClient=null;
 const colToLetter=c=>{let s='';while(c>=0){s=String.fromCharCode(65+(c%26))+s;c=Math.floor(c/26)-1}return s};
@@ -795,12 +796,12 @@ function Assign({db,tasks,team,me,hubData}){
 
     <Card style={{marginTop:16}}>
       <div style={{padding:"16px 20px",borderBottom:"1px solid "+C.bgA,display:"flex",alignItems:"center",gap:10}}>
-        <div style={{width:8,height:8,borderRadius:4,background:msgSent?"#10B981":"#F59E0B"}}/>
+        <div style={{width:8,height:8,borderRadius:4,background:msgSent==='sent'?"#10B981":msgSent?"#F59E0B":"#F59E0B"}}/>
         <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:"#323338"}}>Quick Message</span>
       </div>
       {msgSent?<div className="send-success" style={{padding:"32px 20px",textAlign:"center"}}>
-        <div style={{width:48,height:48,borderRadius:"50%",background:"#D1FAE5",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px"}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="3" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>
-        <div style={{fontSize:16,fontWeight:700,color:msgSent==='sent'?"#059669":"#F59E0B"}}>{msgSent==='sent'?'Sent!':msgSent==='partial'?'SMS failed, email sent':'Nothing sent \u2014 check connection'}</div>
+        <div style={{width:48,height:48,borderRadius:"50%",background:msgSent==='sent'?"#D1FAE5":msgSent==='partial'?"#FEF3C7":"#FEE2E2",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px"}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={msgSent==='sent'?"#059669":msgSent==='partial'?"#D97706":"#DC2626"} strokeWidth="3" strokeLinecap="round"><path d={msgSent==='sent'?"M20 6L9 17l-5-5":msgSent==='partial'?"M12 9v4M12 17h.01":"M18 6L6 18M6 6l12 12"}/></svg></div>
+        <div style={{fontSize:16,fontWeight:700,color:msgSent==='sent'?"#059669":msgSent==='partial'?"#D97706":"#DC2626"}}>{msgSent==='sent'?'Sent!':msgSent==='partial'?'SMS failed, email sent':'Nothing sent \u2014 check connection'}</div>
       </div>:
       <div style={{padding:"16px 20px"}}>
         <div style={{display:"flex",gap:10,alignItems:"flex-end"}}>
@@ -878,7 +879,7 @@ function Cal({db,events,tasks,team,me}){
             {isA&&<button onClick={()=>delEvent(e)} style={{background:"none",border:"none",cursor:"pointer",color:C.rd,fontSize:12,fontFamily:"inherit"}}>Remove</button>}</div>)}
         </>}
       </div></Card>}
-    {modal&&<div style={{position:"fixed",inset:0,background:"rgba(9,26,38,0.45)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200}} onClick={e=>e.target===e.currentTarget&&setModal(false)}>
+    {modal&&<div style={{position:"fixed",inset:0,background:"rgba(9,26,38,0.45)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1100}} onClick={e=>e.target===e.currentTarget&&setModal(false)}>
       <div style={{background:C.cd,borderRadius:12,width:460,maxWidth:"92vw",border:"1px solid "+C.cb}}>
         <div style={{padding:"18px 24px",borderBottom:"1px solid "+C.rl}}><h2 style={{fontFamily:F.sf,fontSize:19,fontWeight:400}}>New Event</h2></div>
         <div style={{padding:"18px 24px"}}><div style={{marginBottom:10}}><Lbl>Title</Lbl><Inp value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/></div><div style={{marginBottom:10}}><Lbl>Date</Lbl><input type="date" style={{width:"100%",padding:"9px 12px",border:"1px solid "+C.rl,borderRadius:7,fontSize:13,fontFamily:"inherit"}} value={form.date} onChange={e=>setForm({...form,date:e.target.value})}/></div><div style={{marginBottom:10}}><Lbl>For</Lbl><Sel value={form.assignee} onChange={e=>setForm({...form,assignee:e.target.value})}>{team.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</Sel></div></div>
@@ -920,7 +921,7 @@ function Sheets({db,hubData,team,me}){
   });
   const sheetData=hubData.sheetData||{};
   const[active,setActiveState]=useState(()=>_activeSheet||sheets[0]?._fbKey||'');
-  const setActive=v=>{_activeSheet=v;setActiveState(v);setEditCell(null);if(tableRef.current)tableRef.current.scrollTop=0};
+  const setActive=v=>{_activeSheet=v;setActiveState(v);setEditCell(null);scrollRef.current=0;if(tableRef.current)tableRef.current.scrollTop=0};
   const[gToken,setGTokenState]=useState(_gToken);
   const setGToken=v=>{_gToken=v;setGTokenState(v)};
   const[editCell,setEditCell]=useState(null);
@@ -1027,6 +1028,7 @@ function Sheets({db,hubData,team,me}){
       const cached=JSON.parse(JSON.stringify(activeVals||[]));
       if(cached[rowIdx+1])cached[rowIdx+1][realCol]=value;
       db.ref('hub/sheetData/'+activeSheet.id).set(cached);
+      _lastSheetEdit[activeSheet.id]=Date.now();
       logEvent(db,'sheet_edit',{user:me,sheet:activeSheet.name,sheetId:activeSheet.id,cell:colToLetter(realCol)+(rowIdx+2),oldValue:(activeVals[rowIdx+1]||[])[realCol]||'',newValue:value});
       setEditCell(null);
       requestAnimationFrame(()=>{if(tableRef.current)tableRef.current.scrollTop=scrollPos});
@@ -1104,7 +1106,7 @@ function Sheets({db,hubData,team,me}){
         </div>
       </div>
       <div ref={tableRef} style={{overflowY:"auto",overflowX:"auto",maxHeight:"72vh"}}>
-        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"fixed"}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:Math.max(visibleCols.length*120,800)}}>
           <colgroup>{visibleCols.map((ci,i)=><col key={i} style={{width:isPriCol(cleanHeaders[ci])?"80px":(100/visibleCols.length)+"%"}}/>)}<col style={{width:"36px"}}/></colgroup>
           <thead><tr>{visibleCols.map((ci,i)=>{
             const h=cleanHeaders[ci]||'';const pri=isPriCol(h);
@@ -1159,7 +1161,7 @@ function Sheets({db,hubData,team,me}){
         </table>
       </div>
     </Card>:activeSheet?<Card><div style={{padding:"40px 24px",textAlign:"center",color:C.mt}}>
-      <div style={{fontFamily:F.sf,fontSize:18,fontStyle:"italic"}}>No data synced yet</div>
+      {sheetData[activeSheet.id]?<div style={{fontFamily:F.sf,fontSize:16}}>This sheet has no columns or is empty</div>:<div><div style={{fontFamily:F.sf,fontSize:18,fontStyle:"italic"}}>No data synced yet</div><div style={{fontSize:12,marginTop:6}}>Click Refresh or connect Google to load data</div></div>}
     </div></Card>:<div style={{padding:"40px",textAlign:"center",color:C.mt}}>No sheets linked</div>}
   </div>);
 }
@@ -2023,11 +2025,12 @@ function App(){
       const sheets=Object.keys(hubData.sheets).filter(k=>k!=='_seed').map(k=>normSheetEntry(hubData.sheets[k]));
       for(const s of sheets){
         const sid=getSheetId(s.url);if(!sid)continue;
+        if(_lastSheetEdit[s.id]&&Date.now()-_lastSheetEdit[s.id]<45000)continue;
         try{
           const r=await fetch('https://docs.google.com/spreadsheets/d/'+sid+'/export?format=csv');
           if(!r.ok)continue;
           const text=await r.text();
-          if(text.trim().startsWith('<!'))continue; // skip HTML error pages
+          if(text.trim().startsWith('<!'))continue;
           const hash=text.length+'-'+Array.from(text).reduce((h,c)=>(((h<<5)-h)+c.charCodeAt(0))|0,0);
           if(syncHashRef.current[s.id]===hash)continue;
           syncHashRef.current[s.id]=hash;
