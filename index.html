@@ -829,12 +829,21 @@ function Sheets({db,hubData,team,me}){
   const[saving,setSaving]=useState(false);
   const tableRef=useRef(null);
   const editRef=useRef(null);
+  const scrollRef=useRef(0);
 
   // Focus edit input without scrolling
   useEffect(()=>{
     if(editRef.current)editRef.current.focus({preventScroll:true});
   },[editCell]);
-  const scrollRef=useRef(0);
+
+  // Preserve scroll across re-renders
+  useEffect(()=>{
+    const el=tableRef.current;if(!el)return;
+    el.scrollTop=scrollRef.current;
+    const h=()=>{scrollRef.current=el.scrollTop};
+    el.addEventListener('scroll',h,{passive:true});
+    return()=>el.removeEventListener('scroll',h);
+  });
 
   const[syncing,setSyncing]=useState(false);
   const[lastSync,setLastSync]=useState(null);
@@ -1802,20 +1811,22 @@ function App(){
     return()=>{if(dbRef.current)dbRef.current.ref('hub').off()};
   },[fbCfg]);
 
-  // Sync empty sheets once on load (no interval - Firebase realtime handles updates)
+  // Smart auto-sync: runs every 30s, only writes to Firebase when data actually changed
+  const syncHashRef=useRef({});
   useEffect(()=>{
     if(!dbRef.current||!hubData?.sheets)return;
     const db=dbRef.current;
-    const sheets=Object.keys(hubData.sheets).filter(k=>k!=='_seed').map(k=>normSheetEntry(hubData.sheets[k]));
-    const syncEmpty=async()=>{
+    const syncAll=async()=>{
+      const sheets=Object.keys(hubData.sheets).filter(k=>k!=='_seed').map(k=>normSheetEntry(hubData.sheets[k]));
       for(const s of sheets){
         const sid=getSheetId(s.url);if(!sid)continue;
-        const cached=hubData.sheetData?.[s.id];
-        if(cached&&Array.isArray(cached)&&cached.length>1)continue;
         try{
           const r=await fetch('https://docs.google.com/spreadsheets/d/'+sid+'/export?format=csv');
           if(!r.ok)continue;
           const text=await r.text();
+          const hash=text.length+'-'+text.slice(0,100)+text.slice(-100);
+          if(syncHashRef.current[s.id]===hash)continue;
+          syncHashRef.current[s.id]=hash;
           const rows=text.split('\n').map(row=>{
             const vals=[];let cur='';let inQ=false;
             for(let i=0;i<row.length;i++){const ch=row[i];if(ch==='"'){inQ=!inQ}else if(ch===','&&!inQ){vals.push(cur.trim());cur=''}else{cur+=ch}}
@@ -1825,7 +1836,9 @@ function App(){
         }catch(e){}
       }
     };
-    syncEmpty();
+    syncAll();
+    const iv=setInterval(syncAll,30000);
+    return()=>clearInterval(iv);
   },[!!hubData?.sheets]);
 
   const logout=()=>{localStorage.removeItem(LK);setUser(null);setTab('my')};
