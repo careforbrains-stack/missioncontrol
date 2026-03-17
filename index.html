@@ -336,11 +336,34 @@ function globalConnectGoogle(callback){
 async function svgToPdfBase64(svgString){
   const {jsPDF}=window.jspdf;
   await document.fonts.ready;
+  // Extract text content from SVG and render as HTML for proper font rendering
   const wrap=document.createElement('div');
-  wrap.style.cssText='position:fixed;left:-9999px;top:-9999px;width:1100px;height:780px';
-  wrap.innerHTML=svgString;
+  wrap.style.cssText='position:fixed;left:-9999px;top:-9999px;width:1100px;height:780px;overflow:hidden';
+  // Render SVG as background for borders/ornaments, overlay HTML for text
+  const svgNoText=svgString.replace(/<text[^>]*>[\s\S]*?<\/text>/g,'');
+  // Parse text elements
+  const texts=[];
+  const re=/<text\s+x="([^"]+)"\s+y="([^"]+)"\s+text-anchor="([^"]+)"\s+font-family="([^"]+)"\s+font-size="([^"]+)"([^>]*)>([\s\S]*?)<\/text>/g;
+  let m;
+  while((m=re.exec(svgString))!==null){
+    const attrs=m[6];const fw=(attrs.match(/font-weight="([^"]+)"/)||[])[1]||'400';
+    const fill=(attrs.match(/fill="([^"]+)"/)||[])[1]||'#1B2838';
+    const ls=(attrs.match(/letter-spacing="([^"]+)"/)||[])[1]||'0';
+    const fs=(attrs.match(/font-style="([^"]+)"/)||[])[1]||'normal';
+    let inner=m[7].replace(/<tspan[^>]*>/g,'<span style="').replace(/<\/tspan>/g,'</span>');
+    inner=inner.replace(/font-weight="([^"]+)"/g,'font-weight:$1;').replace(/fill="([^"]+)"/g,'color:$1;').replace(/font-size="([^"]+)"/g,'font-size:$1px;');
+    texts.push({x:m[1],y:m[2],anchor:m[3],family:m[4],size:m[5],weight:fw,fill,ls,fs,html:inner});
+  }
+  const html=`<div style="position:relative;width:1100px;height:780px;background:#fff">
+    <div style="position:absolute;inset:0">${svgNoText}</div>
+    ${texts.map(t=>{
+      const left=t.anchor==='middle'?'left:'+t.x+'px;transform:translateX(-50%)':t.anchor==='end'?'right:'+(1100-parseFloat(t.x))+'px':'left:'+t.x+'px';
+      return`<div style="position:absolute;top:${parseFloat(t.y)-parseFloat(t.size)*0.85}px;${left};font-family:${t.family};font-size:${t.size}px;font-weight:${t.weight};color:${t.fill};letter-spacing:${t.ls}px;font-style:${t.fs};white-space:nowrap">${t.html}</div>`;
+    }).join('')}
+  </div>`;
+  wrap.innerHTML=html;
   document.body.appendChild(wrap);
-  await new Promise(r=>setTimeout(r,200));
+  await new Promise(r=>setTimeout(r,500));
   const canvas=await html2canvas(wrap,{scale:2,useCORS:true,backgroundColor:'#ffffff',width:1100,height:780});
   document.body.removeChild(wrap);
   const imgData=canvas.toDataURL('image/jpeg',0.95);
