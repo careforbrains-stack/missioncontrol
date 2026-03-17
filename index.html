@@ -176,6 +176,22 @@ button:disabled{opacity:.4;cursor:not-allowed}
 @keyframes successPop{0%{transform:scale(0);opacity:0}50%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
 @keyframes successCheck{0%{stroke-dashoffset:24}100%{stroke-dashoffset:0}}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* SURVEILLANCE CENTER */
+@keyframes scanLine{0%{top:-2px}100%{top:100%}}
+@keyframes matrixRain{0%{transform:translateY(-100%);opacity:1}90%{opacity:1}100%{transform:translateY(100vh);opacity:0}}
+@keyframes flicker{0%,100%{opacity:1}50%{opacity:.85}}
+@keyframes glitch{0%,100%{transform:translateX(0)}20%{transform:translateX(-2px)}40%{transform:translateX(2px)}60%{transform:translateX(-1px)}80%{transform:translateX(1px)}}
+@keyframes radarSweep{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes pulseRing{0%{transform:scale(.8);opacity:.6}50%{transform:scale(1.2);opacity:0}100%{transform:scale(.8);opacity:.6}}
+@keyframes typewriter{from{width:0}to{width:100%}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes slideData{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
+@keyframes hexPulse{0%,100%{opacity:.02}50%{opacity:.06}}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,255,65,.15),transparent);animation:scanLine 4s linear infinite;pointer-events:none;z-index:1}
+.matrix-col{position:absolute;top:0;font-family:monospace;font-size:10px;color:rgba(0,255,65,.12);line-height:1;animation:matrixRain 8s linear infinite;pointer-events:none;white-space:pre}
+.surv-title{animation:flicker 3s ease-in-out infinite}
+.threat-flash{animation:glitch .3s ease-in-out}
 .send-success{animation:successPop .5s var(--ease-spring) both}
 </style>
 </head>
@@ -1751,127 +1767,179 @@ function Logs({hubData,team,db}){
   </div>;
   const S={bg:'#0A0E14',card:'#0D1117',border:'#1B2838',green:'#00FF41',dim:'#3A5068',text:'#8BA4B8'};
 
-  return(<div style={{margin:"-28px -36px -40px",padding:"28px 36px 40px",minHeight:"calc(100vh - 60px)",background:S.bg,color:S.green,fontFamily:"'Courier New',monospace"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+  const matrixChars='01アイウエオカキクケコCFB';
+  const matrixCols=Array.from({length:20},(_,i)=>({left:i*5+'%',delay:Math.random()*8,speed:6+Math.random()*6,chars:Array.from({length:20},()=>matrixChars[Math.floor(Math.random()*matrixChars.length)]).join('\n')}));
+
+  return(<div style={{margin:"-28px -36px -40px",padding:"0",minHeight:"calc(100vh - 60px)",background:"#0A0E14",color:"#00FF41",fontFamily:"'Courier New',monospace",position:"relative",overflow:"hidden"}}>
+    
+    {/* Scan line */}
+    <div className="scan-line"/>
+    
+    {/* Matrix rain background */}
+    {matrixCols.map((col,i)=><div key={i} className="matrix-col" style={{left:col.left,animationDuration:col.speed+'s',animationDelay:col.delay+'s'}}>{col.chars}</div>)}
+    
+    {/* Hex grid overlay */}
+    <div style={{position:"absolute",inset:0,backgroundImage:"radial-gradient(circle,rgba(0,255,65,.02) 1px,transparent 1px)",backgroundSize:"20px 20px",animation:"hexPulse 4s ease-in-out infinite",pointerEvents:"none",zIndex:0}}/>
+    
+    {/* Content */}
+    <div style={{position:"relative",zIndex:2,padding:"28px 36px 40px"}}>
+    
+    {/* Top bar with radar and stats */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:20,marginBottom:20,alignItems:"center"}}>
       <div>
-        <div style={{fontSize:9,fontWeight:700,letterSpacing:"0.3em",color:S.dim}}>CLASSIFIED // TANMAY EYES ONLY</div>
-        <div style={{fontSize:28,fontWeight:700,letterSpacing:"0.05em",color:S.green,textShadow:"0 0 20px rgba(0,255,65,.3)"}}>SURVEILLANCE CENTER</div>
-        <div style={{fontSize:10,color:S.dim}}>{logs.length} total records // {new Date().toISOString()}</div>
+        <div style={{fontSize:9,fontWeight:700,letterSpacing:"0.3em",color:"#3A5068",marginBottom:4}}>CLASSIFIED // CFB-SEC // TANMAY CLEARANCE ONLY</div>
+        <div className="surv-title" style={{fontSize:32,fontWeight:900,letterSpacing:"0.08em",color:"#00FF41",textShadow:"0 0 30px rgba(0,255,65,.4),0 0 60px rgba(0,255,65,.1)"}}>SURVEILLANCE</div>
+        <div style={{fontSize:11,color:"#00FF41",opacity:.5,letterSpacing:"0.2em"}}>CAREFORBRAINS SECURITY OPERATIONS</div>
       </div>
-      <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        <div style={{width:8,height:8,borderRadius:4,background:"#00FF41",boxShadow:"0 0 8px #00FF41",animation:"pulseDot 2s ease-in-out infinite"}}/>
-        <span style={{fontSize:10,color:S.green}}>LIVE</span>
-        <button onClick={clearAll} style={{padding:"4px 10px",borderRadius:4,border:"1px solid #FF4444",background:"transparent",cursor:"pointer",fontFamily:"inherit",fontSize:9,fontWeight:700,color:"#FF4444",letterSpacing:"0.1em"}}>PURGE ALL</button>
+      
+      {/* Radar */}
+      <div style={{width:80,height:80,position:"relative"}}>
+        <div style={{position:"absolute",inset:0,borderRadius:"50%",border:"1px solid rgba(0,255,65,.15)"}}/>
+        <div style={{position:"absolute",inset:10,borderRadius:"50%",border:"1px solid rgba(0,255,65,.1)"}}/>
+        <div style={{position:"absolute",inset:20,borderRadius:"50%",border:"1px solid rgba(0,255,65,.05)"}}/>
+        <div style={{position:"absolute",top:"50%",left:"50%",width:40,height:2,transformOrigin:"0 50%",background:"linear-gradient(90deg,rgba(0,255,65,.6),transparent)",animation:"radarSweep 3s linear infinite"}}/>
+        <div style={{position:"absolute",top:"50%",left:"50%",width:4,height:4,marginTop:-2,marginLeft:-2,borderRadius:"50%",background:"#00FF41",boxShadow:"0 0 6px #00FF41"}}/>
+      </div>
+      
+      <div style={{textAlign:"right"}}>
+        <div style={{display:"flex",gap:6,justifyContent:"flex-end",alignItems:"center",marginBottom:6}}>
+          <div style={{width:8,height:8,borderRadius:4,background:"#00FF41",boxShadow:"0 0 12px #00FF41,0 0 24px rgba(0,255,65,.3)",animation:"pulseDot 1.5s ease-in-out infinite"}}/>
+          <span style={{fontSize:11,fontWeight:700,color:"#00FF41",letterSpacing:"0.2em"}}>MONITORING ACTIVE</span>
+        </div>
+        <div style={{fontSize:9,color:"#3A5068"}}>{logs.length} TOTAL INTERCEPTS // {new Date().toISOString().replace('T',' ').slice(0,19)}Z</div>
+        <div style={{fontSize:9,color:"#3A5068"}}>{logs.filter(l=>l.type==='login').length} LOGINS // {logs.filter(l=>l.isProxy==='Yes').length} PROXY DETECTED</div>
+      </div>
+    </div>
+    
+    {/* Scrolling data ticker */}
+    <div style={{overflow:"hidden",borderTop:"1px solid #1B2838",borderBottom:"1px solid #1B2838",padding:"4px 0",marginBottom:16}}>
+      <div style={{display:"flex",animation:"slideData 30s linear infinite",whiteSpace:"nowrap"}}>
+        {logs.slice(0,20).map((l,i)=><span key={i} style={{fontSize:8,color:"#3A5068",marginRight:30}}>
+          [{fmtTime(l.time)}] {typeLabel[l.type]} :: {getName(l.user)} :: {l.ip||''} :: {l.city||''}{l.isp?' // '+l.isp:''}
+        </span>)}
       </div>
     </div>
 
-    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>
-      {Object.keys(typeLabel).map(k=>{const n=logs.filter(l=>l.type===k).length;return<button key={k} onClick={()=>setFilter(filter===k?'all':k)} style={{
-        padding:"4px 10px",border:"1px solid "+(filter===k?typeColor[k]:S.border),borderRadius:4,
+    {/* Filter bar */}
+    <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:10}}>
+      <button onClick={()=>setFilter('all')} style={{padding:"4px 10px",border:"1px solid "+(filter==='all'?"#00FF41":"#1B2838"),borderRadius:3,background:filter==='all'?"rgba(0,255,65,.08)":"transparent",cursor:"pointer",fontFamily:"inherit",fontSize:9,fontWeight:700,color:filter==='all'?"#00FF41":"#3A5068",letterSpacing:"0.1em"}}>ALL {logs.length}</button>
+      {Object.keys(typeLabel).map(k=>{const n=logs.filter(l=>l.type===k).length;if(!n)return null;return<button key={k} onClick={()=>setFilter(filter===k?'all':k)} style={{
+        padding:"4px 10px",border:"1px solid "+(filter===k?typeColor[k]:"#1B2838"),borderRadius:3,
         background:filter===k?typeColor[k]+"18":"transparent",cursor:"pointer",fontFamily:"inherit",
-        fontSize:9,fontWeight:700,color:filter===k?typeColor[k]:S.dim,letterSpacing:"0.1em"
-      }}>{typeLabel[k]} <span style={{opacity:.5}}>{n}</span></button>})}
+        fontSize:9,fontWeight:700,color:filter===k?typeColor[k]:"#3A5068",letterSpacing:"0.1em"
+      }}>{typeLabel[k]} {n}</button>})}
+      <div style={{flex:1}}/>
+      <button onClick={clearAll} style={{padding:"4px 10px",borderRadius:3,border:"1px solid #FF4444",background:"transparent",cursor:"pointer",fontFamily:"inherit",fontSize:9,fontWeight:700,color:"#FF4444",letterSpacing:"0.15em"}}>&#9760; PURGE</button>
     </div>
 
-    <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="SEARCH RECORDS..." style={{
-      width:"100%",padding:"8px 12px",background:S.card,border:"1px solid "+S.border,borderRadius:4,
-      fontFamily:"inherit",fontSize:11,color:S.green,outline:"none",marginBottom:12,
-      boxShadow:search?"0 0 10px rgba(0,255,65,.1)":"none"
-    }}/>
+    {/* Search */}
+    <div style={{position:"relative",marginBottom:12}}>
+      <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",fontSize:11,color:"#3A5068"}}>&#9655;</span>
+      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="SEARCH INTERCEPTS..." style={{
+        width:"100%",padding:"8px 12px 8px 26px",background:"#0D1117",border:"1px solid #1B2838",borderRadius:3,
+        fontFamily:"inherit",fontSize:11,color:"#00FF41",outline:"none",letterSpacing:"0.05em",
+        boxShadow:search?"0 0 15px rgba(0,255,65,.08),inset 0 0 15px rgba(0,255,65,.03)":"none"
+      }}/>
+    </div>
 
-    <div style={{border:"1px solid "+S.border,borderRadius:6,overflow:"hidden"}}>
-      <div style={{overflowY:"auto",maxHeight:"68vh"}}>
-        {filtered.length===0?<div style={{padding:40,textAlign:"center",color:S.dim,fontSize:12}}>NO RECORDS FOUND</div>:
+    {/* Log entries */}
+    <div style={{border:"1px solid #1B2838",borderRadius:4,overflow:"hidden",background:"rgba(13,17,23,.8)"}}>
+      <div style={{overflowY:"auto",maxHeight:"60vh"}}>
+        {filtered.length===0?<div style={{padding:40,textAlign:"center",color:"#3A5068",fontSize:11,letterSpacing:"0.15em"}}>NO INTERCEPTS MATCHING QUERY</div>:
         filtered.slice(0,300).map(l=><div key={l._fbKey}>
           <div onClick={()=>setExpanded(expanded===l._fbKey?null:l._fbKey)} style={{
-            display:"flex",alignItems:"center",gap:8,padding:"6px 12px",cursor:"pointer",
-            borderBottom:"1px solid "+S.border,background:expanded===l._fbKey?"rgba(0,255,65,0.03)":"transparent",
-            transition:"background .15s"
+            display:"flex",alignItems:"center",gap:8,padding:"5px 12px",cursor:"pointer",
+            borderBottom:"1px solid #1B2838",background:expanded===l._fbKey?"rgba(0,255,65,0.04)":"transparent"
           }}>
-            <span style={{width:6,height:6,borderRadius:3,background:typeColor[l.type]||S.dim,boxShadow:"0 0 6px "+(typeColor[l.type]||S.dim),flexShrink:0}}/>
-            <span style={{fontSize:10,color:S.dim,fontFamily:"monospace",width:110,flexShrink:0}}>{fmtTime(l.time)}</span>
-            <span style={{fontSize:9,padding:"1px 6px",borderRadius:3,border:"1px solid "+(typeColor[l.type]||S.dim),color:typeColor[l.type]||S.dim,fontWeight:700,letterSpacing:"0.1em",flexShrink:0}}>{typeLabel[l.type]||l.type}</span>
-            <span style={{fontSize:10,color:"#FFD700",fontWeight:600,width:60,flexShrink:0}}>{getName(l.user)}</span>
-            <span style={{fontSize:10,color:S.text,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-              {l.type==='login'&&(l.city?l.city+', '+l.region+' // '+l.isp:'IP: '+l.ip)}
-              {l.type==='logout'&&'Session terminated'}
-              {l.type==='sheet_edit'&&(l.sheet+' ['+l.cell+']')}
-              {l.type==='task_assign'&&('"'+l.task+'" > '+getName(l.assignee))}
+            <span style={{width:5,height:5,borderRadius:3,background:typeColor[l.type]||"#3A5068",boxShadow:"0 0 6px "+(typeColor[l.type]||"#3A5068"),flexShrink:0}}/>
+            <span style={{fontSize:9,color:"#3A5068",fontFamily:"monospace",width:100,flexShrink:0}}>{fmtTime(l.time)}</span>
+            <span style={{fontSize:8,padding:"1px 5px",borderRadius:2,border:"1px solid "+(typeColor[l.type]||"#3A5068"),color:typeColor[l.type]||"#3A5068",fontWeight:700,letterSpacing:"0.1em",flexShrink:0}}>{typeLabel[l.type]||l.type}</span>
+            <span style={{fontSize:10,color:"#FFD700",fontWeight:600,width:55,flexShrink:0}}>{getName(l.user)}</span>
+            <span style={{fontSize:9,color:"#8BA4B8",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+              {l.type==='login'&&<span>{l.city?<span><span style={{color:"#00D4FF"}}>{l.city}, {l.region}</span> // {l.isp}{l.isProxy==='Yes'&&<span style={{color:"#FF4444",fontWeight:700}}> [PROXY]</span>}{l.isHosting==='Yes'&&<span style={{color:"#FF4444",fontWeight:700}}> [DATACENTER]</span>}</span>:'IP: '+l.ip}</span>}
+              {l.type==='logout'&&<span style={{color:"#FF6B35"}}>SESSION TERMINATED</span>}
+              {l.type==='sheet_edit'&&<span>{l.sheet} <span style={{color:"#3A5068"}}>[{l.cell}]</span></span>}
+              {l.type==='task_assign'&&<span>"{l.task}" <span style={{color:"#3A5068"}}>&gt;</span> {getName(l.assignee)}</span>}
               {l.type==='email_sent'&&(l.subject||'').slice(0,40)}
-              {l.type==='message_sent'&&('> '+l.toName+': '+l.message)}
-              {l.type==='page_view'&&(l.from+' > '+l.page)}
-              {l.type==='tab_away'&&'LEFT MISSION CONTROL'}
-              {l.type==='tab_return'&&'RETURNED TO MISSION CONTROL'}
+              {l.type==='message_sent'&&<span>&gt; {l.toName}: {l.message}</span>}
+              {l.type==='page_view'&&<span>{l.from} <span style={{color:"#3A5068"}}>&gt;</span> <span style={{color:"#7B68EE"}}>{l.page}</span></span>}
+              {l.type==='tab_away'&&<span style={{color:"#FF4444"}}>&#9888; LEFT MISSION CONTROL</span>}
+              {l.type==='tab_return'&&<span style={{color:"#44FF44"}}>&#10003; RETURNED</span>}
             </span>
-            <span style={{fontSize:9,color:S.dim,flexShrink:0}}>{ago(l.ts)}</span>
-            <span style={{fontSize:9,color:S.dim,transform:expanded===l._fbKey?"rotate(180deg)":"",transition:"transform .2s"}}>&#9660;</span>
+            <span style={{fontSize:8,color:"#3A5068",flexShrink:0}}>{ago(l.ts)}</span>
           </div>
-          {expanded===l._fbKey&&<div style={{padding:"12px",background:"rgba(0,255,65,0.02)",borderBottom:"2px solid "+typeColor[l.type]+"44"}}>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4,marginBottom:8}}>
+          {expanded===l._fbKey&&<div style={{padding:"10px 12px",background:"rgba(0,255,65,0.02)",borderBottom:"2px solid "+(typeColor[l.type]||"#1B2838")+"66"}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:3}}>
               {mkCell('TIMESTAMP',new Date(l.time).toISOString())}
-              {mkCell('IP',l.ip,'#FF6B35')}
+              {mkCell('IPv4',l.ip,'#FF6B35')}
               {mkCell('CITY',l.city)}
               {mkCell('REGION',l.region)}
               {mkCell('COUNTRY',l.country)}
               {mkCell('ZIP',l.zip)}
-              {mkCell('LAT/LON',(l.lat&&l.lon)?l.lat+', '+l.lon:l.lat||'')}
+              {mkCell('COORDINATES',(l.lat&&l.lon)?l.lat+', '+l.lon:'')}
               {mkCell('ISP',l.isp,'#00D4FF')}
               {mkCell('ORG',l.org)}
               {mkCell('ASN',l.asn)}
-              {mkCell('MOBILE NETWORK',l.isMobile)}
+              {mkCell('MOBILE NET',l.isMobile)}
               {mkCell('PROXY/VPN',l.isProxy,'#FF4444')}
-              {mkCell('HOSTING/DC',l.isHosting)}
+              {mkCell('HOSTING/DC',l.isHosting,'#FF4444')}
               {mkCell('DEVICE',l.device)}
               {mkCell('BROWSER',l.browser)}
               {mkCell('OS',l.os)}
               {mkCell('SCREEN',l.screen)}
               {mkCell('WINDOW',l.window)}
-              {mkCell('PIXEL RATIO',l.pixelRatio)}
-              {mkCell('COLOR DEPTH',l.colorDepth)}
-              {mkCell('CANVAS FP',l.canvasFP,'#DA70D6')}
+              {mkCell('DPR',l.pixelRatio)}
+              {mkCell('COLOR',l.colorDepth)}
+              {mkCell('CANVAS HASH',l.canvasFP,'#DA70D6')}
               {mkCell('GPU',l.gpu)}
               {mkCell('GPU VENDOR',l.gpuVendor)}
-              {mkCell('CPU CORES',l.cpuCores)}
+              {mkCell('CPU',l.cpuCores)}
               {mkCell('RAM',l.ram)}
               {mkCell('TOUCH',l.touch)}
               {mkCell('PLATFORM',l.platform)}
               {mkCell('DARK MODE',l.darkMode)}
-              {mkCell('NETWORK',l.network)}
-              {mkCell('DOWNLINK',l.downlink)}
+              {mkCell('NET TYPE',l.network)}
+              {mkCell('BANDWIDTH',l.downlink)}
               {mkCell('BATTERY',l.battery)}
               {mkCell('FONTS',l.fontsDetected)}
               {mkCell('PLUGINS',l.plugins)}
               {mkCell('COOKIES',l.cookiesEnabled)}
-              {mkCell('DO NOT TRACK',l.doNotTrack)}
-              {mkCell('AD BLOCKER',l.adBlock,'#FFD700')}
+              {mkCell('DNT',l.doNotTrack)}
+              {mkCell('AD BLOCK',l.adBlock,'#FFD700')}
               {mkCell('REFERRER',l.referrer)}
-              {mkCell('SESSION START',l.sessionStart)}
-              {mkCell('TIMEZONE',l.tz)}
-              {mkCell('LANGUAGES',l.languages||l.lang)}
-              {mkCell('USER AGENT',l.ua)}
+              {mkCell('SESSION',l.sessionStart)}
+              {mkCell('TZ',l.tz)}
+              {mkCell('LANGS',l.languages||l.lang)}
             </div>
-            {l.type==='login'&&l.lat&&l.lon&&<div style={{marginTop:6,padding:6,background:"rgba(0,255,65,0.03)",border:"1px solid rgba(0,255,65,0.1)",borderRadius:4}}>
-              <div style={{fontSize:8,fontWeight:700,letterSpacing:"0.15em",color:S.green,opacity:.6,marginBottom:4}}>APPROXIMATE LOCATION</div>
-              <a href={"https://www.google.com/maps?q="+l.lat+","+l.lon} target="_blank" rel="noreferrer" style={{fontSize:10,color:"#00D4FF"}}>Open in Google Maps: {l.lat}, {l.lon}</a>
+            {l.type==='login'&&l.lat&&l.lon&&<div style={{marginTop:6,padding:"4px 8px",background:"rgba(0,255,65,0.03)",border:"1px solid rgba(0,255,65,0.1)",borderRadius:3,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontSize:8,color:"#00FF41",letterSpacing:"0.15em"}}>GEO TARGET: {l.lat}, {l.lon}</span>
+              <a href={"https://www.google.com/maps?q="+l.lat+","+l.lon} target="_blank" rel="noreferrer" style={{fontSize:8,color:"#00D4FF",letterSpacing:"0.1em"}}>OPEN MAP &#8599;</a>
             </div>}
-            {l.type==='sheet_edit'&&<div style={{marginTop:6,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4}}>
-              {mkCell('SHEET',l.sheet)}{mkCell('CELL',l.cell)}{mkCell('OLD > NEW',(l.oldValue||'empty')+' > '+(l.newValue||'empty'))}
+            {l.type==='sheet_edit'&&<div style={{marginTop:4,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:3}}>
+              {mkCell('SHEET',l.sheet)}{mkCell('CELL',l.cell)}{mkCell('DELTA',(l.oldValue||'null')+' > '+(l.newValue||'null'))}
             </div>}
-            {l.type==='email_sent'&&<div style={{marginTop:6,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4}}>
-              {mkCell('TEMPLATE',l.template)}{mkCell('TO',l.to)}{mkCell('SUBJECT',l.subject)}
+            {l.type==='email_sent'&&<div style={{marginTop:4,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:3}}>
+              {mkCell('TEMPLATE',l.template)}{mkCell('TARGET',l.to)}{mkCell('SUBJECT',l.subject)}
             </div>}
-            {l.type==='task_assign'&&<div style={{marginTop:6,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4}}>
-              {mkCell('TASK',l.task)}{mkCell('ASSIGNEE',getName(l.assignee))}{mkCell('PRIORITY',l.priority)}
+            {l.type==='task_assign'&&<div style={{marginTop:4,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:3}}>
+              {mkCell('MISSION',l.task)}{mkCell('OPERATOR',getName(l.assignee))}{mkCell('THREAT LEVEL',l.priority)}
             </div>}
-            <div style={{marginTop:8,textAlign:"right"}}><button onClick={e=>{e.stopPropagation();if(confirm('DELETE RECORD?')){deleteLog(l._fbKey);setExpanded(null)}}} style={{padding:"3px 10px",borderRadius:3,border:"1px solid #FF4444",background:"transparent",cursor:"pointer",fontFamily:"inherit",fontSize:9,fontWeight:700,color:"#FF4444",letterSpacing:"0.1em"}}>DELETE</button></div>
+            <div style={{marginTop:6,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontSize:8,color:"#1B2838"}}>REC-{l._fbKey?.slice(-8)}</span>
+              <button onClick={e=>{e.stopPropagation();if(confirm('DESTROY RECORD?')){deleteLog(l._fbKey);setExpanded(null)}}} style={{padding:"2px 8px",borderRadius:2,border:"1px solid #FF4444",background:"transparent",cursor:"pointer",fontFamily:"inherit",fontSize:8,fontWeight:700,color:"#FF4444",letterSpacing:"0.15em"}}>&#9760; DESTROY</button>
+            </div>
           </div>}
         </div>)}
       </div>
     </div>
-    <div style={{marginTop:8,fontSize:9,color:S.dim,textAlign:"center"}}>CAREFORBRAINS SURVEILLANCE SYSTEM v2.0 // AUTHORIZED PERSONNEL ONLY // {filtered.length} RECORDS DISPLAYED</div>
+    <div style={{marginTop:10,display:"flex",justifyContent:"space-between",fontSize:8,color:"#1B2838",letterSpacing:"0.15em"}}>
+      <span>CFB-SEC SURVEILLANCE v3.0</span>
+      <span>AUTHORIZED: TANMAY VASUDEVA</span>
+      <span>{filtered.length} RECORDS</span>
+    </div>
+    </div>
   </div>);
 }
-
 // === SETTINGS ===
 function Settings({db,passwords,team,hubData}){
   const[pu,setPu]=useState('tanmay');const[np,setNp]=useState('');
