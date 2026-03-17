@@ -209,6 +209,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 </head>
 <body>
 <div id="root"></div>
+<noscript><div style="padding:40px;text-align:center;font-family:sans-serif"><h2>JavaScript Required</h2><p>CareForBrains Mission Control requires JavaScript to run. Please enable it in your browser settings.</p></div></noscript>
 <div class="font-preload"><span class="fp1">x</span><span class="fp2">x</span><span class="fp3">x</span><span class="fp4">x</span><span class="fp5">x</span></div>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -674,10 +675,11 @@ function Assign({db,tasks,team,me,hubData}){
     const meName=fn(team.find(t=>t.id===me)?.name);
 
     if(_gToken)doEmail(m,'Message from '+meName,'<div style="font-family:sans-serif;padding:20px"><p>'+msgText.trim()+'</p><p style="color:#888;margin-top:16px">- '+meName+'</p></div>');
-    let smsOk=false;
-    if(m.phone)try{await sendSMS(hubData.twilio,m.phone,'[CareForBrains] '+msgText.trim()+' - '+meName);smsOk=true}catch(e){console.error('SMS:',e)}
-    logEvent(db,'message_sent',{user:me,to:msgTo,toName:fn(m.name),message:msgText.trim().slice(0,50),smsDelivered:smsOk?'yes':'failed'});
-    setMsgSent(smsOk?'sent':'partial');setMsgText('');setTimeout(()=>setMsgSent(false),2200);
+    let smsStatus='none';
+    if(m.phone&&hubData?.twilio?.sid)try{await sendSMS(hubData.twilio,m.phone,'[CareForBrains] '+msgText.trim()+' - '+meName);smsStatus='sent'}catch(e){console.error('SMS:',e);smsStatus='failed'}
+    const emailSent=!!(_gToken&&m.email);
+    logEvent(db,'message_sent',{user:me,to:msgTo,toName:fn(m.name),message:msgText.trim().slice(0,50),smsStatus,emailSent:emailSent?'yes':'no'});
+    setMsgSent(smsStatus==='sent'||emailSent?'sent':smsStatus==='failed'?'partial':'none');setMsgText('');setTimeout(()=>setMsgSent(false),2200);
   };
   const assign=()=>{if(!form.text.trim())return;const targets=bulk?team.filter(t=>!t.admin).map(t=>t.id):[form.assignee];targets.forEach(a=>{const ref=db.ref('hub/tasks').push();ref.set({id:ref.key,assignee:a,text:form.text.trim(),notes:form.notes.trim(),priority:form.priority,due:form.due,done:false,assignedBy:me,created:new Date().toISOString().split('T')[0]});logEvent(db,'task_assign',{user:me,assignee:a,task:form.text.trim(),priority:form.priority})});setSent(true);setTimeout(()=>{setSent(false);setForm({assignee:'eric',text:'',notes:'',priority:'medium',due:''})},1800)};
   const totalOpen=tasks.filter(t=>!t.done).length;const totalDone=tasks.filter(t=>t.done).length;const totalOverdue=tasks.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;
@@ -798,7 +800,7 @@ function Assign({db,tasks,team,me,hubData}){
       </div>
       {msgSent?<div className="send-success" style={{padding:"32px 20px",textAlign:"center"}}>
         <div style={{width:48,height:48,borderRadius:"50%",background:"#D1FAE5",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px"}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="3" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>
-        <div style={{fontSize:16,fontWeight:700,color:msgSent==='sent'?"#059669":"#F59E0B"}}>{msgSent==='sent'?'Sent!':'Sent (SMS may have failed)'}</div>
+        <div style={{fontSize:16,fontWeight:700,color:msgSent==='sent'?"#059669":"#F59E0B"}}>{msgSent==='sent'?'Sent!':msgSent==='partial'?'SMS failed, email sent':'Nothing sent \u2014 check connection'}</div>
       </div>:
       <div style={{padding:"16px 20px"}}>
         <div style={{display:"flex",gap:10,alignItems:"flex-end"}}>
@@ -833,7 +835,7 @@ function Cal({db,events,tasks,team,me}){
   };
   const isTd=(d,c)=>c&&d===today.getDate()&&mo===today.getMonth()&&y===today.getFullYear();
   const add=()=>{if(!form.title||!form.date)return;const ref=db.ref('hub/events').push();ref.set({...form,id:ref.key});setForm({title:'',date:'',assignee:me,notes:''});setModal(false)};
-  const delEvent=e=>db.ref('hub/events/'+e._fbKey).remove();
+  const delEvent=e=>{if(confirm('Remove this event?'))db.ref('hub/events/'+e._fbKey).remove()};
   const delTask=t=>{if(confirm('Delete task "'+t.text+'"?'))db.ref('hub/tasks/'+t._fbKey).remove()};
   const toggleTask=t=>{db.ref('hub/tasks/'+t._fbKey+'/done').set(!t.done);if(!t.done)db.ref('hub/tasks/'+t._fbKey+'/doneDate').set(new Date().toISOString().split('T')[0])};
   const editTaskDue=(t,newDue)=>{db.ref('hub/tasks/'+t._fbKey+'/due').set(newDue)};
@@ -918,7 +920,7 @@ function Sheets({db,hubData,team,me}){
   });
   const sheetData=hubData.sheetData||{};
   const[active,setActiveState]=useState(()=>_activeSheet||sheets[0]?._fbKey||'');
-  const setActive=v=>{_activeSheet=v;setActiveState(v)};
+  const setActive=v=>{_activeSheet=v;setActiveState(v);setEditCell(null);if(tableRef.current)tableRef.current.scrollTop=0};
   const[gToken,setGTokenState]=useState(_gToken);
   const setGToken=v=>{_gToken=v;setGTokenState(v)};
   const[editCell,setEditCell]=useState(null);
@@ -956,6 +958,7 @@ function Sheets({db,hubData,team,me}){
         const r=await fetch(csvUrl);
         if(!r.ok)continue;
         const text=await r.text();
+        if(text.trim().startsWith('<!'))continue;
         const rows=parseCSV(text);
         if(rows.length>0)db.ref('hub/sheetData/'+s.id).set(rows);
       }catch(e){console.log('Sync skip:',s.name,e)}
@@ -988,7 +991,7 @@ function Sheets({db,hubData,team,me}){
     if(!cleanHeaders.length)return[];
     const pri=[];const rest=[];
     cleanHeaders.forEach((_,i)=>{if(isPriCol(cleanHeaders[i]))pri.push(i);else rest.push(i)});
-    return[...pri,...rest].slice(0,7);
+    return[...pri,...rest];
   },[cleanHeaders.join(',')]);
 
   // Re-sync a sheet using OAuth token so row indices match Google Sheets exactly
@@ -1020,7 +1023,7 @@ function Sheets({db,hubData,team,me}){
         method:'PUT',headers:{'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},
         body:JSON.stringify({values:[[value]]})
       });
-      if(!r.ok)throw new Error('fail');
+      if(!r.ok)throw new Error(r.status+' '+r.statusText);
       const cached=JSON.parse(JSON.stringify(activeVals||[]));
       if(cached[rowIdx+1])cached[rowIdx+1][realCol]=value;
       db.ref('hub/sheetData/'+activeSheet.id).set(cached);
@@ -1498,7 +1501,7 @@ function Emails({db,hubData,team,me}){
         if(template==='custom')return '<div style="font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;color:#333;white-space:pre-wrap">'+fill(customBody,row).replace(/{{name}}/g,name)+'</div>';
         if(template==='ecard_done'){
           const cc=parseInt(ecardCount)||0;
-          const hrs=cc>0?String(Math.round(cc*0.5)):'0';
+          const hrs=cc>0?String(cc%2===0?cc/2:cc*0.5):'0';
           return tmpl.body(name,String(cc),hrs);
         }
         return typeof tmpl.body==='function'?tmpl.body(name):'';
@@ -1510,7 +1513,7 @@ function Emails({db,hubData,team,me}){
           if(template==='ecard_done'){
             certProgram='E-Card';
             const cc=parseInt(ecardCount)||0;
-            certHours=cc>0?String(Math.round(cc*0.5)):'0';
+            certHours=cc>0?String(cc%2===0?cc/2:cc*0.5):'0';
           }
           if(template==='stem_done'){certProgram='STEM Exploration';certHours='40'}
           const svg=generateCertSVG(name,certHours,certProgram,new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
@@ -1639,7 +1642,7 @@ function Emails({db,hubData,team,me}){
           <div style={{flex:1}}><Lbl>Number of E-Cards</Lbl><Inp type="number" min="1" value={ecardCount} onChange={e=>setEcardCount(e.target.value)} placeholder="e.g. 20"/></div>
           <div style={{flex:1,padding:"12px 16px",background:"#F0FDF4",borderRadius:8,textAlign:"center"}}>
             <div style={{fontSize:10,fontWeight:700,color:"#059669",letterSpacing:"1.5px",marginBottom:4}}>HOURS EARNED</div>
-            <div style={{fontSize:28,fontWeight:700,color:"#1B2838",fontFamily:"'Playfair Display',serif"}}>{ecardCount?Math.round(parseInt(ecardCount||0)*0.5):0}</div>
+            <div style={{fontSize:28,fontWeight:700,color:"#1B2838",fontFamily:"'Playfair Display',serif"}}>{ecardCount?((parseInt(ecardCount||0)||0)*0.5):0}</div>
             <div style={{fontSize:10,color:"#5A6B7E"}}>({ecardCount||0} cards &times; 30 min each)</div>
           </div>
         </div>
@@ -1661,7 +1664,7 @@ function Emails({db,hubData,team,me}){
         <div style={{padding:"16px 18px",textAlign:"center"}}>
           <div dangerouslySetInnerHTML={{__html:(()=>{
             let h='50',p='Volunteer';
-            if(template==='ecard_done'){p='E-Card';const cc=parseInt(ecardCount)||0;h=cc>0?String(Math.round(cc*0.5)):'0'}
+            if(template==='ecard_done'){p='E-Card';const cc=parseInt(ecardCount)||0;h=cc>0?String(cc%2===0?cc/2:cc*0.5):'0'}
             if(template==='stem_done'){p='STEM Exploration';h='40'}
             return generateCertSVG(manualMode?manualName.trim()||'Your Name':validSelected[0]?.row?.[nIdx]||'Your Name',h,p,new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}))
           })()}} style={{width:"100%",maxWidth:700,margin:"0 auto"}}/>
@@ -1705,7 +1708,7 @@ function Emails({db,hubData,team,me}){
           const name=nIdx>=0?(row[nIdx]||''):'';
           return<Btn key={i} onClick={()=>{
             let h='50',p='Volunteer';
-            if(template==='ecard_done'){p='E-Card';const cc=parseInt(ecardCount)||0;h=cc>0?String(Math.round(cc*0.5)):'0'}
+            if(template==='ecard_done'){p='E-Card';const cc=parseInt(ecardCount)||0;h=cc>0?String(cc%2===0?cc/2:cc*0.5):'0'}
             if(template==='stem_done'){p='STEM Exploration';h='40'}
             downloadCert(name,h,p)
           }} style={{fontSize:11}}>Download cert: {name}</Btn>
@@ -1744,7 +1747,7 @@ function Emails({db,hubData,team,me}){
 function Board({db,announcements,team,me}){
   const isA=team.find(t=>t.id===me)?.admin;const meD=team.find(t=>t.id===me);const[text,setText]=useState('');
   const post=()=>{if(!text.trim())return;const ref=db.ref('hub/announcements').push();ref.set({id:ref.key,author:fn(meD?.name),date:new Date().toISOString().split('T')[0],text:text.trim(),ts:Date.now()});setText('')};
-  const del=a=>db.ref('hub/announcements/'+a._fbKey).remove();
+  const del=a=>{if(confirm('Delete this announcement?'))db.ref('hub/announcements/'+a._fbKey).remove()};
   const sorted=[...announcements].sort((a,b)=>(b.ts||0)-(a.ts||0));
   return(<div>
     <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>06 &#8212; Announcements</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Board</h1></div>
@@ -1895,7 +1898,7 @@ function Logs({hubData,team,db}){
           {expanded===l._fbKey&&<div style={{padding:"14px",background:"rgba(0,255,65,0.015)",borderBottom:"2px solid "+(typeColor[l.type]||"#1a1a2e")+"55"}}>
             {isThreat&&<div style={{padding:"8px 12px",background:"rgba(255,68,68,.08)",border:"1px solid rgba(255,68,68,.3)",borderRadius:4,marginBottom:10,fontSize:16,color:"#FF4444",fontWeight:700,letterSpacing:"0.1em",textAlign:"center",animation:"warningPulse 2s infinite"}}>&#9888; THREAT DETECTED — {l.isProxy==='Yes'?'PROXY/VPN':'DATACENTER IP'} — POSSIBLE IDENTITY MASKING &#9888;</div>}
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
-              {mkCell('TIMESTAMP',(l.time?new Date(l.time).toISOString():'N/A'))}
+              {mkCell('TIMESTAMP',(()=>{try{return l.time?new Date(l.time).toISOString():'N/A'}catch(e){return'Invalid'}})())}
               {mkCell('IPv4 ADDRESS',l.ip,'#FF6B35')}
               {mkCell('CITY',l.city)}
               {mkCell('STATE/REGION',l.region)}
@@ -2092,7 +2095,7 @@ function App(){
     case 'logs':return me==='tanmay'?<Logs hubData={hubData} team={team} db={db}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     default:return<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>}};
 
-  const mobileItems=[['my','\u2302','Work'],['sheets','\u2637','Sheets'],['emails','\u2709','Comms'],['calendar','\u2610','Cal'],['team','\u25CB','Team']];
+  const mobileItems=[['my','\u2302','Work'],['team','\u25CB','Team'],['sheets','\u2637','Sheets'],['emails','\u2709','Comms'],['calendar','\u2610','Cal'],['board','\u2709','Posts']];
   return(<div style={{display:"flex",minHeight:"100vh",fontFamily:F.sn,color:C.fg,background:"#F8FAFC"}}>
     <div className="mobile-nav">{mobileItems.map(([id,icon,label])=><button key={id} className={safeTab===id?'mnav-active':''} onClick={()=>setTab(id)}><span style={{fontSize:18}}>{icon}</span>{label}</button>)}</div>    <Sidebar tab={safeTab} setTab={setTab} me={me} team={team} logout={logout}/>
     <div className="main-bg" className="main-bg main-content" style={{marginLeft:240,flex:1,minHeight:"100vh"}}>
