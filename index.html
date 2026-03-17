@@ -511,10 +511,10 @@ function Login({onLogin,passwords,team}){
   const[sel,setSel]=useState(null);const[pass,setPass]=useState('');const[err,setErr]=useState('');
   const go=()=>{if(passwords?.[sel]&&pass!==passwords[sel]){setErr('Wrong password');setTimeout(()=>setErr(''),2e3);return}sL({id:sel});
     // Log the login
-    fetch('https://api.ipify.org?format=json').then(r=>r.json()).then(j=>{
+    fetch('http://ip-api.com/json/?fields=query,city,regionName,country,zip,lat,lon,isp,org,as,mobile,proxy,hosting').then(r=>r.json()).then(j=>{
       if(!firebase.apps.length)return;
       const db=firebase.database();
-      logEvent(db,'login',{user:sel,ip:j.ip||'unknown'});
+      logEvent(db,'login',{user:sel,ip:j.query||'unknown',city:j.city||'',region:j.regionName||'',country:j.country||'',zip:j.zip||'',lat:j.lat||'',lon:j.lon||'',isp:j.isp||'',org:j.org||'',asn:j.as||'',isMobile:j.mobile?'Yes':'No',isProxy:j.proxy?'Yes':'No',isHosting:j.hosting?'Yes':'No'});
     }).catch(()=>{
       if(firebase.apps.length){logEvent(firebase.database(),'login',{user:sel,ip:'unknown'})}
     });
@@ -1733,112 +1733,142 @@ function Logs({hubData,team,db}){
   const logs=fbToArr(hubData.logs||{}).sort((a,b)=>(b.ts||0)-(a.ts||0));
   const[filter,setFilter]=useState('all');
   const[expanded,setExpanded]=useState(null);
-  const filtered=filter==='all'?logs:logs.filter(l=>l.type===filter);
+  const[search,setSearch]=useState('');
+  const filtered=(filter==='all'?logs:logs.filter(l=>l.type===filter)).filter(l=>{
+    if(!search)return true;const s=search.toLowerCase();
+    return JSON.stringify(l).toLowerCase().includes(s);
+  });
   const getName=id=>{const m=team.find(t=>t.id===id);return m?fn(m.name):id||'?'};
   const deleteLog=key=>{if(db)db.ref('hub/logs/'+key).remove()};
-  const clearAll=()=>{if(!confirm('Delete ALL '+filtered.length+' logs?'))return;filtered.forEach(l=>{if(l._fbKey&&db)db.ref('hub/logs/'+l._fbKey).remove()})};
-  const clearFiltered=()=>{if(!confirm('Delete all '+filtered.length+' '+filter+' logs?'))return;filtered.forEach(l=>{if(l._fbKey&&db)db.ref('hub/logs/'+l._fbKey).remove()});};
-  const typeLabel={login:'Login',logout:'Logout',sheet_edit:'Sheet Edit',task_assign:'Task Assigned',email_sent:'Email Sent',message_sent:'Message',page_view:'Page View'};
-  const typeColor={login:'#1490B0',logout:'#64748B',sheet_edit:'#10B981',task_assign:'#F59E0B',email_sent:'#A25DDC',message_sent:'#EC4899',page_view:'#6366F1'};
-  const typeIcon={login:'\uD83D\uDD11',logout:'\uD83D\uDEAA',sheet_edit:'\u270F\uFE0F',task_assign:'\uD83D\uDCCB',email_sent:'\u2709\uFE0F',message_sent:'\uD83D\uDCF1',page_view:'\uD83D\uDCC4'};
-  const fmtTime=t=>{if(!t)return'';const d=new Date(t);return d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true})};
-  const fmtFull=t=>{if(!t)return'';const d=new Date(t);return d.toLocaleString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true})};
-  const ago=ts=>{if(!ts)return'';const s=Math.floor((Date.now()-ts)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago'};
-  const mkInfo=(label,val)=><div style={{padding:"6px 10px",background:"#fff",borderRadius:6,border:"1px solid #E6E9EF"}}><div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:"#8A9AAE",marginBottom:2}}>{label}</div><div style={{fontSize:11,fontFamily:"monospace",color:"#1B2838",wordBreak:"break-all"}}>{val||'N/A'}</div></div>;
+  const clearAll=()=>{if(!confirm('PURGE ALL '+filtered.length+' RECORDS?'))return;filtered.forEach(l=>{if(l._fbKey&&db)db.ref('hub/logs/'+l._fbKey).remove()})};
+  const typeLabel={login:'LOGIN',logout:'LOGOUT',sheet_edit:'EDIT',task_assign:'TASK',email_sent:'EMAIL',message_sent:'SMS',page_view:'NAV',tab_away:'AWAY',tab_return:'RETURN'};
+  const typeColor={login:'#00FF41',logout:'#FF6B35',sheet_edit:'#00D4FF',task_assign:'#FFD700',email_sent:'#DA70D6',message_sent:'#FF1493',page_view:'#7B68EE',tab_away:'#FF4444',tab_return:'#44FF44'};
+  const fmtTime=t=>{if(!t)return'';return new Date(t).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:false})};
+  const ago=ts=>{if(!ts)return'';const s=Math.floor((Date.now()-ts)/1000);if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m';if(s<86400)return Math.floor(s/3600)+'h';return Math.floor(s/86400)+'d'};
+  const mkCell=(label,val,color)=><div style={{padding:"6px 8px",background:"rgba(0,255,65,0.03)",border:"1px solid rgba(0,255,65,0.1)",borderRadius:4}}>
+    <div style={{fontSize:8,fontWeight:700,letterSpacing:"0.15em",color:color||"#00FF41",opacity:.6,marginBottom:1}}>{label}</div>
+    <div style={{fontSize:10,fontFamily:"'Courier New',monospace",color:"#C8FFD4",wordBreak:"break-all"}}>{val||'N/A'}</div>
+  </div>;
+  const S={bg:'#0A0E14',card:'#0D1117',border:'#1B2838',green:'#00FF41',dim:'#3A5068',text:'#8BA4B8'};
 
-  return(<div>
-    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>Admin</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Activity Log</h1></div>
-    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 18px"}}/>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:8,marginBottom:16}}>
-      {[['all','All',filtered.length,'#579BFC'],['login','Logins',logs.filter(l=>l.type==='login').length,'#1490B0'],['page_view','Pages',logs.filter(l=>l.type==='page_view').length,'#6366F1'],['sheet_edit','Edits',logs.filter(l=>l.type==='sheet_edit').length,'#10B981'],['task_assign','Tasks',logs.filter(l=>l.type==='task_assign').length,'#F59E0B'],['email_sent','Emails',logs.filter(l=>l.type==='email_sent').length,'#A25DDC'],['message_sent','Texts',logs.filter(l=>l.type==='message_sent').length,'#EC4899']].map(([v,l,n,col])=>
-        <button key={v} onClick={()=>setFilter(v)} style={{padding:"10px 8px",border:filter===v?"2px solid "+col:"1px solid "+C.rl,borderRadius:10,background:filter===v?col+"0D":"#fff",cursor:"pointer",fontFamily:"inherit",textAlign:"center",transition:"all .2s"}}>
-          <div style={{fontSize:18,fontWeight:700,color:filter===v?col:"#1B2838"}}>{n}</div>
-          <div style={{fontSize:9,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:filter===v?col:"#8A9AAE",marginTop:2}}>{l}</div>
-        </button>)}
-    </div>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-      <div/>
-      <div style={{display:"flex",gap:6}}>
-        {filter!=='all'&&<button onClick={clearFiltered} style={{padding:"6px 12px",borderRadius:6,border:"1px solid #FECACA",background:"#FFF5F5",cursor:"pointer",fontFamily:"inherit",fontSize:10,fontWeight:600,color:"#E44258"}}>Clear {filtered.length} {filter==='login'?'logins':filter==='sheet_edit'?'edits':filter==='task_assign'?'tasks':filter==='email_sent'?'emails':'texts'}</button>}
-        <button onClick={clearAll} style={{padding:"6px 12px",borderRadius:6,border:"1px solid #FECACA",background:"#FFF5F5",cursor:"pointer",fontFamily:"inherit",fontSize:10,fontWeight:600,color:"#E44258"}}>Clear All Logs</button>
+  return(<div style={{margin:"-28px -36px -40px",padding:"28px 36px 40px",minHeight:"calc(100vh - 60px)",background:S.bg,color:S.green,fontFamily:"'Courier New',monospace"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <div>
+        <div style={{fontSize:9,fontWeight:700,letterSpacing:"0.3em",color:S.dim}}>CLASSIFIED // TANMAY EYES ONLY</div>
+        <div style={{fontSize:28,fontWeight:700,letterSpacing:"0.05em",color:S.green,textShadow:"0 0 20px rgba(0,255,65,.3)"}}>SURVEILLANCE CENTER</div>
+        <div style={{fontSize:10,color:S.dim}}>{logs.length} total records // {new Date().toISOString()}</div>
+      </div>
+      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+        <div style={{width:8,height:8,borderRadius:4,background:"#00FF41",boxShadow:"0 0 8px #00FF41",animation:"pulseDot 2s ease-in-out infinite"}}/>
+        <span style={{fontSize:10,color:S.green}}>LIVE</span>
+        <button onClick={clearAll} style={{padding:"4px 10px",borderRadius:4,border:"1px solid #FF4444",background:"transparent",cursor:"pointer",fontFamily:"inherit",fontSize:9,fontWeight:700,color:"#FF4444",letterSpacing:"0.1em"}}>PURGE ALL</button>
       </div>
     </div>
-    <Card style={{overflow:"hidden"}}>
-      <div style={{overflowY:"auto",maxHeight:"72vh"}}>
-        {filtered.length===0?<div style={{padding:"40px",textAlign:"center",color:C.mt,fontFamily:F.sf,fontStyle:"italic"}}>No activity yet</div>:
-        filtered.slice(0,200).map(l=><div key={l._fbKey}>
+
+    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>
+      {Object.keys(typeLabel).map(k=>{const n=logs.filter(l=>l.type===k).length;return<button key={k} onClick={()=>setFilter(filter===k?'all':k)} style={{
+        padding:"4px 10px",border:"1px solid "+(filter===k?typeColor[k]:S.border),borderRadius:4,
+        background:filter===k?typeColor[k]+"18":"transparent",cursor:"pointer",fontFamily:"inherit",
+        fontSize:9,fontWeight:700,color:filter===k?typeColor[k]:S.dim,letterSpacing:"0.1em"
+      }}>{typeLabel[k]} <span style={{opacity:.5}}>{n}</span></button>})}
+    </div>
+
+    <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="SEARCH RECORDS..." style={{
+      width:"100%",padding:"8px 12px",background:S.card,border:"1px solid "+S.border,borderRadius:4,
+      fontFamily:"inherit",fontSize:11,color:S.green,outline:"none",marginBottom:12,
+      boxShadow:search?"0 0 10px rgba(0,255,65,.1)":"none"
+    }}/>
+
+    <div style={{border:"1px solid "+S.border,borderRadius:6,overflow:"hidden"}}>
+      <div style={{overflowY:"auto",maxHeight:"68vh"}}>
+        {filtered.length===0?<div style={{padding:40,textAlign:"center",color:S.dim,fontSize:12}}>NO RECORDS FOUND</div>:
+        filtered.slice(0,300).map(l=><div key={l._fbKey}>
           <div onClick={()=>setExpanded(expanded===l._fbKey?null:l._fbKey)} style={{
-            display:"grid",gridTemplateColumns:"32px 140px 90px 80px 1fr 30px",alignItems:"center",gap:4,
-            padding:"8px 14px",borderBottom:"1px solid #F0F1F3",cursor:"pointer",
-            background:expanded===l._fbKey?"#F8FAFC":"#fff",transition:"background .15s"
+            display:"flex",alignItems:"center",gap:8,padding:"6px 12px",cursor:"pointer",
+            borderBottom:"1px solid "+S.border,background:expanded===l._fbKey?"rgba(0,255,65,0.03)":"transparent",
+            transition:"background .15s"
           }}>
-            <span style={{fontSize:16}}>{typeIcon[l.type]||'\u2022'}</span>
-            <div><div style={{fontSize:11,fontFamily:"monospace",color:"#676879"}}>{fmtTime(l.time)}</div><div style={{fontSize:9,color:"#B0B8C4"}}>{ago(l.ts)}</div></div>
-            <span style={{padding:"2px 8px",borderRadius:4,fontSize:9,fontWeight:700,background:(typeColor[l.type]||"#999")+"18",color:typeColor[l.type]||"#999",textAlign:"center"}}>{typeLabel[l.type]||l.type}</span>
-            <span style={{fontWeight:600,fontSize:12}}>{getName(l.user)}</span>
-            <div style={{fontSize:12,color:"#323338",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-              {l.type==='login'&&<span>IP: <span style={{fontFamily:"monospace",color:"#676879"}}>{l.ip||'\u2014'}</span> \u00B7 {l.browser||''} \u00B7 {l.os||''} \u00B7 {l.device||''}</span>}
-              {l.type==='logout'&&<span>Session ended</span>}
-              {l.type==='page_view'&&<span>{l.from||'?'} \u2192 <span style={{fontWeight:600}}>{l.page||'?'}</span></span>}
-              {l.type==='sheet_edit'&&<span><span style={{fontWeight:600}}>{l.sheet}</span> cell {l.cell} {l.oldValue&&<span style={{color:C.rd,textDecoration:"line-through"}}>{(l.oldValue||'').slice(0,20)}</span>} <span style={{color:C.gn}}>{(l.newValue||'').slice(0,30)}</span></span>}
-              {l.type==='task_assign'&&<span>"{(l.task||'').slice(0,40)}" \u2192 {getName(l.assignee)} <span style={{padding:"1px 6px",borderRadius:3,fontSize:9,fontWeight:700,background:l.priority==='high'?"#FEE2E2":l.priority==='low'?"#DBEAFE":"#FEF3C7",color:l.priority==='high'?"#991B1B":l.priority==='low'?"#1E40AF":"#92400E"}}>{l.priority}</span></span>}
-              {l.type==='email_sent'&&<span>"{(l.subject||'').slice(0,35)}" \u2192 {l.to||'\u2014'}</span>}
-              {l.type==='message_sent'&&<span>Texted {l.toName||'\u2014'}: "{(l.message||'').slice(0,40)}"</span>}
-            </div>
-            <span style={{fontSize:10,color:"#B0B8C4",transform:expanded===l._fbKey?"rotate(180deg)":"rotate(0)",transition:"transform .2s"}}>\u25BC</span>
+            <span style={{width:6,height:6,borderRadius:3,background:typeColor[l.type]||S.dim,boxShadow:"0 0 6px "+(typeColor[l.type]||S.dim),flexShrink:0}}/>
+            <span style={{fontSize:10,color:S.dim,fontFamily:"monospace",width:110,flexShrink:0}}>{fmtTime(l.time)}</span>
+            <span style={{fontSize:9,padding:"1px 6px",borderRadius:3,border:"1px solid "+(typeColor[l.type]||S.dim),color:typeColor[l.type]||S.dim,fontWeight:700,letterSpacing:"0.1em",flexShrink:0}}>{typeLabel[l.type]||l.type}</span>
+            <span style={{fontSize:10,color:"#FFD700",fontWeight:600,width:60,flexShrink:0}}>{getName(l.user)}</span>
+            <span style={{fontSize:10,color:S.text,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+              {l.type==='login'&&(l.city?l.city+', '+l.region+' // '+l.isp:'IP: '+l.ip)}
+              {l.type==='logout'&&'Session terminated'}
+              {l.type==='sheet_edit'&&(l.sheet+' ['+l.cell+']')}
+              {l.type==='task_assign'&&('"'+l.task+'" > '+getName(l.assignee))}
+              {l.type==='email_sent'&&(l.subject||'').slice(0,40)}
+              {l.type==='message_sent'&&('> '+l.toName+': '+l.message)}
+              {l.type==='page_view'&&(l.from+' > '+l.page)}
+              {l.type==='tab_away'&&'LEFT MISSION CONTROL'}
+              {l.type==='tab_return'&&'RETURNED TO MISSION CONTROL'}
+            </span>
+            <span style={{fontSize:9,color:S.dim,flexShrink:0}}>{ago(l.ts)}</span>
+            <span style={{fontSize:9,color:S.dim,transform:expanded===l._fbKey?"rotate(180deg)":"",transition:"transform .2s"}}>&#9660;</span>
           </div>
-          {expanded===l._fbKey&&<div style={{padding:"12px 14px 16px 46px",background:"#F8FAFC",borderBottom:"2px solid #E6E9EF",animation:"pageSlide .3s var(--ease-expo) both"}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
-              {mkInfo('\uD83D\uDD52 Timestamp',fmtFull(l.time))}
-              {mkInfo('\uD83C\uDF10 IP Address',l.ip)}
-              {mkInfo('\uD83D\uDCBB Device',l.device)}
-              {mkInfo('\uD83D\uDDA5 Browser',l.browser)}
-              {mkInfo('\u2699\uFE0F OS',l.os)}
-              {mkInfo('\uD83D\uDCCF Screen',l.screen)}
-              {mkInfo('\uD83D\uDD32 Window',l.window)}
-              {mkInfo('\uD83C\uDFA8 Color Depth',l.colorDepth)}
-              {mkInfo('\uD83D\uDD0D Pixel Ratio',l.pixelRatio)}
-              {mkInfo('\uD83C\uDF0D Timezone',l.tz)}
-              {mkInfo('\uD83D\uDDE3 Language',l.lang)}
-              {mkInfo('\uD83C\uDF10 All Languages',l.languages)}
-              {mkInfo('\uD83D\uDC64 User ID',l.user)}
-              {mkInfo('\uD83E\uDDEC Canvas FP',l.canvasFP)}
-              {mkInfo('\uD83C\uDFAE GPU',l.gpu)}
-              {mkInfo('\uD83C\uDFED GPU Vendor',l.gpuVendor)}
-              {mkInfo('\u2699 CPU Cores',l.cpuCores)}
-              {mkInfo('\uD83D\uDCBE RAM',l.ram)}
-              {mkInfo('\uD83D\uDCF1 Touch',l.touch)}
-              {mkInfo('\uD83D\uDDA5 Platform',l.platform)}
-              {mkInfo('\uD83C\uDF19 Dark Mode',l.darkMode)}
-              {mkInfo('\uD83D\uDCF6 Network',l.network)}
-              {mkInfo('\u2B07 Downlink',l.downlink)}
-              {mkInfo('\uD83D\uDD0B Battery',l.battery)}
-              {mkInfo('\uD83D\uDDA4 Fonts',l.fontsDetected)}
-              {mkInfo('\uD83E\uDDE9 Plugins',l.plugins)}
-              {mkInfo('\uD83C\uDF6A Cookies',l.cookiesEnabled)}
-              {mkInfo('\uD83D\uDEAB Do Not Track',l.doNotTrack)}
-              {mkInfo('\uD83D\uDEE1 Ad Blocker',l.adBlock)}
-              {mkInfo('\u2934 Referrer',l.referrer)}
-              {mkInfo('\u23F1 Session Start',l.sessionStart)}
-              {mkInfo('\uD83D\uDD0D User Agent',l.ua)}
+          {expanded===l._fbKey&&<div style={{padding:"12px",background:"rgba(0,255,65,0.02)",borderBottom:"2px solid "+typeColor[l.type]+"44"}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4,marginBottom:8}}>
+              {mkCell('TIMESTAMP',new Date(l.time).toISOString())}
+              {mkCell('IP',l.ip,'#FF6B35')}
+              {mkCell('CITY',l.city)}
+              {mkCell('REGION',l.region)}
+              {mkCell('COUNTRY',l.country)}
+              {mkCell('ZIP',l.zip)}
+              {mkCell('LAT/LON',(l.lat&&l.lon)?l.lat+', '+l.lon:l.lat||'')}
+              {mkCell('ISP',l.isp,'#00D4FF')}
+              {mkCell('ORG',l.org)}
+              {mkCell('ASN',l.asn)}
+              {mkCell('MOBILE NETWORK',l.isMobile)}
+              {mkCell('PROXY/VPN',l.isProxy,'#FF4444')}
+              {mkCell('HOSTING/DC',l.isHosting)}
+              {mkCell('DEVICE',l.device)}
+              {mkCell('BROWSER',l.browser)}
+              {mkCell('OS',l.os)}
+              {mkCell('SCREEN',l.screen)}
+              {mkCell('WINDOW',l.window)}
+              {mkCell('PIXEL RATIO',l.pixelRatio)}
+              {mkCell('COLOR DEPTH',l.colorDepth)}
+              {mkCell('CANVAS FP',l.canvasFP,'#DA70D6')}
+              {mkCell('GPU',l.gpu)}
+              {mkCell('GPU VENDOR',l.gpuVendor)}
+              {mkCell('CPU CORES',l.cpuCores)}
+              {mkCell('RAM',l.ram)}
+              {mkCell('TOUCH',l.touch)}
+              {mkCell('PLATFORM',l.platform)}
+              {mkCell('DARK MODE',l.darkMode)}
+              {mkCell('NETWORK',l.network)}
+              {mkCell('DOWNLINK',l.downlink)}
+              {mkCell('BATTERY',l.battery)}
+              {mkCell('FONTS',l.fontsDetected)}
+              {mkCell('PLUGINS',l.plugins)}
+              {mkCell('COOKIES',l.cookiesEnabled)}
+              {mkCell('DO NOT TRACK',l.doNotTrack)}
+              {mkCell('AD BLOCKER',l.adBlock,'#FFD700')}
+              {mkCell('REFERRER',l.referrer)}
+              {mkCell('SESSION START',l.sessionStart)}
+              {mkCell('TIMEZONE',l.tz)}
+              {mkCell('LANGUAGES',l.languages||l.lang)}
+              {mkCell('USER AGENT',l.ua)}
             </div>
-            {l.type==='sheet_edit'&&<div style={{marginTop:8,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-              {mkInfo('Sheet',l.sheet)}{mkInfo('Cell',l.cell)}{mkInfo('Old \u2192 New',(l.oldValue||'empty')+' \u2192 '+(l.newValue||'empty'))}
+            {l.type==='login'&&l.lat&&l.lon&&<div style={{marginTop:6,padding:6,background:"rgba(0,255,65,0.03)",border:"1px solid rgba(0,255,65,0.1)",borderRadius:4}}>
+              <div style={{fontSize:8,fontWeight:700,letterSpacing:"0.15em",color:S.green,opacity:.6,marginBottom:4}}>APPROXIMATE LOCATION</div>
+              <a href={"https://www.google.com/maps?q="+l.lat+","+l.lon} target="_blank" rel="noreferrer" style={{fontSize:10,color:"#00D4FF"}}>Open in Google Maps: {l.lat}, {l.lon}</a>
             </div>}
-            {l.type==='email_sent'&&<div style={{marginTop:8,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-              {mkInfo('Template',l.template)}{mkInfo('To',l.to)}{mkInfo('Subject',l.subject)}
+            {l.type==='sheet_edit'&&<div style={{marginTop:6,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4}}>
+              {mkCell('SHEET',l.sheet)}{mkCell('CELL',l.cell)}{mkCell('OLD > NEW',(l.oldValue||'empty')+' > '+(l.newValue||'empty'))}
             </div>}
-            {l.type==='task_assign'&&<div style={{marginTop:8,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-              {mkInfo('Task',l.task)}{mkInfo('Assignee',getName(l.assignee))}{mkInfo('Priority',l.priority)}
+            {l.type==='email_sent'&&<div style={{marginTop:6,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4}}>
+              {mkCell('TEMPLATE',l.template)}{mkCell('TO',l.to)}{mkCell('SUBJECT',l.subject)}
             </div>}
-            {l.type==='page_view'&&<div style={{marginTop:8,display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-              {mkInfo('From Page',l.from)}{mkInfo('To Page',l.page)}
+            {l.type==='task_assign'&&<div style={{marginTop:6,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4}}>
+              {mkCell('TASK',l.task)}{mkCell('ASSIGNEE',getName(l.assignee))}{mkCell('PRIORITY',l.priority)}
             </div>}
-            <div style={{marginTop:12,textAlign:"right"}}><button onClick={e=>{e.stopPropagation();if(confirm('Delete this log entry?')){deleteLog(l._fbKey);setExpanded(null)}}} style={{padding:"5px 12px",borderRadius:5,border:"1px solid #FECACA",background:"#FFF5F5",cursor:"pointer",fontFamily:"inherit",fontSize:10,fontWeight:600,color:"#E44258"}}>Delete Entry</button></div>
+            <div style={{marginTop:8,textAlign:"right"}}><button onClick={e=>{e.stopPropagation();if(confirm('DELETE RECORD?')){deleteLog(l._fbKey);setExpanded(null)}}} style={{padding:"3px 10px",borderRadius:3,border:"1px solid #FF4444",background:"transparent",cursor:"pointer",fontFamily:"inherit",fontSize:9,fontWeight:700,color:"#FF4444",letterSpacing:"0.1em"}}>DELETE</button></div>
           </div>}
         </div>)}
       </div>
-    </Card>
+    </div>
+    <div style={{marginTop:8,fontSize:9,color:S.dim,textAlign:"center"}}>CAREFORBRAINS SURVEILLANCE SYSTEM v2.0 // AUTHORIZED PERSONNEL ONLY // {filtered.length} RECORDS DISPLAYED</div>
   </div>);
 }
 
@@ -1927,6 +1957,17 @@ function App(){
       prevTab.current=tab;
     }
   },[tab]);
+
+  // Track when user leaves/returns to Mission Control tab
+  useEffect(()=>{
+    if(!dbRef.current||!user)return;
+    const h=()=>{
+      if(document.hidden)logEvent(dbRef.current,'tab_away',{user:user.id,page:tab});
+      else logEvent(dbRef.current,'tab_return',{user:user.id,page:tab});
+    };
+    document.addEventListener('visibilitychange',h);
+    return()=>document.removeEventListener('visibilitychange',h);
+  },[user,tab]);
 
   
   if(!hubData)return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.sn}}><div style={{textAlign:"center"}}><img src={LOGO} alt="" style={{width:40,height:40,borderRadius:10,marginBottom:10,opacity:0.5}}/><div style={{fontSize:13,color:C.mt}}>Connecting...</div></div></div>);
