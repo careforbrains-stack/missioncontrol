@@ -837,6 +837,7 @@ function Sheets({db,hubData,team,me}){
   const scrollRef=useRef(0);
 
   const[syncing,setSyncing]=useState(false);
+  const[lastSync,setLastSync]=useState(null);
 
   const syncAllSheets=async(force)=>{
     setSyncing(true);
@@ -863,10 +864,10 @@ function Sheets({db,hubData,team,me}){
         if(rows.length>0)db.ref('hub/sheetData/'+s.id).set(rows);
       }catch(e){console.log('Sync skip:',s.name,e)}
     }
-    setSyncing(false);
+    setSyncing(false);setLastSync(new Date());
   };
 
-  // Auto-sync on mount (fill empty sheets)
+  // Fill empty sheets on mount (App-level sync handles periodic refresh)
   useEffect(()=>{syncAllSheets(false)},[]);
 
   const activeSheet=sheets.find(s=>(s._fbKey||s.id)===active)||sheets[0]||null;
@@ -952,7 +953,14 @@ function Sheets({db,hubData,team,me}){
 
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-      <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>05 &#8212; Sheets</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Data Room</h1></div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+        <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>05 &#8212; Sheets</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Data Room</h1></div>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8}}>
+          {syncing&&<div style={{width:14,height:14,border:"2px solid #E6E9EF",borderTopColor:"#579BFC",borderRadius:"50%",animation:"spin .8s linear infinite"}}/>}
+          <span style={{fontSize:10,color:syncing?"#579BFC":"#B0B8C4",fontWeight:syncing?600:400}}>{syncing?'Syncing...':lastSync?'Synced '+lastSync.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'—'}</span>
+          <button onClick={()=>syncAllSheets(true)} disabled={syncing} style={{padding:"4px 10px",borderRadius:5,border:"1px solid "+C.rl,background:"#fff",fontSize:10,fontWeight:600,color:"#579BFC",cursor:"pointer",fontFamily:"inherit"}}>Refresh</button>
+        </div>
+      </div>
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
         {saving&&<span style={{fontSize:11,color:C.tl}}>Saving...</span>}
         {!gToken?<Btn onClick={connectGoogle} primary>Connect Google</Btn>:<span style={{fontSize:11,fontWeight:600,color:C.gn}}>&#9679; Connected</span>}
@@ -1807,6 +1815,31 @@ function App(){
   const db=dbRef.current;
 
   if(!user)return<Login onLogin={id=>setUser({id})} passwords={passwords} team={team}/>;
+
+  // Global auto-sync: refreshes all sheets every 30s regardless of which tab is open
+  useEffect(()=>{
+    if(!db||!hubData?.sheets)return;
+    const syncAll=async()=>{
+      const sheets=Object.keys(hubData.sheets).filter(k=>k!=='_seed').map(k=>normSheetEntry(hubData.sheets[k]));
+      for(const s of sheets){
+        const sid=getSheetId(s.url);if(!sid)continue;
+        try{
+          const r=await fetch('https://docs.google.com/spreadsheets/d/'+sid+'/export?format=csv');
+          if(!r.ok)continue;
+          const text=await r.text();
+          const rows=text.split('\n').map(row=>{
+            const vals=[];let cur='';let inQ=false;
+            for(let i=0;i<row.length;i++){const ch=row[i];if(ch==='"'){inQ=!inQ}else if(ch===','&&!inQ){vals.push(cur.trim());cur=''}else{cur+=ch}}
+            vals.push(cur.trim());return vals;
+          }).filter(r=>r.some(c=>c));
+          if(rows.length>0)db.ref('hub/sheetData/'+s.id).set(rows);
+        }catch(e){}
+      }
+    };
+    syncAll();
+    const iv=setInterval(syncAll,30000);
+    return()=>clearInterval(iv);
+  },[db,!!hubData?.sheets]);
 
   const me=user.id;const isA=team.find(t=>t.id===me)?.admin;const canEmail=canUseEmails(me);
   const safeTab=(tab==='assign'&&!isA)||(tab==='settings'&&!isA)||(tab==='logs'&&me!=='tanmay')||(tab==='emails'&&!canEmail)?'my':tab;
