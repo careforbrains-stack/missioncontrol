@@ -1768,9 +1768,9 @@ function Logs({hubData,team,db}){
   const typeColor={login:'#00FF41',logout:'#FF6B35',sheet_edit:'#00D4FF',task_assign:'#FFD700',email_sent:'#DA70D6',message_sent:'#FF1493',page_view:'#7B68EE',tab_away:'#FF4444',tab_return:'#44FF44'};
   const fmtTime=t=>{if(!t)return'';return new Date(t).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:false})};
   const ago=ts=>{if(!ts)return'';const s=Math.floor((Date.now()-ts)/1000);if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m';if(s<86400)return Math.floor(s/3600)+'h';return Math.floor(s/86400)+'d'};
-  const mkCell=(label,val,color)=><div style={{padding:"6px 8px",background:"rgba(0,255,65,0.03)",border:"1px solid rgba(0,255,65,0.1)",borderRadius:4}}>
-    <div style={{fontSize:8,fontWeight:700,letterSpacing:"0.15em",color:color||"#00FF41",opacity:.6,marginBottom:1}}>{label}</div>
-    <div style={{fontSize:10,fontFamily:"'Courier New',monospace",color:"#C8FFD4",wordBreak:"break-all"}}>{val||'N/A'}</div>
+  const mkCell=(label,val,color)=><div style={{padding:"12px 14px",background:"rgba(0,255,65,0.03)",border:"1px solid rgba(0,255,65,0.1)",borderRadius:4}}>
+    <div style={{fontSize:11,fontWeight:700,letterSpacing:"0.15em",color:color||"#00FF41",opacity:.6,marginBottom:3}}>{label}</div>
+    <div style={{fontSize:15,fontFamily:"'Courier New',monospace",color:"#C8FFD4",wordBreak:"break-all"}}>{val||'N/A'}</div>
   </div>;
   const S={bg:'#0A0E14',card:'#0D1117',border:'#1B2838',green:'#00FF41',dim:'#3A5068',text:'#8BA4B8'};
 
@@ -1793,9 +1793,9 @@ function Logs({hubData,team,db}){
     <div style={{borderBottom:"1px solid #1a1a2e",paddingBottom:18,marginBottom:18}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
         <div>
-          <div style={{fontSize:10,fontWeight:700,letterSpacing:"0.4em",color:"#FF4444",marginBottom:6,animation:"eyeGlow 3s ease-in-out infinite"}}>&#128065; CLASSIFIED // EYES ONLY</div>
-          <div className="surv-title" style={{fontSize:42,fontWeight:900,letterSpacing:"0.06em",color:"#00FF41",textShadow:"0 0 40px rgba(0,255,65,.5),0 0 80px rgba(0,255,65,.15)",lineHeight:1}}>SURVEILLANCE</div>
-          <div style={{fontSize:14,color:"#00FF41",opacity:.4,letterSpacing:"0.25em",marginTop:4}}>CAREFORBRAINS SECURITY OPS</div>
+          <div style={{fontSize:12,fontWeight:700,letterSpacing:"0.4em",color:"#FF4444",marginBottom:6,animation:"eyeGlow 3s ease-in-out infinite"}}>&#128065; CLASSIFIED // EYES ONLY</div>
+          <div className="surv-title" style={{fontSize:52,fontWeight:900,letterSpacing:"0.06em",color:"#00FF41",textShadow:"0 0 40px rgba(0,255,65,.5),0 0 80px rgba(0,255,65,.15)",lineHeight:1}}>SURVEILLANCE</div>
+          <div style={{fontSize:16,color:"#00FF41",opacity:.4,letterSpacing:"0.25em",marginTop:4}}>CAREFORBRAINS SECURITY OPS</div>
         </div>
         
         <div style={{width:90,height:90,position:"relative",flexShrink:0}}>
@@ -1816,9 +1816,9 @@ function Logs({hubData,team,db}){
           [uniqueDevices,'DEVICES','#DA70D6'],
           [threats,'THREATS','#FF4444'],
           [awayCount,'DESERTIONS','#FF6B35']
-        ].map(([n,l,col],i)=><div key={i} style={{padding:"10px 12px",background:"rgba(0,0,0,.4)",border:"1px solid "+col+"33",borderRadius:4,textAlign:"center"}}>
-          <div className={n>0&&l==='THREATS'?"heartbeat":""} style={{fontSize:24,fontWeight:900,color:col,textShadow:"0 0 15px "+col+"66"}}>{n}</div>
-          <div style={{fontSize:8,fontWeight:700,letterSpacing:"0.2em",color:col,opacity:.5,marginTop:2}}>{l}</div>
+        ].map(([n,l,col],i)=><div key={i} style={{padding:"18px 16px",background:"rgba(0,0,0,.4)",border:"1px solid "+col+"33",borderRadius:4,textAlign:"center"}}>
+          <div className={n>0&&l==='THREATS'?"heartbeat":""} style={{fontSize:36,fontWeight:900,color:col,textShadow:"0 0 15px "+col+"66"}}>{n}</div>
+          <div style={{fontSize:11,fontWeight:700,letterSpacing:"0.2em",color:col,opacity:.5,marginTop:4}}>{l}</div>
         </div>)}
       </div>
     </div>
@@ -1826,7 +1826,7 @@ function Logs({hubData,team,db}){
     {/* LIVE TICKER */}
     <div style={{overflow:"hidden",border:"1px solid #1a1a2e",borderRadius:3,padding:"5px 0",marginBottom:14,background:"rgba(0,0,0,.3)"}}>
       <div style={{display:"flex",animation:"slideData 40s linear infinite",whiteSpace:"nowrap"}}>
-        {logs.slice(0,30).map((l,i)=><span key={i} style={{fontSize:10,color:typeColor[l.type]||"#3A5068",marginRight:40,opacity:.6}}>
+        {logs.slice(0,30).map((l,i)=><span key={i} style={{fontSize:12,color:typeColor[l.type]||"#3A5068",marginRight:40,opacity:.6}}>
           [{fmtTime(l.time)}] {typeLabel[l.type]} // {getName(l.user)} // {l.ip||''} {l.city?' // '+l.city:''}{l.isp?' // '+l.isp:''}
         </span>)}
       </div>
@@ -1834,43 +1834,43 @@ function Logs({hubData,team,db}){
 
     {/* FILTERS */}
     <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:10,alignItems:"center"}}>
-      <button onClick={()=>setFilter('all')} style={{padding:"5px 12px",border:"1px solid "+(filter==='all'?"#00FF41":"#1a1a2e"),borderRadius:3,background:filter==='all'?"rgba(0,255,65,.1)":"transparent",cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:700,color:filter==='all'?"#00FF41":"#3A5068",letterSpacing:"0.08em"}}>ALL {logs.length}</button>
+      <button onClick={()=>setFilter('all')} style={{padding:"8px 14px",border:"1px solid "+(filter==='all'?"#00FF41":"#1a1a2e"),borderRadius:3,background:filter==='all'?"rgba(0,255,65,.1)":"transparent",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,color:filter==='all'?"#00FF41":"#3A5068",letterSpacing:"0.08em"}}>ALL {logs.length}</button>
       {Object.keys(typeLabel).map(k=>{const n=logs.filter(l=>l.type===k).length;if(!n)return null;return<button key={k} onClick={()=>setFilter(filter===k?'all':k)} style={{
-        padding:"5px 12px",border:"1px solid "+(filter===k?typeColor[k]:"#1a1a2e"),borderRadius:3,
+        padding:"8px 14px",border:"1px solid "+(filter===k?typeColor[k]:"#1a1a2e"),borderRadius:3,
         background:filter===k?typeColor[k]+"15":"transparent",cursor:"pointer",fontFamily:"inherit",
-        fontSize:11,fontWeight:700,color:filter===k?typeColor[k]:"#3A5068",letterSpacing:"0.08em"
+        fontSize:13,fontWeight:700,color:filter===k?typeColor[k]:"#3A5068",letterSpacing:"0.08em"
       }}>{typeLabel[k]} {n}</button>})}
       <div style={{flex:1}}/>
-      <button onClick={clearAll} style={{padding:"5px 12px",borderRadius:3,border:"1px solid #FF4444",background:"rgba(255,68,68,.08)",cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:700,color:"#FF4444",letterSpacing:"0.12em",animation:threats>0?"warningPulse 2s infinite":"none"}}>&#9760; PURGE ALL</button>
+      <button onClick={clearAll} style={{padding:"5px 12px",borderRadius:3,border:"1px solid #FF4444",background:"rgba(255,68,68,.08)",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:700,color:"#FF4444",letterSpacing:"0.12em",animation:threats>0?"warningPulse 2s infinite":"none"}}>&#9760; PURGE ALL</button>
     </div>
 
     {/* SEARCH */}
     <div style={{position:"relative",marginBottom:14}}>
       <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:13,color:"#3A5068"}}>&#9655;</span>
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="SEARCH ALL INTERCEPTS..." style={{
-        width:"100%",padding:"10px 14px 10px 30px",background:"rgba(0,0,0,.4)",border:"1px solid #1a1a2e",borderRadius:4,
-        fontFamily:"inherit",fontSize:13,color:"#00FF41",outline:"none",letterSpacing:"0.05em",
+        width:"100%",padding:"14px 18px 14px 34px",background:"rgba(0,0,0,.4)",border:"1px solid #1a1a2e",borderRadius:4,
+        fontFamily:"inherit",fontSize:16,color:"#00FF41",outline:"none",letterSpacing:"0.05em",
         boxShadow:search?"0 0 20px rgba(0,255,65,.08),inset 0 0 20px rgba(0,255,65,.03)":"none"
       }}/>
     </div>
 
     {/* LOG ENTRIES */}
     <div style={{border:"1px solid #1a1a2e",borderRadius:4,overflow:"hidden",background:"rgba(5,5,8,.9)"}}>
-      <div style={{overflowY:"auto",maxHeight:"55vh"}}>
+      <div style={{overflowY:"auto",maxHeight:"60vh"}}>
         {filtered.length===0?<div style={{padding:50,textAlign:"center",color:"#3A5068",fontSize:14,letterSpacing:"0.15em"}}>NO INTERCEPTS FOUND</div>:
         filtered.slice(0,300).map(l=>{
           const isThreat=l.isProxy==='Yes'||l.isHosting==='Yes';
           return<div key={l._fbKey}>
           <div onClick={()=>setExpanded(expanded===l._fbKey?null:l._fbKey)} className={isThreat?"threat-row":""} style={{
-            display:"flex",alignItems:"center",gap:10,padding:"8px 14px",cursor:"pointer",
+            display:"flex",alignItems:"center",gap:12,padding:"12px 18px",cursor:"pointer",
             borderBottom:"1px solid #0f0f1a",
             background:isThreat?"rgba(255,68,68,.04)":expanded===l._fbKey?"rgba(0,255,65,0.04)":"transparent"
           }}>
             <span style={{width:7,height:7,borderRadius:4,background:typeColor[l.type]||"#3A5068",boxShadow:"0 0 8px "+(typeColor[l.type]||"#3A5068"),flexShrink:0}}/>
-            <span style={{fontSize:12,color:"#4A6070",fontFamily:"monospace",width:120,flexShrink:0}}>{fmtTime(l.time)}</span>
-            <span style={{fontSize:10,padding:"2px 8px",borderRadius:3,border:"1px solid "+(typeColor[l.type]||"#3A5068"),color:typeColor[l.type]||"#3A5068",fontWeight:700,letterSpacing:"0.1em",flexShrink:0}}>{typeLabel[l.type]||l.type}</span>
-            <span style={{fontSize:13,color:"#FFD700",fontWeight:700,width:70,flexShrink:0}}>{getName(l.user)}</span>
-            <span style={{fontSize:12,color:"#8BA4B8",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+            <span style={{fontSize:14,color:"#4A6070",fontFamily:"monospace",width:140,flexShrink:0}}>{fmtTime(l.time)}</span>
+            <span style={{fontSize:12,padding:"4px 10px",borderRadius:3,border:"1px solid "+(typeColor[l.type]||"#3A5068"),color:typeColor[l.type]||"#3A5068",fontWeight:700,letterSpacing:"0.1em",flexShrink:0}}>{typeLabel[l.type]||l.type}</span>
+            <span style={{fontSize:16,color:"#FFD700",fontWeight:700,width:85,flexShrink:0}}>{getName(l.user)}</span>
+            <span style={{fontSize:15,color:"#8BA4B8",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
               {l.type==='login'&&<span>{l.city?<span><span style={{color:"#00D4FF"}}>{l.city}, {l.region}</span> // {l.isp}{isThreat&&<span style={{color:"#FF4444",fontWeight:900}}> &#9888; PROXY/VPN</span>}</span>:'IP: '+l.ip}</span>}
               {l.type==='logout'&&<span style={{color:"#FF6B35"}}>SESSION TERMINATED</span>}
               {l.type==='sheet_edit'&&<span>{l.sheet} <span style={{color:"#3A5068"}}>[{l.cell}]</span> {l.oldValue&&<span style={{color:"#FF4444",textDecoration:"line-through"}}>{(l.oldValue||'').slice(0,15)}</span>} <span style={{color:"#00FF41"}}>{(l.newValue||'').slice(0,15)}</span></span>}
@@ -1881,12 +1881,12 @@ function Logs({hubData,team,db}){
               {l.type==='tab_away'&&<span style={{color:"#FF4444",fontWeight:700}}>&#9888; SUBJECT LEFT MISSION CONTROL</span>}
               {l.type==='tab_return'&&<span style={{color:"#44FF44"}}>&#10003; SUBJECT RETURNED</span>}
             </span>
-            <span style={{fontSize:10,color:"#3A5068",flexShrink:0}}>{ago(l.ts)}</span>
+            <span style={{fontSize:13,color:"#3A5068",flexShrink:0}}>{ago(l.ts)}</span>
             <span style={{fontSize:10,color:"#3A5068",transform:expanded===l._fbKey?"rotate(180deg)":"",transition:"transform .2s"}}>&#9660;</span>
           </div>
           {expanded===l._fbKey&&<div style={{padding:"14px",background:"rgba(0,255,65,0.015)",borderBottom:"2px solid "+(typeColor[l.type]||"#1a1a2e")+"55"}}>
-            {isThreat&&<div style={{padding:"8px 12px",background:"rgba(255,68,68,.08)",border:"1px solid rgba(255,68,68,.3)",borderRadius:4,marginBottom:10,fontSize:12,color:"#FF4444",fontWeight:700,letterSpacing:"0.1em",textAlign:"center",animation:"warningPulse 2s infinite"}}>&#9888; THREAT DETECTED — {l.isProxy==='Yes'?'PROXY/VPN':'DATACENTER IP'} — POSSIBLE IDENTITY MASKING &#9888;</div>}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4}}>
+            {isThreat&&<div style={{padding:"8px 12px",background:"rgba(255,68,68,.08)",border:"1px solid rgba(255,68,68,.3)",borderRadius:4,marginBottom:10,fontSize:16,color:"#FF4444",fontWeight:700,letterSpacing:"0.1em",textAlign:"center",animation:"warningPulse 2s infinite"}}>&#9888; THREAT DETECTED — {l.isProxy==='Yes'?'PROXY/VPN':'DATACENTER IP'} — POSSIBLE IDENTITY MASKING &#9888;</div>}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
               {mkCell('TIMESTAMP',new Date(l.time).toISOString())}
               {mkCell('IPv4 ADDRESS',l.ip,'#FF6B35')}
               {mkCell('CITY',l.city)}
@@ -1929,8 +1929,8 @@ function Logs({hubData,team,db}){
               {mkCell('LANGUAGES',l.languages||l.lang)}
             </div>
             {l.lat&&l.lon&&<div style={{marginTop:8,padding:"6px 12px",background:"rgba(0,255,65,0.03)",border:"1px solid rgba(0,255,65,0.12)",borderRadius:3,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <span style={{fontSize:11,color:"#00FF41",letterSpacing:"0.1em"}}>&#127758; GEO TARGET: {l.lat}, {l.lon}</span>
-              <a href={"https://www.google.com/maps?q="+l.lat+","+l.lon} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#00D4FF",letterSpacing:"0.08em",textDecoration:"none"}}>OPEN IN MAPS &#8599;</a>
+              <span style={{fontSize:14,color:"#00FF41",letterSpacing:"0.1em"}}>&#127758; GEO TARGET: {l.lat}, {l.lon}</span>
+              <a href={"https://www.google.com/maps?q="+l.lat+","+l.lon} target="_blank" rel="noreferrer" style={{fontSize:14,color:"#00D4FF",letterSpacing:"0.08em",textDecoration:"none"}}>OPEN IN MAPS &#8599;</a>
             </div>}
             {l.type==='sheet_edit'&&<div style={{marginTop:6,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4}}>
               {mkCell('TARGET SHEET',l.sheet)}{mkCell('TARGET CELL',l.cell)}{mkCell('DATA CHANGE',(l.oldValue||'null')+' > '+(l.newValue||'null'))}
@@ -1943,13 +1943,13 @@ function Logs({hubData,team,db}){
             </div>}
             <div style={{marginTop:10,display:"flex",justifyContent:"space-between",alignItems:"center",borderTop:"1px solid #1a1a2e",paddingTop:8}}>
               <span style={{fontSize:9,color:"#1a1a2e",letterSpacing:"0.1em"}}>RECORD ID: {l._fbKey?.slice(-12)}</span>
-              <button onClick={e=>{e.stopPropagation();if(confirm('PERMANENTLY DESTROY THIS RECORD?')){deleteLog(l._fbKey);setExpanded(null)}}} style={{padding:"4px 12px",borderRadius:3,border:"1px solid #FF4444",background:"rgba(255,68,68,.06)",cursor:"pointer",fontFamily:"inherit",fontSize:10,fontWeight:700,color:"#FF4444",letterSpacing:"0.12em"}}>&#9760; DESTROY RECORD</button>
+              <button onClick={e=>{e.stopPropagation();if(confirm('PERMANENTLY DESTROY THIS RECORD?')){deleteLog(l._fbKey);setExpanded(null)}}} style={{padding:"4px 12px",borderRadius:3,border:"1px solid #FF4444",background:"rgba(255,68,68,.06)",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,color:"#FF4444",letterSpacing:"0.12em"}}>&#9760; DESTROY RECORD</button>
             </div>
           </div>}
         </div>})}
       </div>
     </div>
-    <div style={{marginTop:12,display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:10,color:"#1a1a2e",letterSpacing:"0.12em"}}>
+    <div style={{marginTop:12,display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,color:"#2a2a3e",letterSpacing:"0.12em"}}>
       <span>CFB-SEC // SURVEILLANCE SYSTEM v3.0</span>
       <span>CLEARANCE: TANMAY VASUDEVA // CEO</span>
       <span>{filtered.length} RECORDS ACTIVE</span>
