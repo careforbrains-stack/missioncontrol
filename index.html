@@ -941,8 +941,10 @@ function Sheets({db,hubData,team,me}){
   const priCellStyle=(val)=>{
     const v=(val||'').trim().toLowerCase();
     if(!v)return{background:"#FEE2E2",color:"#991B1B"};
-    if(v==='y'||v==='yes'||v==='done'||v==='true'||v==='si'||v==='sí'||v==='ok'||v==='completed'||v==='approved'||v==='accepted')return{background:"#D1FAE5",color:"#065F46"};
-    if(v==='n'||v==='no'||v==='nah'||v==='false'||v==='denied'||v==='rejected')return{background:"#FEE2E2",color:"#991B1B"};
+    const yesWords=['yes','y','ye','si','ok','done','true','completed','approved','accepted','yas','ues','uyes'];
+    const noWords=['n','no','nah','false','denied','rejected'];
+    if(yesWords.some(w=>v.startsWith(w)))return{background:"#D1FAE5",color:"#065F46"};
+    if(noWords.some(w=>v===w))return{background:"#FEE2E2",color:"#991B1B"};
     return{background:"#FEF3C7",color:"#92400E"};
   };
 
@@ -1349,8 +1351,9 @@ function Emails({db,hubData,team,me}){
     const vals=sheetData[sid];
     if(vals&&Array.isArray(vals)&&vals.length>0){
       setCols(vals[0]);setRows(vals.slice(1));
-      const ei=vals[0].findIndex(h=>(h||'').toLowerCase().includes('email'));
-      const ni=vals[0].findIndex(h=>(h||'').toLowerCase().includes('name')&&!(h||'').toLowerCase().includes('last'));
+      const ei=vals[0].findIndex(h=>{const l=(h||'').toLowerCase();return l.includes('email')&&!l.includes('school')});
+      let ni=vals[0].findIndex(h=>{const l=(h||'').toLowerCase();return l.includes('full name')||l==='name'||l.includes('name (first')||l.includes('name:')});
+      if(ni<0)ni=vals[0].findIndex(h=>{const l=(h||'').toLowerCase();return l.includes('name')&&!l.includes('school')&&!l.includes('user')});
       setEmailCol(ei>=0?vals[0][ei]:'');setNameCol(ni>=0?vals[0][ni]:'');
     }else{setCols([]);setRows([])}
   };
@@ -1487,7 +1490,8 @@ function Emails({db,hubData,team,me}){
                 const statusWords=['reached','respond','responded','contacted','reply','finished','done','complete','status','added','attended','joined','insta','disc','pvsa'];
                 const statusColIdx=cols.findIndex(h=>statusWords.some(w=>(h||'').toLowerCase().includes(w)));
                 const statusVal=statusColIdx>=0?(row[statusColIdx]||'').trim().toLowerCase():'';
-                const responded=statusVal==='yes'||statusVal==='y'||statusVal==='done'||statusVal==='true'||statusVal==='si'||statusVal.startsWith('ye')||statusVal==='ok'||statusVal==='completed'||statusVal==='approved'||statusVal==='accepted';
+                const yesWords=['yes','y','ye','si','ok','done','true','completed','approved','accepted','yas','ues','uyes'];
+                const responded=!!statusVal&&yesWords.some(w=>statusVal.startsWith(w));
                 const rowBg=checked[i]?"rgba(87,155,252,.06)":responded?"rgba(0,202,114,.06)":"transparent";
                 return<tr key={i} style={{background:rowBg,opacity:valid?1:.5}}>
                 <td style={{padding:"5px 10px",borderBottom:"1px solid #F0F1F3",textAlign:"center"}}><input type="checkbox" checked={!!checked[i]} disabled={!valid} onChange={e=>{const n={...checked};if(e.target.checked)n[i]=true;else delete n[i];setChecked(n)}}/></td>
