@@ -188,6 +188,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="https://accounts.google.com/gsi/client"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script type="text/babel">
 const{useState,useEffect,useRef,useCallback}=React;
@@ -334,26 +335,18 @@ function globalConnectGoogle(callback){
 // Convert SVG certificate to PDF base64
 async function svgToPdfBase64(svgString){
   const {jsPDF}=window.jspdf;
-  return new Promise((resolve,reject)=>{
-    const img=new Image();
-    const svgBlob=new Blob([svgString],{type:'image/svg+xml;charset=utf-8'});
-    const url=URL.createObjectURL(svgBlob);
-    img.onload=()=>{
-      const canvas=document.createElement('canvas');
-      canvas.width=2000;canvas.height=1440;
-      const ctx=canvas.getContext('2d');
-      ctx.fillStyle='#fff';ctx.fillRect(0,0,2000,1440);
-      ctx.drawImage(img,0,0,2000,1440);
-      URL.revokeObjectURL(url);
-      const imgData=canvas.toDataURL('image/jpeg',0.95);
-      const pdf=new jsPDF({orientation:'landscape',unit:'px',format:[1000,720]});
-      pdf.addImage(imgData,'JPEG',0,0,1000,720);
-      const pdfBase64=pdf.output('datauristring').split(',')[1];
-      resolve(pdfBase64);
-    };
-    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('SVG render failed'))};
-    img.src=url;
-  });
+  await document.fonts.ready;
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:fixed;left:-9999px;top:-9999px;width:1100px;height:780px';
+  wrap.innerHTML=svgString;
+  document.body.appendChild(wrap);
+  await new Promise(r=>setTimeout(r,200));
+  const canvas=await html2canvas(wrap,{scale:2,useCORS:true,backgroundColor:'#ffffff',width:1100,height:780});
+  document.body.removeChild(wrap);
+  const imgData=canvas.toDataURL('image/jpeg',0.95);
+  const pdf=new jsPDF({orientation:'landscape',unit:'px',format:[1100,780]});
+  pdf.addImage(imgData,'JPEG',0,0,1100,780);
+  return pdf.output('datauristring').split(',')[1];
 }
 
 // Send email via Gmail API directly — no third party, no branding
@@ -1437,7 +1430,7 @@ function Emails({db,hubData,team,me}){
             const cc=parseInt(ecardCount)||0;
             certHours=cc>0?String(Math.round(cc*0.5)):'0';
           }
-          if(template==='stem_done'){certProgram='STEM Exploration'}
+          if(template==='stem_done'){certProgram='STEM Exploration';certHours='40'}
           const svg=generateCertSVG(name,certHours,certProgram,new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
           const pdfB64=await svgToPdfBase64(svg);
           pdfAttachment={name:'CareForBrains_Certificate_'+name.replace(/\s+/g,'_')+'.pdf',data:pdfB64};
@@ -1587,7 +1580,7 @@ function Emails({db,hubData,team,me}){
           <div dangerouslySetInnerHTML={{__html:(()=>{
             let h='50',p='Volunteer';
             if(template==='ecard_done'){p='E-Card';const cc=parseInt(ecardCount)||0;h=cc>0?String(Math.round(cc*0.5)):'0'}
-            if(template==='stem_done'){p='STEM Exploration'}
+            if(template==='stem_done'){p='STEM Exploration';h='40'}
             return generateCertSVG(validSelected[0]?.row?.[nIdx]||'Your Name',h,p,new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}))
           })()}} style={{width:"100%",maxWidth:700,margin:"0 auto"}}/>
           <div style={{marginTop:10,fontSize:11,color:C.mt}}>Certificate auto-fills with each recipient's name and hours</div>
@@ -1631,7 +1624,7 @@ function Emails({db,hubData,team,me}){
           return<Btn key={i} onClick={()=>{
             let h='50',p='Volunteer';
             if(template==='ecard_done'){p='E-Card';const cc=parseInt(ecardCount)||0;h=cc>0?String(Math.round(cc*0.5)):'0'}
-            if(template==='stem_done'){p='STEM Exploration'}
+            if(template==='stem_done'){p='STEM Exploration';h='40'}
             downloadCert(name,h,p)
           }} style={{fontSize:11}}>Download cert: {name}</Btn>
         })}
