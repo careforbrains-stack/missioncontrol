@@ -1507,8 +1507,9 @@ function Emails({db,hubData,team,me}){
                 <th style={{padding:"6px 10px",borderBottom:"2px solid "+C.rl,background:"#F5F6F8",position:"sticky",top:0,textAlign:"center",fontSize:10,fontWeight:700,color:"#323338"}}>Status</th>
               </tr></thead>
               <tbody>{rows.map((row,i)=>{const email=eIdx>=0?(row[eIdx]||'').trim():'';const name=nIdx>=0?(row[nIdx]||'').trim():'';const valid=okEmail(email);
-                const statusWords=['reached','respond','responded','contacted','reply','finished','done','complete','status','added','attended','joined','insta','disc','pvsa'];
-                const statusColIdx=cols.findIndex(h=>statusWords.some(w=>(h||'').toLowerCase().includes(w)));
+                const statusWords=['reached','respond','responded','contacted','reply','finished','pvsa'];
+                let statusColIdx=-1;
+                for(let ci=cols.length-1;ci>=0;ci--){if(statusWords.some(w=>(cols[ci]||'').toLowerCase().includes(w))){statusColIdx=ci;break}}
                 const statusVal=statusColIdx>=0?(row[statusColIdx]||'').trim().toLowerCase():'';
                 const yesWords=['yes','y','ye','si','ok','done','true','completed','approved','accepted','yas','ues','uyes'];
                 const responded=!!statusVal&&yesWords.some(w=>statusVal.startsWith(w));
