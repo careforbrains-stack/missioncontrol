@@ -541,10 +541,10 @@ function Login({onLogin,passwords,team}){
   const[sel,setSel]=useState(null);const[pass,setPass]=useState('');const[err,setErr]=useState('');
   const go=()=>{if(passwords?.[sel]&&pass!==passwords[sel]){setErr('Wrong password');setTimeout(()=>setErr(''),2e3);return}sL({id:sel});
     // Log the login
-    fetch('http://ip-api.com/json/?fields=query,city,regionName,country,zip,lat,lon,isp,org,as,mobile,proxy,hosting').then(r=>r.json()).then(j=>{
+    fetch('https://ipwho.is/').then(r=>r.json()).then(j=>{
       if(!firebase.apps.length)return;
       const db=firebase.database();
-      logEvent(db,'login',{user:sel,ip:j.query||'unknown',city:j.city||'',region:j.regionName||'',country:j.country||'',zip:j.zip||'',lat:j.lat||'',lon:j.lon||'',isp:j.isp||'',org:j.org||'',asn:j.as||'',isMobile:j.mobile?'Yes':'No',isProxy:j.proxy?'Yes':'No',isHosting:j.hosting?'Yes':'No'});
+      logEvent(db,'login',{user:sel,ip:j.ip||'unknown',city:j.city||'',region:j.region||'',country:j.country||'',zip:j.postal||'',lat:j.latitude||'',lon:j.longitude||'',isp:j.connection?.isp||'',org:j.connection?.org||'',asn:j.connection?.asn?'AS'+j.connection.asn:'',isMobile:j.connection?.type==='cellular'?'Yes':'No',isProxy:j.security?.proxy?'Yes':'No',isHosting:j.security?.hosting?'Yes':'No'});
     }).catch(()=>{
       if(firebase.apps.length){logEvent(firebase.database(),'login',{user:sel,ip:'unknown'})}
     });
