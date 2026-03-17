@@ -891,7 +891,7 @@ function Sheets({db,hubData,team,me}){
   const allHeaders=Array.isArray(activeVals)&&activeVals.length?activeVals[0]:[];
   const allRows=Array.isArray(activeVals)&&activeVals.length>1?activeVals.slice(1):[];
 
-  const priorityWords=['reached','status','done','complete','approved','accepted','respond','responded','reply','contacted','joined','added','attended','insta','disc','finished','pvsa'];
+  const priorityWords=['reached','status','done','complete','approved','accepted','respond','responded','reply','contacted','joined','added','attended','finished','pvsa'];
   const isPriCol=h=>priorityWords.some(w=>(h||'').toLowerCase().includes(w));
 
   // Strip empty trailing columns
@@ -1515,8 +1515,8 @@ function Emails({db,hubData,team,me}){
               </tr></thead>
               <tbody>{rows.map((row,i)=>{const email=eIdx>=0?(row[eIdx]||'').trim():'';const name=nIdx>=0?(row[nIdx]||'').trim():'';const valid=okEmail(email);
                 const statusWords=['reached','respond','responded','contacted','reply','finished','pvsa'];
-                let statusColIdx=-1;
-                for(let ci=cols.length-1;ci>=0;ci--){if(statusWords.some(w=>(cols[ci]||'').toLowerCase().includes(w))){statusColIdx=ci;break}}
+                let statusColIdx=-1;let statusMax=0;
+                for(let ci=0;ci<cols.length;ci++){if(statusWords.some(w=>(cols[ci]||'').toLowerCase().includes(w))){const filled=rows.filter(r=>r&&r[ci]&&(r[ci]||'').trim()).length;if(filled>statusMax){statusMax=filled;statusColIdx=ci}}}
                 const statusVal=statusColIdx>=0?(row[statusColIdx]||'').trim().toLowerCase():'';
                 const yesWords=['yes','y','ye','si','ok','done','true','completed','approved','accepted','yas','ues','uyes'];
                 const responded=!!statusVal&&yesWords.some(w=>statusVal.startsWith(w));
