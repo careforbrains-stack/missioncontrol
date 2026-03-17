@@ -1802,14 +1802,16 @@ function App(){
     return()=>{if(dbRef.current)dbRef.current.ref('hub').off()};
   },[fbCfg]);
 
-  // Global auto-sync: refreshes all sheets every 30s
+  // Sync empty sheets once on load (no interval - Firebase realtime handles updates)
   useEffect(()=>{
     if(!dbRef.current||!hubData?.sheets)return;
     const db=dbRef.current;
-    const syncAll=async()=>{
-      const sheets=Object.keys(hubData.sheets).filter(k=>k!=='_seed').map(k=>normSheetEntry(hubData.sheets[k]));
+    const sheets=Object.keys(hubData.sheets).filter(k=>k!=='_seed').map(k=>normSheetEntry(hubData.sheets[k]));
+    const syncEmpty=async()=>{
       for(const s of sheets){
         const sid=getSheetId(s.url);if(!sid)continue;
+        const cached=hubData.sheetData?.[s.id];
+        if(cached&&Array.isArray(cached)&&cached.length>1)continue;
         try{
           const r=await fetch('https://docs.google.com/spreadsheets/d/'+sid+'/export?format=csv');
           if(!r.ok)continue;
@@ -1823,9 +1825,7 @@ function App(){
         }catch(e){}
       }
     };
-    syncAll();
-    const iv=setInterval(syncAll,30000);
-    return()=>clearInterval(iv);
+    syncEmpty();
   },[!!hubData?.sheets]);
 
   const logout=()=>{localStorage.removeItem(LK);setUser(null);setTab('my')};
