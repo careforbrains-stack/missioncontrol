@@ -1802,23 +1802,10 @@ function App(){
     return()=>{if(dbRef.current)dbRef.current.ref('hub').off()};
   },[fbCfg]);
 
-  const logout=()=>{localStorage.removeItem(LK);setUser(null);setTab('my')};
-
-  
-  if(!hubData)return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.sn}}><div style={{textAlign:"center"}}><img src={LOGO} alt="" style={{width:40,height:40,borderRadius:10,marginBottom:10,opacity:0.5}}/><div style={{fontSize:13,color:C.mt}}>Connecting...</div></div></div>);
-
-  const team=hubData.team||TEAM;
-  const tasks=fbToArr(hubData.tasks);
-  const events=fbToArr(hubData.events);
-  const announcements=fbToArr(hubData.announcements);
-  const passwords=hubData.passwords||{};
-  const db=dbRef.current;
-
-  if(!user)return<Login onLogin={id=>setUser({id})} passwords={passwords} team={team}/>;
-
-  // Global auto-sync: refreshes all sheets every 30s regardless of which tab is open
+  // Global auto-sync: refreshes all sheets every 30s
   useEffect(()=>{
-    if(!db||!hubData?.sheets)return;
+    if(!dbRef.current||!hubData?.sheets)return;
+    const db=dbRef.current;
     const syncAll=async()=>{
       const sheets=Object.keys(hubData.sheets).filter(k=>k!=='_seed').map(k=>normSheetEntry(hubData.sheets[k]));
       for(const s of sheets){
@@ -1839,7 +1826,21 @@ function App(){
     syncAll();
     const iv=setInterval(syncAll,30000);
     return()=>clearInterval(iv);
-  },[db,!!hubData?.sheets]);
+  },[!!hubData?.sheets]);
+
+  const logout=()=>{localStorage.removeItem(LK);setUser(null);setTab('my')};
+
+  
+  if(!hubData)return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.sn}}><div style={{textAlign:"center"}}><img src={LOGO} alt="" style={{width:40,height:40,borderRadius:10,marginBottom:10,opacity:0.5}}/><div style={{fontSize:13,color:C.mt}}>Connecting...</div></div></div>);
+
+  const team=hubData.team||TEAM;
+  const tasks=fbToArr(hubData.tasks);
+  const events=fbToArr(hubData.events);
+  const announcements=fbToArr(hubData.announcements);
+  const passwords=hubData.passwords||{};
+  const db=dbRef.current;
+
+  if(!user)return<Login onLogin={id=>setUser({id})} passwords={passwords} team={team}/>;
 
   const me=user.id;const isA=team.find(t=>t.id===me)?.admin;const canEmail=canUseEmails(me);
   const safeTab=(tab==='assign'&&!isA)||(tab==='settings'&&!isA)||(tab==='logs'&&me!=='tanmay')||(tab==='emails'&&!canEmail)?'my':tab;
