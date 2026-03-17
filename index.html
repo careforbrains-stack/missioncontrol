@@ -280,6 +280,30 @@ let _activeSheet='';
 let _tokenClient=null;
 const colToLetter=c=>{let s='';while(c>=0){s=String.fromCharCode(65+(c%26))+s;c=Math.floor(c/26)-1}return s};
 
+function parseCSV(text){
+  const rows=[];let row=[];let cell='';let inQ=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(inQ){
+      if(ch==='"'&&text[i+1]==='"'){cell+='"';i++}
+      else if(ch==='"'){inQ=false}
+      else{cell+=ch}
+    }else{
+      if(ch==='"'){inQ=true}
+      else if(ch===','){row.push(cell.trim());cell=''}
+      else if(ch==='\n'||(ch==='\r'&&text[i+1]==='\n')){
+        if(ch==='\r')i++;
+        row.push(cell.trim());
+        if(row.some(c=>c))rows.push(row);
+        row=[];cell='';
+      }else{cell+=ch}
+    }
+  }
+  row.push(cell.trim());
+  if(row.some(c=>c))rows.push(row);
+  return rows;
+}
+
 async function sendSMS(twilioConfig,to,body){
   if(!twilioConfig||!twilioConfig.sid||!twilioConfig.token||!twilioConfig.from)return;
   const auth=btoa(twilioConfig.sid+':'+twilioConfig.token);
@@ -859,17 +883,7 @@ function Sheets({db,hubData,team,me}){
         const r=await fetch(csvUrl);
         if(!r.ok)continue;
         const text=await r.text();
-        const rows=text.split('\n').map(row=>{
-          const vals=[];let cur='';let inQ=false;
-          for(let i=0;i<row.length;i++){
-            const ch=row[i];
-            if(ch==='"'){inQ=!inQ}
-            else if(ch===','&&!inQ){vals.push(cur.trim());cur=''}
-            else{cur+=ch}
-          }
-          vals.push(cur.trim());
-          return vals;
-        }).filter(r=>r.some(c=>c));
+        const rows=parseCSV(text);
         if(rows.length>0)db.ref('hub/sheetData/'+s.id).set(rows);
       }catch(e){console.log('Sync skip:',s.name,e)}
     }
@@ -1828,11 +1842,7 @@ function App(){
           const hash=text.length+'-'+text.slice(0,100)+text.slice(-100);
           if(syncHashRef.current[s.id]===hash)continue;
           syncHashRef.current[s.id]=hash;
-          const rows=text.split('\n').map(row=>{
-            const vals=[];let cur='';let inQ=false;
-            for(let i=0;i<row.length;i++){const ch=row[i];if(ch==='"'){inQ=!inQ}else if(ch===','&&!inQ){vals.push(cur.trim());cur=''}else{cur+=ch}}
-            vals.push(cur.trim());return vals;
-          }).filter(r=>r.some(c=>c));
+          const rows=parseCSV(text);
           if(rows.length>0)db.ref('hub/sheetData/'+s.id).set(rows);
         }catch(e){}
       }
