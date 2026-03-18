@@ -485,10 +485,22 @@ function getDeviceInfo(){
 }
 let _deviceInfo=null;
 let _geoInfo={};
-// Fetch IP geo once on page load
-fetch('https://ipwho.is/').then(r=>r.json()).then(j=>{
-  _geoInfo={ip:j.ip||'',city:j.city||'',region:j.region||'',country:j.country||'',zip:j.postal||'',lat:j.latitude||'',lon:j.longitude||'',isp:j.connection?.isp||'',org:j.connection?.org||'',asn:j.connection?.asn?'AS'+j.connection.asn:'',isMobile:j.connection?.type==='cellular'?'Yes':'No',isProxy:j.security?.proxy?'Yes':'No',isHosting:j.security?.hosting?'Yes':'No'};
-}).catch(()=>{});
+// Fetch IP geo once on page load - try multiple APIs
+(async()=>{
+  const apis=[
+    {url:'https://ipapi.co/json/',map:d=>({ip:d.ip,city:d.city,region:d.region,country:d.country_name,zip:d.postal,lat:d.latitude,lon:d.longitude,isp:d.org,org:d.org,asn:d.asn})},
+    {url:'https://ipwho.is/',map:d=>({ip:d.ip,city:d.city,region:d.region,country:d.country,zip:d.postal,lat:d.latitude,lon:d.longitude,isp:d.connection?.isp,org:d.connection?.org,asn:d.connection?.asn?'AS'+d.connection.asn:''})},
+    {url:'https://freeipapi.com/api/json',map:d=>({ip:d.ipAddress,city:d.cityName,region:d.regionName,country:d.countryName,zip:d.zipCode,lat:d.latitude,lon:d.longitude,isp:'',org:'',asn:''})}
+  ];
+  for(const api of apis){
+    try{
+      const r=await fetch(api.url);if(!r.ok)continue;
+      const d=await r.json();
+      const g=api.map(d);
+      if(g.ip){_geoInfo={...g,isMobile:'No',isProxy:'No',isHosting:'No'};break}
+    }catch(e){continue}
+  }
+})();
 function logEvent(db,type,data){
   if(!db)return;
   if(!_deviceInfo)_deviceInfo=getDeviceInfo();
@@ -523,14 +535,8 @@ function fbToArr(obj){if(!obj)return[];return Object.keys(obj).filter(k=>k!=='_s
 function Login({onLogin,passwords,team}){
   const[sel,setSel]=useState(null);const[pass,setPass]=useState('');const[err,setErr]=useState('');
   const go=()=>{if(passwords?.[sel]&&pass!==passwords[sel]){setErr('Wrong password');setTimeout(()=>setErr(''),2e3);return}sL({id:sel});
-    // Log the login
-    fetch('https://ipwho.is/').then(r=>r.json()).then(j=>{
-      if(!firebase.apps.length)return;
-      const db=firebase.database();
-      logEvent(db,'login',{user:sel,ip:j.ip||'unknown',city:j.city||'',region:j.region||'',country:j.country||'',zip:j.postal||'',lat:j.latitude||'',lon:j.longitude||'',isp:j.connection?.isp||'',org:j.connection?.org||'',asn:j.connection?.asn?'AS'+j.connection.asn:'',isMobile:j.connection?.type==='cellular'?'Yes':'No',isProxy:j.security?.proxy?'Yes':'No',isHosting:j.security?.hosting?'Yes':'No'});
-    }).catch(()=>{
-      if(firebase.apps.length){logEvent(firebase.database(),'login',{user:sel,ip:'unknown'})}
-    });
+    // Log the login - geo data comes from _geoInfo (fetched on page load)
+    if(firebase.apps.length){logEvent(firebase.database(),'login',{user:sel})}
     onLogin(sel)};
   return(<div className="login-shell" style={{minHeight:"100vh",background:"#F8FAFC",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.sn,padding:"32px 20px"}}>
     <div style={{width:440,maxWidth:"90vw"}}>
