@@ -575,7 +575,7 @@ function Login({onLogin,passwords,team}){
 // === SIDEBAR ===
 function Sidebar({tab,setTab,me,team,logout}){
   const meD=team.find(t=>t.id===me);const isA=meD?.admin;
-  const items=[{id:'my',label:'My Work',n:'01',show:true},{id:'team',label:'Team Board',n:'02',show:true},{id:'assign',label:'Assign Work',n:'\u26A1',show:isA},{id:'calendar',label:'Calendar',n:'03',show:true},{id:'contacts',label:'Contacts',n:'04',show:true},{id:'sheets',label:'Sheets',n:'05',show:true},{id:'emails',label:'Comms',n:'07',show:canUseEmails(me)},{id:'board',label:'Announcements',n:'08',show:true},{id:'partners',label:'Partnerships',n:'09',show:true},{id:'settings',label:'Settings',n:'\u2014',show:isA},{id:'logs',label:'Activity Log',n:'\u25CF',show:me==='tanmay'}];
+  const items=[{id:'my',label:'My Work',n:'01',show:true},{id:'team',label:'Team Board',n:'02',show:true},{id:'assign',label:'Assign Work',n:'\u26A1',show:isA},{id:'calendar',label:'Calendar',n:'03',show:true},{id:'contacts',label:'Contacts',n:'04',show:true},{id:'sheets',label:'Sheets',n:'05',show:true},{id:'emails',label:'Comms',n:'07',show:canUseEmails(me)},{id:'board',label:'Announcements',n:'08',show:true},{id:'roadmap',label:'Future Plans',n:'\uD83D\uDE80',show:true},{id:'partners',label:'Partnerships',n:'09',show:true},{id:'settings',label:'Settings',n:'\u2014',show:isA},{id:'logs',label:'Activity Log',n:'\u25CF',show:me==='tanmay'}];
   return(<div className="sidebar-shell" style={{width:240,position:"fixed",top:0,left:0,bottom:0,display:"flex",flexDirection:"column",zIndex:100}}>
     <div className="sidebar-brand" style={{padding:18,display:"flex",alignItems:"center",gap:10}}>
       <img src={LOGO} alt="" className="sidebar-logo" style={{width:30,height:30,borderRadius:8}}/><div><span style={{fontWeight:700,fontSize:13.5,display:"block",color:"#F8FAFC"}}>Mission Control</span><span style={{fontSize:9.5,color:"rgba(248,250,252,.58)"}}>CareForBrains</span></div>
@@ -1761,6 +1761,146 @@ function Board({db,announcements,team,me}){
   </div>);
 }
 
+// === ROADMAP ===
+function Roadmap({db,hubData,team,me}){
+  const plans=fbToArr(hubData.roadmap||{}).sort((a,b)=>(a.order||99)-(b.order||99));
+  const[adding,setAdding]=useState(false);
+  const[form,setForm]=useState({title:'',description:'',status:'idea',priority:'medium',lead:'',target:'',tags:''});
+  const[expanded,setExpanded]=useState(null);
+  const[noteText,setNoteText]=useState('');
+  const[viewFilter,setViewFilter]=useState('all');
+  const statusLabels={idea:'Idea',planned:'Planned',in_progress:'In Progress',done:'Done',shelved:'Shelved'};
+  const statusColors={idea:'#8B5CF6',planned:'#3B82F6',in_progress:'#F59E0B',done:'#10B981',shelved:'#6B7280'};
+  const statusIcons={idea:'\uD83D\uDCA1',planned:'\uD83D\uDCCB',in_progress:'\u26A1',done:'\u2705',shelved:'\uD83D\uDCE6'};
+  const priColors={high:'#EF4444',medium:'#F59E0B',low:'#3B82F6'};
+  const getName=id=>{const m=team.find(t=>t.id===id);return m?fn(m.name):id||'?'};
+
+  const save=()=>{
+    if(!form.title.trim())return;
+    const ref=db.ref('hub/roadmap').push();
+    const tags=form.tags.split(',').map(t=>t.trim()).filter(Boolean);
+    ref.set({id:ref.key,title:form.title.trim(),description:form.description.trim(),status:form.status,priority:form.priority,lead:form.lead||me,target:form.target,tags,updates:[],addedBy:me,created:new Date().toISOString(),order:plans.length});
+    setForm({title:'',description:'',status:'idea',priority:'medium',lead:'',target:'',tags:''});setAdding(false);
+  };
+  const updateStatus=(p,s)=>db.ref('hub/roadmap/'+p._fbKey+'/status').set(s);
+  const updatePriority=(p,pr)=>db.ref('hub/roadmap/'+p._fbKey+'/priority').set(pr);
+  const addUpdate=(p)=>{
+    if(!noteText.trim())return;
+    const updates=[...(p.updates||[]),{text:noteText.trim(),by:me,date:new Date().toISOString()}];
+    db.ref('hub/roadmap/'+p._fbKey+'/updates').set(updates);
+    setNoteText('');
+  };
+  const del=p=>{if(confirm('Delete "'+p.title+'"?'))db.ref('hub/roadmap/'+p._fbKey).remove()};
+  const filtered=viewFilter==='all'?plans:plans.filter(p=>p.status===viewFilter);
+  const counts=Object.keys(statusLabels).reduce((a,k)=>{a[k]=plans.filter(p=>p.status===k).length;return a},{});
+
+  return(<div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:12}}>
+      <div>
+        <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>{'\uD83D\uDE80'} Roadmap</div>
+        <h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Future Plans</h1>
+      </div>
+      <Btn primary onClick={()=>setAdding(!adding)}>{adding?'Cancel':'+ New Initiative'}</Btn>
+    </div>
+    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(90px,1fr))",gap:8,marginBottom:18}}>
+      {[['all','All',plans.length,'#579BFC'],...Object.entries(statusLabels).map(([k,l])=>[k,l,counts[k]||0,statusColors[k]])].map(([k,l,n,col])=>
+        <button key={k} onClick={()=>setViewFilter(k)} style={{padding:"10px 6px",borderRadius:8,border:"1px solid "+(viewFilter===k?col:C.rl),background:viewFilter===k?col+"12":"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:600,color:viewFilter===k?col:C.sc,textAlign:"center"}}>
+          <div style={{fontSize:18,marginBottom:2}}>{k==='all'?'\uD83D\uDCCA':statusIcons[k]}</div>
+          <div style={{fontSize:18,fontWeight:700,color:viewFilter===k?col:C.fg}}>{n}</div>{l}
+        </button>
+      )}
+    </div>
+
+    {adding&&<Card style={{marginBottom:18}}>
+      <div style={{padding:18}}>
+        <div style={{fontSize:13,fontWeight:700,marginBottom:12}}>New Initiative</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          <div style={{gridColumn:"1/-1"}}><Lbl>Title *</Lbl><Inp value={form.title} onChange={e=>setForm({...form,title:e.target.value})} placeholder="e.g. CareForBrains Podcast, Summer Program 2026"/></div>
+          <div style={{gridColumn:"1/-1"}}><Lbl>Description</Lbl><textarea value={form.description} onChange={e=>setForm({...form,description:e.target.value})} placeholder="What is this initiative about? Goals, vision, timeline ideas..." style={{width:"100%",padding:"9px 12px",border:"1px solid "+C.rl,borderRadius:7,fontSize:13,fontFamily:"inherit",outline:"none",minHeight:60,resize:"vertical"}}/></div>
+          <div><Lbl>Status</Lbl><Sel value={form.status} onChange={e=>setForm({...form,status:e.target.value})}>{Object.entries(statusLabels).map(([k,v])=><option key={k} value={k}>{v}</option>)}</Sel></div>
+          <div><Lbl>Priority</Lbl><Sel value={form.priority} onChange={e=>setForm({...form,priority:e.target.value})}><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></Sel></div>
+          <div><Lbl>Lead</Lbl><Sel value={form.lead} onChange={e=>setForm({...form,lead:e.target.value})}><option value="">Select lead...</option>{team.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</Sel></div>
+          <div><Lbl>Target Date</Lbl><input type="date" value={form.target} onChange={e=>setForm({...form,target:e.target.value})} style={{width:"100%",padding:"9px 12px",border:"1px solid "+C.rl,borderRadius:7,fontSize:13,fontFamily:"inherit"}}/></div>
+          <div style={{gridColumn:"1/-1"}}><Lbl>Tags (comma separated)</Lbl><Inp value={form.tags} onChange={e=>setForm({...form,tags:e.target.value})} placeholder="e.g. podcast, content, outreach"/></div>
+        </div>
+        <div style={{marginTop:12,display:"flex",justifyContent:"flex-end"}}><Btn primary onClick={save}>Save Initiative</Btn></div>
+      </div>
+    </Card>}
+
+    {filtered.length===0?<Card><div style={{padding:"40px 24px",textAlign:"center",color:C.mt}}><div style={{fontSize:16}}>No initiatives {viewFilter!=='all'?'with status "'+statusLabels[viewFilter]+'"':''} yet</div><div style={{fontSize:12,marginTop:6}}>Click "+ New Initiative" to start planning</div></div></Card>:
+    filtered.map(p=>{
+      const open=expanded===p._fbKey;
+      const sc=statusColors[p.status]||C.mt;
+      const pc=priColors[p.priority]||C.mt;
+      const updates=Array.isArray(p.updates)?p.updates:[];
+      const tags=Array.isArray(p.tags)?p.tags:[];
+      const daysUntil=p.target?Math.ceil((new Date(p.target)-new Date())/(1000*60*60*24)):null;
+      return<Card key={p._fbKey} style={{marginBottom:10,borderLeft:"3px solid "+sc}}>
+        <div onClick={()=>setExpanded(open?null:p._fbKey)} style={{padding:"14px 18px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+              <span style={{fontSize:16}}>{statusIcons[p.status]||''}</span>
+              <span style={{fontSize:15,fontWeight:700}}>{p.title}</span>
+              <span style={{padding:"3px 10px",borderRadius:999,fontSize:10,fontWeight:700,background:sc+"18",color:sc,border:"1px solid "+sc+"33"}}>{statusLabels[p.status]||p.status}</span>
+              <span style={{padding:"2px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:pc+"15",color:pc}}>{(p.priority||'').toUpperCase()}</span>
+              {tags.map((t,i)=><span key={i} style={{padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:600,background:"#E5E7EB",color:"#374151"}}>#{t}</span>)}
+              {updates.length>0&&<span style={{fontSize:10,color:C.mt}}>{updates.length} update{updates.length>1?'s':''}</span>}
+            </div>
+            <div style={{fontSize:12,color:C.mt,marginTop:4}}>
+              {p.lead&&<span>Lead: {getName(p.lead)} {'\u00B7'} </span>}
+              {p.target&&<span>Target: {new Date(p.target).toLocaleDateString()} {daysUntil!==null&&<span style={{color:daysUntil<0?'#EF4444':daysUntil<14?'#F59E0B':'#10B981'}}>({daysUntil<0?Math.abs(daysUntil)+'d overdue':daysUntil+'d left'})</span>} {'\u00B7'} </span>}
+              {p.description&&<span style={{color:C.sc}}>{p.description.slice(0,80)}{p.description.length>80?'...':''}</span>}
+            </div>
+          </div>
+          <span style={{fontSize:12,color:C.mt,transform:open?"rotate(180deg)":"",transition:"transform .2s"}}>{'\u25BC'}</span>
+        </div>
+
+        {open&&<div style={{padding:"0 18px 18px",borderTop:"1px solid "+C.rl}}>
+          {p.description&&<div style={{padding:"12px 14px",background:C.bgA,borderRadius:8,marginTop:14,fontSize:13,lineHeight:1.6}}>{p.description}</div>}
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginTop:14}}>
+            <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Lead</div><div style={{fontSize:13}}>{p.lead?getName(p.lead):'Unassigned'}</div></div>
+            <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Target Date</div><div style={{fontSize:13}}>{p.target?new Date(p.target).toLocaleDateString():'Not set'}</div></div>
+            <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Added</div><div style={{fontSize:13}}>{getName(p.addedBy)} {'\u00B7'} {new Date(p.created).toLocaleDateString()}</div></div>
+          </div>
+
+          <div style={{marginTop:14}}>
+            <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Status</div>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+              {Object.entries(statusLabels).map(([k,v])=><button key={k} onClick={()=>updateStatus(p,k)} style={{padding:"5px 12px",borderRadius:6,border:"1px solid "+(p.status===k?statusColors[k]:C.rl),background:p.status===k?statusColors[k]+"15":"#fff",color:p.status===k?statusColors[k]:C.sc,cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:600}}>{statusIcons[k]} {v}</button>)}
+            </div>
+          </div>
+
+          <div style={{marginTop:10}}>
+            <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Priority</div>
+            <div style={{display:"flex",gap:6}}>
+              {[['high','High'],['medium','Medium'],['low','Low']].map(([k,v])=><button key={k} onClick={()=>updatePriority(p,k)} style={{padding:"5px 12px",borderRadius:6,border:"1px solid "+(p.priority===k?priColors[k]:C.rl),background:p.priority===k?priColors[k]+"15":"#fff",color:p.priority===k?priColors[k]:C.sc,cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:600}}>{v}</button>)}
+            </div>
+          </div>
+
+          <div style={{marginTop:16}}>
+            <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:8}}>Updates & Progress ({updates.length})</div>
+            {updates.map((u,i)=><div key={i} style={{padding:"10px 12px",background:C.bgA,borderRadius:8,marginBottom:6,borderLeft:"3px solid "+sc}}>
+              <div style={{fontSize:13}}>{u.text}</div>
+              <div style={{fontSize:10,color:C.mt,marginTop:4}}>{getName(u.by)} {'\u00B7'} {new Date(u.date).toLocaleDateString()} {new Date(u.date).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div>
+            </div>)}
+            <div style={{display:"flex",gap:8,marginTop:8}}>
+              <input value={noteText} onChange={e=>setNoteText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&noteText.trim())addUpdate(p)}} placeholder="Post an update, progress note, or idea..." style={{flex:1,padding:"9px 12px",border:"1px solid "+C.rl,borderRadius:7,fontSize:13,fontFamily:"inherit",outline:"none"}}/>
+              <Btn primary onClick={()=>addUpdate(p)}>Post</Btn>
+            </div>
+          </div>
+
+          <div style={{marginTop:14,display:"flex",justifyContent:"flex-end"}}>
+            <button onClick={()=>del(p)} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #EF4444",background:"rgba(239,68,68,.06)",color:"#EF4444",cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:600}}>Delete Initiative</button>
+          </div>
+        </div>}
+      </Card>
+    })}
+  </div>);
+}
+
 // === PARTNERSHIPS ===
 function Partnerships({db,hubData,team,me}){
   const partners=fbToArr(hubData.partnerships||{}).sort((a,b)=>(b.created||'').localeCompare(a.created||''));
@@ -2156,7 +2296,7 @@ function App(){
 
   const me=user.id;const isA=team.find(t=>t.id===me)?.admin;const canEmail=canUseEmails(me);
   const safeTab=(tab==='assign'&&!isA)||(tab==='settings'&&!isA)||(tab==='logs'&&me!=='tanmay')||(tab==='emails'&&!canEmail)?'my':tab;
-  const titles={my:'My Work',emails:'Comms',team:'Team Board',assign:'Assign Work',calendar:'Calendar',contacts:'Contacts',sheets:'Sheets',board:'Announcements',settings:'Settings',logs:'Activity Log',partners:'Partnerships'};
+  const titles={my:'My Work',emails:'Comms',team:'Team Board',assign:'Assign Work',calendar:'Calendar',contacts:'Contacts',sheets:'Sheets',board:'Announcements',settings:'Settings',logs:'Activity Log',roadmap:'Future Plans',partners:'Partnerships'};
   const V=()=>{switch(safeTab){
     case 'my':return<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'team':return<TeamBoard db={db} tasks={tasks} team={team} me={me}/>;
@@ -2167,6 +2307,7 @@ function App(){
     case 'emails':return canEmail?<Emails db={db} hubData={hubData} team={team} me={me}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'board':return<Board db={db} announcements={announcements} team={team} me={me}/>;
     case 'settings':return isA?<Settings db={db} passwords={passwords} team={team} hubData={hubData}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
+    case 'roadmap':return<Roadmap db={db} hubData={hubData} team={team} me={me}/>;
     case 'partners':return<Partnerships db={db} hubData={hubData} team={team} me={me}/>;
     case 'logs':return me==='tanmay'?<Logs hubData={hubData} team={team} db={db}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     default:return<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>}};
