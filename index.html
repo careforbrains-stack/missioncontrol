@@ -1367,12 +1367,18 @@ function Sheets({db,hubData,team,me}){
   };
 
   return(<div>
-    <SectionHeader variant="data" kicker="Data" title="Sheets" meta={[`${sheets.length} linked sheets`,gToken?'Google connected':'View only',(()=>{const lt=lastSync?.getTime()||0;const bt=_lastBgSync||0;const best=Math.max(lt,bt);return best?'Synced '+new Date(best).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'Awaiting sync'})()]} actions={<>
-      {saving&&<span style={{fontSize:11,color:C.tl,fontWeight:700}}>Saving...</span>}
-      {syncing&&<div style={{width:16,height:16,border:"2px solid #D8E8EE",borderTopColor:"#1490B0",borderRadius:"50%",animation:"spin .8s linear infinite"}}/>}
-      <Btn onClick={()=>syncAllSheets(true)} disabled={syncing}>Refresh</Btn>
-      {!gToken?<Btn onClick={connectGoogle} primary>Connect Google</Btn>:<span className="meta-chip" style={{color:C.gn}}>&#9679; Connected</span>}
-    </>}/>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <span style={{fontWeight:700,fontSize:15}}>{sheets.length} Sheets</span>
+        <span style={{fontSize:11,color:C.mt}}>{(()=>{const lt=lastSync?.getTime()||0;const bt=_lastBgSync||0;const best=Math.max(lt,bt);return best?'Synced '+new Date(best).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'—'})()}</span>
+        {saving&&<span style={{fontSize:11,color:C.tl,fontWeight:700}}>Saving...</span>}
+        {syncing&&<div style={{width:14,height:14,border:"2px solid #D8E8EE",borderTopColor:"#1490B0",borderRadius:"50%",animation:"spin .8s linear infinite"}}/>}
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <Btn onClick={()=>syncAllSheets(true)} disabled={syncing}>Refresh</Btn>
+        {!gToken?<Btn onClick={connectGoogle} primary>Connect Google</Btn>:<span style={{fontSize:11,color:C.gn,fontWeight:600}}>&#9679; Connected</span>}
+      </div>
+    </div>
     {!gToken&&<div style={{padding:"8px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FECACA",marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
       <span style={{color:"#E44258",fontSize:12,fontWeight:600}}>&#9888; View only</span>
       <span style={{color:"#676879",fontSize:12}}>Connect Google to edit cells.</span>
