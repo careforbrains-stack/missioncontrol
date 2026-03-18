@@ -973,7 +973,7 @@ function Sheets({db,hubData,team,me}){
   const allRows=Array.isArray(activeVals)&&activeVals.length>1?activeVals.slice(1):[];
 
   const priorityWords=['reached','status','done','complete','approved','accepted','respond','responded','reply','contacted','joined','added','attended','finished','pvsa'];
-  const isPriCol=h=>priorityWords.some(w=>(h||'').toLowerCase().includes(w));
+  const isPriCol=h=>{const l=(h||'').toLowerCase();return l.length<60&&priorityWords.some(w=>l.includes(w))};
 
   // Strip empty trailing columns
   const lastUsed=React.useMemo(()=>{
