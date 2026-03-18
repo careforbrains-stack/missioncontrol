@@ -850,7 +850,7 @@ function Cal({db,events,tasks,team,me}){
     return[...taskItems,...eventItems];
   };
   const isTd=(d,c)=>c&&d===today.getDate()&&mo===today.getMonth()&&y===today.getFullYear();
-  const add=()=>{if(!form.title||!form.date)return;const ref=db.ref('hub/events').push();ref.set({...form,id:ref.key});setForm({title:'',date:'',assignee:me,notes:''});setModal(false)};
+  const add=()=>{if(!form.title?.trim()||!form.date)return;const ref=db.ref('hub/events').push();ref.set({...form,id:ref.key});setForm({title:'',date:'',assignee:me,notes:''});setModal(false)};
   const delEvent=e=>{if(confirm('Remove this event?'))db.ref('hub/events/'+e._fbKey).remove()};
   const delTask=t=>{if(confirm('Delete task "'+t.text+'"?'))db.ref('hub/tasks/'+t._fbKey).remove()};
   const toggleTask=t=>{db.ref('hub/tasks/'+t._fbKey+'/done').set(!t.done);if(!t.done)db.ref('hub/tasks/'+t._fbKey+'/doneDate').set(new Date().toISOString().split('T')[0])};
@@ -906,7 +906,7 @@ function Cal({db,events,tasks,team,me}){
 function Contacts({db,team,me}){
   const isA=team.find(t=>t.id===me)?.admin;const[ed,setEd]=useState(null);const[form,setForm]=useState({});
   const startEdit=m=>{setEd(m.id);setForm({phone:m.phone||'',email:m.email||''})};
-  const saveEdit=(id,idx)=>{db.ref('hub/team/'+idx+'/phone').set(form.phone||'');db.ref('hub/team/'+idx+'/email').set(form.email||'');setEd(null)};
+  const saveEdit=(id)=>{const idx=team.findIndex(t=>t.id===id);if(idx<0)return;db.ref('hub/team/'+idx+'/phone').set(form.phone||'');db.ref('hub/team/'+idx+'/email').set(form.email||'');setEd(null)};
   return(<div>
     <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>04 &#8212; Contacts</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Team Directory</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
@@ -917,7 +917,7 @@ function Contacts({db,team,me}){
         {ed===m.id?<div style={{marginTop:8,display:"flex",flexDirection:"column",gap:6,maxWidth:300}}>
           <Inp placeholder="Phone" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/>
           <Inp placeholder="Email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/>
-          <div style={{display:"flex",gap:6}}><Btn primary onClick={()=>saveEdit(m.id,idx)}>Save</Btn><Btn onClick={()=>setEd(null)}>Cancel</Btn></div>
+          <div style={{display:"flex",gap:6}}><Btn primary onClick={()=>saveEdit(m.id)}>Save</Btn><Btn onClick={()=>setEd(null)}>Cancel</Btn></div>
         </div>:<div style={{display:"flex",gap:14,marginTop:4,fontSize:12,color:C.sc}}>
           {m.phone&&<span>&#9742; {m.phone}</span>}{m.email&&<span>&#9993; {m.email}</span>}
           {!m.phone&&!m.email&&<span style={{color:C.mt,fontStyle:"italic"}}>No contact info</span>}</div>}
@@ -976,7 +976,7 @@ function Sheets({db,hubData,team,me}){
         const text=await r.text();
         if(text.trim().startsWith('<!'))continue;
         const rows=parseCSV(text);
-        if(rows.length>0)db.ref('hub/sheetData/'+s.id).set(rows);
+        db.ref('hub/sheetData/'+s.id).set(rows.length>0?rows:null);
       }catch(e){console.log('Sync skip:',s.name,e)}
     }
     setSyncing(false);setLastSync(new Date());
@@ -1785,7 +1785,9 @@ function Roadmap({db,hubData,team,me}){
   const[adding,setAdding]=useState(false);
   const[form,setForm]=useState({title:'',description:'',status:'idea',priority:'medium',lead:'',target:'',tags:''});
   const[expanded,setExpanded]=useState(null);
-  const[noteText,setNoteText]=useState('');
+  const[noteDrafts,setNoteDrafts]=useState({});
+  const getNoteText=id=>noteDrafts[id]||'';
+  const setNoteText=(id,v)=>setNoteDrafts(d=>({...d,[id]:v}));
   const[viewFilter,setViewFilter]=useState('all');
   const statusLabels={idea:'Idea',planned:'Planned',in_progress:'In Progress',done:'Done',shelved:'Shelved'};
   const statusColors={idea:'#8B5CF6',planned:'#3B82F6',in_progress:'#F59E0B',done:'#10B981',shelved:'#6B7280'};
@@ -1803,10 +1805,10 @@ function Roadmap({db,hubData,team,me}){
   const updateStatus=(p,s)=>db.ref('hub/roadmap/'+p._fbKey+'/status').set(s);
   const updatePriority=(p,pr)=>db.ref('hub/roadmap/'+p._fbKey+'/priority').set(pr);
   const addUpdate=(p)=>{
-    if(!noteText.trim())return;
-    const updates=[...(p.updates||[]),{text:noteText.trim(),by:me,date:new Date().toISOString()}];
+    const nt=getNoteText(p._fbKey);if(!nt.trim())return;
+    const updates=[...(p.updates||[]),{text:nt.trim(),by:me,date:new Date().toISOString()}];
     db.ref('hub/roadmap/'+p._fbKey+'/updates').set(updates);
-    setNoteText('');
+    setNoteText(p._fbKey,'');
   };
   const del=p=>{if(confirm('Delete "'+p.title+'"?'))db.ref('hub/roadmap/'+p._fbKey).remove()};
   const filtered=viewFilter==='all'?plans:plans.filter(p=>p.status===viewFilter);
@@ -1905,7 +1907,7 @@ function Roadmap({db,hubData,team,me}){
               <div style={{fontSize:10,color:C.mt,marginTop:4}}>{getName(u.by)} {'\u00B7'} {new Date(u.date).toLocaleDateString()} {new Date(u.date).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div>
             </div>)}
             <div style={{display:"flex",gap:8,marginTop:8}}>
-              <input value={noteText} onChange={e=>setNoteText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&noteText.trim())addUpdate(p)}} placeholder="Post an update, progress note, or idea..." style={{flex:1,padding:"9px 12px",border:"1px solid "+C.rl,borderRadius:7,fontSize:13,fontFamily:"inherit",outline:"none"}}/>
+              <input value={getNoteText(p._fbKey)} onChange={e=>setNoteText(p._fbKey,e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&getNoteText(p._fbKey).trim())addUpdate(p)}} placeholder="Post an update, progress note, or idea..." style={{flex:1,padding:"9px 12px",border:"1px solid "+C.rl,borderRadius:7,fontSize:13,fontFamily:"inherit",outline:"none"}}/>
               <Btn primary onClick={()=>addUpdate(p)}>Post</Btn>
             </div>
           </div>
@@ -1925,7 +1927,9 @@ function Partnerships({db,hubData,team,me}){
   const[adding,setAdding]=useState(false);
   const[form,setForm]=useState({name:'',contact:'',email:'',website:'',type:'',status:'reaching_out',notes:''});
   const[expanded,setExpanded]=useState(null);
-  const[noteText,setNoteText]=useState('');
+  const[noteDrafts,setNoteDrafts]=useState({});
+  const getNoteText=id=>noteDrafts[id]||'';
+  const setNoteText=(id,v)=>setNoteDrafts(d=>({...d,[id]:v}));
   const[filter,setFilter]=useState('all');
   const statusLabels={reaching_out:'Reaching Out',in_contact:'In Contact',confirmed:'Confirmed',declined:'Declined',paused:'Paused'};
   const statusColors={reaching_out:'#F59E0B',in_contact:'#3B82F6',confirmed:'#10B981',declined:'#EF4444',paused:'#6B7280'};
@@ -1939,10 +1943,10 @@ function Partnerships({db,hubData,team,me}){
   };
   const updateStatus=(p,s)=>db.ref('hub/partnerships/'+p._fbKey+'/status').set(s);
   const addNote=(p)=>{
-    if(!noteText.trim())return;
-    const notes=[...(p.notes||[]),{text:noteText.trim(),by:me,date:new Date().toISOString()}];
+    const nt=getNoteText(p._fbKey);if(!nt.trim())return;
+    const notes=[...(p.notes||[]),{text:nt.trim(),by:me,date:new Date().toISOString()}];
     db.ref('hub/partnerships/'+p._fbKey+'/notes').set(notes);
-    setNoteText('');
+    setNoteText(p._fbKey,'');
   };
   const del=p=>{if(confirm('Delete partnership "'+p.name+'"?'))db.ref('hub/partnerships/'+p._fbKey).remove()};
   const filtered=filter==='all'?partners:partners.filter(p=>p.status===filter);
@@ -2025,7 +2029,7 @@ function Partnerships({db,hubData,team,me}){
               <div style={{fontSize:10,color:C.mt,marginTop:4}}>{getName(n.by)} · {new Date(n.date).toLocaleDateString()} {new Date(n.date).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div>
             </div>)}
             <div style={{display:"flex",gap:8,marginTop:8}}>
-              <input value={noteText} onChange={e=>setNoteText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&noteText.trim())addNote(p)}} placeholder="Add a note or follow-up..." style={{flex:1,padding:"9px 12px",border:"1px solid "+C.rl,borderRadius:7,fontSize:13,fontFamily:"inherit",outline:"none"}}/>
+              <input value={getNoteText(p._fbKey)} onChange={e=>setNoteText(p._fbKey,e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&getNoteText(p._fbKey).trim())addNote(p)}} placeholder="Add a note or follow-up..." style={{flex:1,padding:"9px 12px",border:"1px solid "+C.rl,borderRadius:7,fontSize:13,fontFamily:"inherit",outline:"none"}}/>
               <Btn primary onClick={()=>addNote(p)}>Add</Btn>
             </div>
           </div>
@@ -2048,7 +2052,7 @@ function Logs({hubData,team,db}){
   const[hovered,setHovered]=useState(null);
   const[search,setSearch]=useState('');
   const[now,setNow]=useState(Date.now());
-  useEffect(()=>{const id=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(id)},[]);
+  useEffect(()=>{const id=setInterval(()=>setNow(Date.now()),30000);return()=>clearInterval(id)},[]);
   const meta={login:{label:'LOGIN',color:S.green,bg:'rgba(16,185,129,.12)'},logout:{label:'LOGOUT',color:S.muted,bg:'rgba(107,114,128,.14)'},page_view:{label:'PAGE VIEW',color:S.blue,bg:'rgba(59,130,246,.12)'},tab_away:{label:'TAB AWAY',color:S.amber,bg:'rgba(245,158,11,.12)'},tab_return:{label:'TAB RETURN',color:S.blue,bg:'rgba(59,130,246,.10)'},sheet_edit:{label:'SHEET EDIT',color:'#8B5CF6',bg:'rgba(139,92,246,.12)'},task_assign:{label:'TASK ASSIGN',color:'#EC4899',bg:'rgba(236,72,153,.12)'},email_sent:{label:'EMAIL SENT',color:'#06B6D4',bg:'rgba(6,182,212,.12)'},message_sent:{label:'MESSAGE SENT',color:S.amber,bg:'rgba(245,158,11,.12)'}};
   const getName=id=>{const m=team.find(t=>t.id===id);return m?fn(m.name):id||'Unknown'};
   const tsOf=l=>{const t=l.ts||Date.parse(l.time||'');return Number.isFinite(t)?t:0};
@@ -2241,7 +2245,7 @@ function App(){
       db.ref('hub').on('value',snap=>{
         const val=snap.val();
         if(val)setHubData(val);
-        else{db.ref('hub').set(SEED);setHubData(SEED)}
+        else{db.ref('hub').once('value',s2=>{if(!s2.val()){db.ref('hub').set(SEED);setHubData(SEED)}})}
       });
     }catch(e){console.error(e);localStorage.removeItem(LK);window.location.reload()}
     return()=>{if(dbRef.current)dbRef.current.ref('hub').off()};
@@ -2263,13 +2267,13 @@ function App(){
           const text=await r.text();
           if(text.trim().startsWith('<!'))continue;
           const hash=text.length+'-'+Array.from(text).reduce((h,c)=>(((h<<5)-h)+c.charCodeAt(0))|0,0);
-          if(syncHashRef.current[s.id]===hash)continue;
+          if(syncHashRef.current[s.id]===hash){_lastBgSync=Date.now();continue}
           syncHashRef.current[s.id]=hash;
           const rows=parseCSV(text);
-          if(rows.length>0)db.ref('hub/sheetData/'+s.id).set(rows);
+          db.ref('hub/sheetData/'+s.id).set(rows.length>0?rows:null);
+          _lastBgSync=Date.now();
         }catch(e){}
       }
-      _lastBgSync=Date.now();
     };
     syncAll();
     const iv=setInterval(syncAll,30000);
