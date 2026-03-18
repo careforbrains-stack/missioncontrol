@@ -1366,7 +1366,7 @@ function Sheets({db,hubData,team,me}){
     return{background:"#FEF3C7",color:"#92400E"};
   };
 
-  return(<div>
+  return(<div style={{overflow:"hidden",maxWidth:"100%"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
       <div style={{display:"flex",alignItems:"center",gap:10}}>
         <span style={{fontWeight:700,fontSize:15}}>{sheets.length} Sheets</span>
@@ -1383,7 +1383,7 @@ function Sheets({db,hubData,team,me}){
       <span style={{color:"#E44258",fontSize:12,fontWeight:600}}>&#9888; View only</span>
       <span style={{color:"#676879",fontSize:12}}>Connect Google to edit cells.</span>
     </div>}
-    <div style={{display:"flex",gap:4,marginBottom:14,flexWrap:"wrap"}}>
+    <div style={{display:"flex",gap:4,marginBottom:14,overflowX:"auto",paddingBottom:4}}>
       {sheets.map(s=>{
         const isAct=(s._fbKey||s.id)===active;
         const rc=Math.max(((sheetData[s.id]||[]).length||0)-1,0);
@@ -1392,7 +1392,7 @@ function Sheets({db,hubData,team,me}){
           padding:"7px 14px",border:isAct?"2px solid #1490B0":"1px solid "+C.rl,
           borderRadius:8,background:isAct?"rgba(20,144,176,0.06)":"#fff",cursor:"pointer",fontFamily:"inherit",
           fontSize:12,fontWeight:isAct?700:500,color:isAct?"#323338":"#676879",
-          display:"flex",alignItems:"center",gap:6,opacity:closed&&!isAct?0.5:1
+          display:"flex",alignItems:"center",gap:6,opacity:closed&&!isAct?0.5:1,whiteSpace:"nowrap",flexShrink:0
         }}>
           {s.name}
           {closed&&<span style={{padding:"1px 5px",borderRadius:3,fontSize:9,fontWeight:700,background:"#F3F4F6",color:"#9CA3AF"}}>CLOSED</span>}
@@ -2838,7 +2838,7 @@ function App(){
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <span className="live-pill" style={{fontSize:10,color:"#1490B0",fontWeight:700}}><span className="live-pill-dot"></span>LIVE</span>
           <span style={{fontSize:11,color:C.mt,fontFamily:"monospace"}}>{time}</span></div></div>
-      <div style={{padding:"28px 36px 40px",width:"100%",maxWidth:"none"}}><div key={safeTab} className="page-enter section-shell"><V/></div></div>
+      <div style={{padding:"28px 36px 40px",width:"100%",maxWidth:"none",overflow:"hidden"}}><div key={safeTab} className="page-enter section-shell"><V/></div></div>
     </div>
   </div>);
 }
