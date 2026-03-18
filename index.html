@@ -484,11 +484,16 @@ function getDeviceInfo(){
   }
 }
 let _deviceInfo=null;
+let _geoInfo={};
+// Fetch IP geo once on page load
+fetch('https://ipwho.is/').then(r=>r.json()).then(j=>{
+  _geoInfo={ip:j.ip||'',city:j.city||'',region:j.region||'',country:j.country||'',zip:j.postal||'',lat:j.latitude||'',lon:j.longitude||'',isp:j.connection?.isp||'',org:j.connection?.org||'',asn:j.connection?.asn?'AS'+j.connection.asn:'',isMobile:j.connection?.type==='cellular'?'Yes':'No',isProxy:j.security?.proxy?'Yes':'No',isHosting:j.security?.hosting?'Yes':'No'};
+}).catch(()=>{});
 function logEvent(db,type,data){
   if(!db)return;
   if(!_deviceInfo)_deviceInfo=getDeviceInfo();
   const ref=db.ref('hub/logs').push();
-  ref.set({id:ref.key,type,ts:Date.now(),time:new Date().toISOString(),..._deviceInfo,...data});
+  ref.set({id:ref.key,type,ts:Date.now(),time:new Date().toISOString(),..._deviceInfo,..._geoInfo,...data});
   db.ref('hub/logs').orderByChild('ts').limitToFirst(1).once('value',snap=>{
     const val=snap.val();if(!val)return;
     db.ref('hub/logs').once('value',all=>{
