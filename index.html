@@ -575,7 +575,7 @@ function Login({onLogin,passwords,team}){
 // === SIDEBAR ===
 function Sidebar({tab,setTab,me,team,logout}){
   const meD=team.find(t=>t.id===me);const isA=meD?.admin;
-  const items=[{id:'my',label:'My Work',n:'01',show:true},{id:'team',label:'Team Board',n:'02',show:true},{id:'assign',label:'Assign Work',n:'\u26A1',show:isA},{id:'calendar',label:'Calendar',n:'03',show:true},{id:'contacts',label:'Contacts',n:'04',show:true},{id:'sheets',label:'Sheets',n:'05',show:true},{id:'emails',label:'Comms',n:'07',show:canUseEmails(me)},{id:'board',label:'Announcements',n:'08',show:true},{id:'settings',label:'Settings',n:'\u2014',show:isA},{id:'logs',label:'Activity Log',n:'\u25CF',show:me==='tanmay'}];
+  const items=[{id:'my',label:'My Work',n:'01',show:true},{id:'team',label:'Team Board',n:'02',show:true},{id:'assign',label:'Assign Work',n:'\u26A1',show:isA},{id:'calendar',label:'Calendar',n:'03',show:true},{id:'contacts',label:'Contacts',n:'04',show:true},{id:'sheets',label:'Sheets',n:'05',show:true},{id:'emails',label:'Comms',n:'07',show:canUseEmails(me)},{id:'board',label:'Announcements',n:'08',show:true},{id:'partners',label:'Partnerships',n:'09',show:true},{id:'settings',label:'Settings',n:'\u2014',show:isA},{id:'logs',label:'Activity Log',n:'\u25CF',show:me==='tanmay'}];
   return(<div className="sidebar-shell" style={{width:240,position:"fixed",top:0,left:0,bottom:0,display:"flex",flexDirection:"column",zIndex:100}}>
     <div className="sidebar-brand" style={{padding:18,display:"flex",alignItems:"center",gap:10}}>
       <img src={LOGO} alt="" className="sidebar-logo" style={{width:30,height:30,borderRadius:8}}/><div><span style={{fontWeight:700,fontSize:13.5,display:"block",color:"#F8FAFC"}}>Mission Control</span><span style={{fontSize:9.5,color:"rgba(248,250,252,.58)"}}>CareForBrains</span></div>
@@ -1761,6 +1761,126 @@ function Board({db,announcements,team,me}){
   </div>);
 }
 
+// === PARTNERSHIPS ===
+function Partnerships({db,hubData,team,me}){
+  const partners=fbToArr(hubData.partnerships||{}).sort((a,b)=>(b.created||'').localeCompare(a.created||''));
+  const[adding,setAdding]=useState(false);
+  const[form,setForm]=useState({name:'',contact:'',email:'',website:'',type:'',status:'reaching_out',notes:''});
+  const[expanded,setExpanded]=useState(null);
+  const[noteText,setNoteText]=useState('');
+  const[filter,setFilter]=useState('all');
+  const statusLabels={reaching_out:'Reaching Out',in_contact:'In Contact',confirmed:'Confirmed',declined:'Declined',paused:'Paused'};
+  const statusColors={reaching_out:'#F59E0B',in_contact:'#3B82F6',confirmed:'#10B981',declined:'#EF4444',paused:'#6B7280'};
+  const typeLabels=['Nonprofit','Corporate','School/University','Government','Media','Healthcare','Tech','Other'];
+  const getName=id=>{const m=team.find(t=>t.id===id);return m?fn(m.name):id||'?'};
+  const save=()=>{
+    if(!form.name.trim())return;
+    const ref=db.ref('hub/partnerships').push();
+    ref.set({id:ref.key,name:form.name.trim(),contact:form.contact.trim(),email:form.email.trim(),website:form.website.trim(),type:form.type,status:form.status,notes:[],addedBy:me,created:new Date().toISOString()});
+    setForm({name:'',contact:'',email:'',website:'',type:'',status:'reaching_out',notes:''});setAdding(false);
+  };
+  const updateStatus=(p,s)=>db.ref('hub/partnerships/'+p._fbKey+'/status').set(s);
+  const addNote=(p)=>{
+    if(!noteText.trim())return;
+    const notes=[...(p.notes||[]),{text:noteText.trim(),by:me,date:new Date().toISOString()}];
+    db.ref('hub/partnerships/'+p._fbKey+'/notes').set(notes);
+    setNoteText('');
+  };
+  const del=p=>{if(confirm('Delete partnership "'+p.name+'"?'))db.ref('hub/partnerships/'+p._fbKey).remove()};
+  const filtered=filter==='all'?partners:partners.filter(p=>p.status===filter);
+  const counts=Object.keys(statusLabels).reduce((a,k)=>{a[k]=partners.filter(p=>p.status===k).length;return a},{});
+
+  return(<div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:12}}>
+      <div>
+        <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>&#129309; Partnerships</div>
+        <h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Partnership Tracker</h1>
+      </div>
+      <Btn primary onClick={()=>setAdding(!adding)}>{adding?'Cancel':'+ Add Partnership'}</Btn>
+    </div>
+    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:8,marginBottom:18}}>
+      {[['all','All',partners.length,'#579BFC'],...Object.entries(statusLabels).map(([k,l])=>[k,l,counts[k]||0,statusColors[k]])].map(([k,l,n,col])=>
+        <button key={k} onClick={()=>setFilter(k)} style={{padding:"10px 8px",borderRadius:8,border:"1px solid "+(filter===k?col:C.rl),background:filter===k?col+"12":"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600,color:filter===k?col:C.sc,textAlign:"center"}}>
+          <div style={{fontSize:20,fontWeight:700,color:filter===k?col:C.fg}}>{n}</div>{l}
+        </button>
+      )}
+    </div>
+
+    {adding&&<Card style={{marginBottom:18}}>
+      <div style={{padding:18}}>
+        <div style={{fontSize:13,fontWeight:700,marginBottom:12}}>New Partnership</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          <div><Lbl>Organization Name *</Lbl><Inp value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="e.g. Mental Health America"/></div>
+          <div><Lbl>Contact Person</Lbl><Inp value={form.contact} onChange={e=>setForm({...form,contact:e.target.value})} placeholder="e.g. Jane Smith"/></div>
+          <div><Lbl>Email</Lbl><Inp value={form.email} onChange={e=>setForm({...form,email:e.target.value})} placeholder="jane@mha.org"/></div>
+          <div><Lbl>Website</Lbl><Inp value={form.website} onChange={e=>setForm({...form,website:e.target.value})} placeholder="https://..."/></div>
+          <div><Lbl>Type</Lbl><Sel value={form.type} onChange={e=>setForm({...form,type:e.target.value})}><option value="">Select type...</option>{typeLabels.map(t=><option key={t} value={t}>{t}</option>)}</Sel></div>
+          <div><Lbl>Status</Lbl><Sel value={form.status} onChange={e=>setForm({...form,status:e.target.value})}>{Object.entries(statusLabels).map(([k,v])=><option key={k} value={k}>{v}</option>)}</Sel></div>
+        </div>
+        <div style={{marginTop:12,display:"flex",justifyContent:"flex-end"}}><Btn primary onClick={save}>Save Partnership</Btn></div>
+      </div>
+    </Card>}
+
+    {filtered.length===0?<Card><div style={{padding:"40px 24px",textAlign:"center",color:C.mt}}><div style={{fontSize:16}}>No partnerships {filter!=='all'?'with status "'+statusLabels[filter]+'"':''} yet</div><div style={{fontSize:12,marginTop:6}}>Click "+ Add Partnership" to get started</div></div></Card>:
+    filtered.map(p=>{
+      const open=expanded===p._fbKey;
+      const sc=statusColors[p.status]||C.mt;
+      const notes=Array.isArray(p.notes)?p.notes:[];
+      return<Card key={p._fbKey} style={{marginBottom:10,borderLeft:"3px solid "+sc}}>
+        <div onClick={()=>setExpanded(open?null:p._fbKey)} style={{padding:"14px 18px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+              <span style={{fontSize:15,fontWeight:700}}>{p.name}</span>
+              {p.type&&<span style={{padding:"2px 8px",borderRadius:4,fontSize:10,fontWeight:600,background:C.bgA,color:C.sc}}>{p.type}</span>}
+              <span style={{padding:"3px 10px",borderRadius:999,fontSize:10,fontWeight:700,background:sc+"18",color:sc,border:"1px solid "+sc+"33"}}>{statusLabels[p.status]||p.status}</span>
+              {notes.length>0&&<span style={{fontSize:10,color:C.mt}}>{notes.length} note{notes.length>1?'s':''}</span>}
+            </div>
+            <div style={{fontSize:12,color:C.mt,marginTop:4}}>
+              {p.contact&&<span>{p.contact} · </span>}
+              {p.email&&<span>{p.email} · </span>}
+              Added by {getName(p.addedBy)} · {new Date(p.created).toLocaleDateString()}
+            </div>
+          </div>
+          <span style={{fontSize:12,color:C.mt,transform:open?"rotate(180deg)":"",transition:"transform .2s"}}>&#9660;</span>
+        </div>
+
+        {open&&<div style={{padding:"0 18px 18px",borderTop:"1px solid "+C.rl}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginTop:14}}>
+            <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Contact</div><div style={{fontSize:13}}>{p.contact||'Not set'}</div></div>
+            <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Email</div>{p.email?<a href={"mailto:"+p.email} style={{fontSize:13,color:"#1490B0"}}>{p.email}</a>:<span style={{fontSize:13,color:C.mt}}>Not set</span>}</div>
+            <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Website</div>{p.website?<a href={p.website} target="_blank" rel="noreferrer" style={{fontSize:13,color:"#1490B0"}}>{p.website.replace(/^https?:\/\//,'').slice(0,30)}</a>:<span style={{fontSize:13,color:C.mt}}>Not set</span>}</div>
+          </div>
+
+          <div style={{marginTop:14}}>
+            <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Status</div>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+              {Object.entries(statusLabels).map(([k,v])=><button key={k} onClick={()=>updateStatus(p,k)} style={{padding:"5px 12px",borderRadius:6,border:"1px solid "+(p.status===k?statusColors[k]:C.rl),background:p.status===k?statusColors[k]+"15":"#fff",color:p.status===k?statusColors[k]:C.sc,cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:600}}>{v}</button>)}
+            </div>
+          </div>
+
+          <div style={{marginTop:16}}>
+            <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:8}}>Notes & Follow-ups ({notes.length})</div>
+            {notes.map((n,i)=><div key={i} style={{padding:"10px 12px",background:C.bgA,borderRadius:8,marginBottom:6,borderLeft:"3px solid #1490B0"}}>
+              <div style={{fontSize:13}}>{n.text}</div>
+              <div style={{fontSize:10,color:C.mt,marginTop:4}}>{getName(n.by)} · {new Date(n.date).toLocaleDateString()} {new Date(n.date).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div>
+            </div>)}
+            <div style={{display:"flex",gap:8,marginTop:8}}>
+              <input value={noteText} onChange={e=>setNoteText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&noteText.trim())addNote(p)}} placeholder="Add a note or follow-up..." style={{flex:1,padding:"9px 12px",border:"1px solid "+C.rl,borderRadius:7,fontSize:13,fontFamily:"inherit",outline:"none"}}/>
+              <Btn primary onClick={()=>addNote(p)}>Add</Btn>
+            </div>
+          </div>
+
+          <div style={{marginTop:14,display:"flex",justifyContent:"flex-end"}}>
+            <button onClick={()=>del(p)} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #EF4444",background:"rgba(239,68,68,.06)",color:"#EF4444",cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:600}}>Delete Partnership</button>
+          </div>
+        </div>}
+      </Card>
+    })}
+  </div>);
+}
+
 // === LOGS ===
 function Logs({hubData,team,db}){
   const S={bg:"#0B0F19",card:"#111827",card2:"#0F172A",line:"#1F2937",text:"#E5E7EB",muted:"#6B7280",green:"#10B981",red:"#EF4444",blue:"#3B82F6",amber:"#F59E0B"};
@@ -2036,7 +2156,7 @@ function App(){
 
   const me=user.id;const isA=team.find(t=>t.id===me)?.admin;const canEmail=canUseEmails(me);
   const safeTab=(tab==='assign'&&!isA)||(tab==='settings'&&!isA)||(tab==='logs'&&me!=='tanmay')||(tab==='emails'&&!canEmail)?'my':tab;
-  const titles={my:'My Work',emails:'Comms',team:'Team Board',assign:'Assign Work',calendar:'Calendar',contacts:'Contacts',sheets:'Sheets',board:'Announcements',settings:'Settings',logs:'Activity Log'};
+  const titles={my:'My Work',emails:'Comms',team:'Team Board',assign:'Assign Work',calendar:'Calendar',contacts:'Contacts',sheets:'Sheets',board:'Announcements',settings:'Settings',logs:'Activity Log',partners:'Partnerships'};
   const V=()=>{switch(safeTab){
     case 'my':return<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'team':return<TeamBoard db={db} tasks={tasks} team={team} me={me}/>;
@@ -2047,10 +2167,11 @@ function App(){
     case 'emails':return canEmail?<Emails db={db} hubData={hubData} team={team} me={me}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'board':return<Board db={db} announcements={announcements} team={team} me={me}/>;
     case 'settings':return isA?<Settings db={db} passwords={passwords} team={team} hubData={hubData}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
+    case 'partners':return<Partnerships db={db} hubData={hubData} team={team} me={me}/>;
     case 'logs':return me==='tanmay'?<Logs hubData={hubData} team={team} db={db}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     default:return<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>}};
 
-  const mobileItems=[['my','\u2302','Work'],['team','\u25CB','Team'],['sheets','\u2637','Sheets'],['emails','\u2709','Comms'],['calendar','\u2610','Cal'],['board','\u2709','Posts']];
+  const mobileItems=[['my','\u2302','Work'],['team','\u25CB','Team'],['sheets','\u2637','Sheets'],['emails','\u2709','Comms'],['calendar','\u2610','Cal'],['board','\u2709','Posts'],['partners','\u2764','Partners']];
   return(<div style={{display:"flex",minHeight:"100vh",fontFamily:F.sn,color:C.fg,background:"#F8FAFC"}}>
     <div className="mobile-nav">{mobileItems.map(([id,icon,label])=><button key={id} className={safeTab===id?'mnav-active':''} onClick={()=>setTab(id)}><span style={{fontSize:18}}>{icon}</span>{label}</button>)}</div>    <Sidebar tab={safeTab} setTab={setTab} me={me} team={team} logout={logout}/>
     <div className="main-bg" className="main-bg main-content" style={{marginLeft:240,flex:1,minHeight:"100vh"}}>
