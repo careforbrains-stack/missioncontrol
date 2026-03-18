@@ -576,7 +576,7 @@ function Sidebar({tab,setTab,me,team,logout}){
   const meD=team.find(t=>t.id===me);const isA=meD?.admin;
   const items=[
     // WORK
-    {id:'my',label:'My Work',n:'01',show:true,sec:'WORKSPACE'},
+    {id:'my',label:'Dashboard',n:'01',show:true,sec:'WORKSPACE'},
     {id:'team',label:'Team Board',n:'02',show:true},
     {id:'assign',label:'Assign Work',n:'\u26A1',show:isA},
     {id:'calendar',label:'Calendar',n:'03',show:true},
@@ -2655,24 +2655,24 @@ function App(){
 
   const me=user.id;const isA=team.find(t=>t.id===me)?.admin;const canEmail=canUseEmails(me);
   const safeTab=(tab==='assign'&&!isA)||(tab==='settings'&&!isA)||(tab==='logs'&&me!=='tanmay')||(tab==='emails'&&!canEmail)?'my':tab;
-  const titles={my:'My Work',emails:'Comms',team:'Team Board',assign:'Assign Work',calendar:'Calendar',contacts:'Contacts',volunteers:'Volunteers',sheets:'Sheets',board:'Announcements',settings:'Settings',logs:'Activity Log',roadmap:'Future Plans',partners:'Partnerships'};
+  const titles={my:'Dashboard',emails:'Comms',team:'Team Board',assign:'Assign Work',calendar:'Calendar',contacts:'Contacts',volunteers:'Volunteers',sheets:'Sheets',board:'Announcements',settings:'Settings',logs:'Activity Log',roadmap:'Future Plans',partners:'Partnerships'};
   const V=()=>{switch(safeTab){
     case 'my':return<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>;
     case 'team':return<TeamBoard db={db} tasks={tasks} team={team} me={me}/>;
-    case 'assign':return isA?<Assign db={db} tasks={tasks} team={team} me={me} hubData={hubData}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
+    case 'assign':return isA?<Assign db={db} tasks={tasks} team={team} me={me} hubData={hubData}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>;
     case 'calendar':return<Cal db={db} events={events} tasks={tasks} team={team} me={me}/>;
     case 'contacts':return<Contacts db={db} team={team} me={me}/>;
     case 'volunteers':return<VolunteerCRM hubData={hubData} team={team} me={me}/>;
     case 'sheets':return<Sheets db={db} hubData={hubData} team={team} me={me}/>;
-    case 'emails':return canEmail?<Emails db={db} hubData={hubData} team={team} me={me}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
+    case 'emails':return canEmail?<Emails db={db} hubData={hubData} team={team} me={me}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>;
     case 'board':return<Board db={db} announcements={announcements} team={team} me={me}/>;
-    case 'settings':return isA?<Settings db={db} passwords={passwords} team={team} hubData={hubData}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
+    case 'settings':return isA?<Settings db={db} passwords={passwords} team={team} hubData={hubData}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>;
     case 'roadmap':return<Roadmap db={db} hubData={hubData} team={team} me={me}/>;
     case 'partners':return<Partnerships db={db} hubData={hubData} team={team} me={me}/>;
-    case 'logs':return me==='tanmay'?<Logs hubData={hubData} team={team} db={db}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
-    default:return<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>}};
+    case 'logs':return me==='tanmay'?<Logs hubData={hubData} team={team} db={db}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>;
+    default:return<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>}};
 
-  const mobileItems=[['my','\u2302','Work'],['team','\u25CB','Team'],['sheets','\u2637','Sheets'],['emails','\u2709','Comms'],['calendar','\u2610','Cal'],['board','\u2709','Posts'],['partners','\u2764','Partners']];
+  const mobileItems=[['my','\u2302','Home'],['team','\u25CB','Team'],['sheets','\u2637','Sheets'],['emails','\u2709','Comms'],['calendar','\u2610','Cal'],['board','\u2709','Posts'],['partners','\u2764','Partners']];
   return(<div style={{display:"flex",minHeight:"100vh",fontFamily:F.sn,color:C.fg,background:"#F8FAFC"}}>
     <div className="mobile-nav">{mobileItems.map(([id,icon,label])=><button key={id} className={safeTab===id?'mnav-active':''} onClick={()=>setTab(id)}><span style={{fontSize:18}}>{icon}</span>{label}</button>)}</div>    <Sidebar tab={safeTab} setTab={setTab} me={me} team={team} logout={logout}/>
     <div className="main-bg" className="main-bg main-content" style={{marginLeft:240,flex:1,minHeight:"100vh"}}>
