@@ -28,7 +28,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .sidebar-profile{border-bottom:1px solid rgba(255,255,255,.06)}
 .sidebar-label{color:rgba(255,255,255,.25)}
 .nav-btn{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:13px;font-weight:500;color:rgba(255,255,255,.42);background:transparent;border:none;border-left:3px solid transparent;width:100%;text-align:left;font-family:inherit;transition:all .35s var(--ease-spring)}
-.nav-btn:hover{color:rgba(255,255,255,.88);background:rgba(255,255,255,.04);transform:translateX(4px);border-left-color:rgba(87,155,252,.3)}
+.nav-btn:hover{color:rgba(255,255,255,.88);background:rgba(255,255,255,.04);transform:translateX(2px);border-left-color:rgba(87,155,252,.3)}
 .nav-btn.active{color:#fff;background:rgba(87,155,252,.14);border-left-color:#579BFC;font-weight:700;transform:translateX(0)}
 
 /* SURFACES */
@@ -39,10 +39,10 @@ button:disabled{opacity:.4;cursor:not-allowed}
 /* BUTTONS */
 .mission-btn{border-radius:8px;font-weight:600;border:none;padding:8px 18px;font-size:12.5px;letter-spacing:-.01em;transition:all .3s var(--ease-spring);transform:translateY(0)}
 .mission-btn:not(.mission-btn-primary){background:#F5F6F8;color:#323338;border:1px solid #E6E9EF}
-.mission-btn:not(.mission-btn-primary):hover{background:#ECEDF5;border-color:#D0D4DC;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.mission-btn:not(.mission-btn-primary):hover{background:#ECEDF5;border-color:#D0D4DC;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
 .mission-btn:not(:disabled):active{transform:translateY(0) scale(.96)!important;transition-duration:.1s}
 .mission-btn-primary{background:#579BFC;color:#fff;border:1px solid #4B8AE8;box-shadow:0 4px 14px rgba(87,155,252,.25)}
-.mission-btn-primary:hover{background:#4B8AE8;box-shadow:0 8px 28px rgba(87,155,252,.35);transform:translateY(-3px)}
+.mission-btn-primary:hover{background:#4B8AE8;box-shadow:0 8px 28px rgba(87,155,252,.35);transform:translateY(-1px)}
 
 /* FIELDS */
 .mission-field{border:1px solid #E6E9EF;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;background:#fff;color:#323338;transition:all .3s var(--ease-expo)}
@@ -57,19 +57,17 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .live-pill-dot{width:7px;height:7px;border-radius:50%;background:#00CA72;box-shadow:0 0 10px rgba(0,202,114,.6);animation:pulseDot 2s ease-in-out infinite}
 
 /* STAT CARDS */
-.stat-card{padding:22px;border-radius:12px;background:#fff;border:1px solid #E6E9EF;box-shadow:0 1px 4px rgba(0,0,0,.03);transition:all .4s var(--ease-spring);position:relative;overflow:hidden}
-.stat-card:hover{box-shadow:0 12px 36px rgba(0,0,0,.07);transform:translateY(-4px) scale(1.02)}
-.stat-card::after{content:"";position:absolute;bottom:-30px;right:-30px;width:90px;height:90px;border-radius:50%;background:rgba(87,155,252,.05);transition:all .4s var(--ease-expo);pointer-events:none}
-.stat-card:hover::after{transform:scale(1.8);background:rgba(87,155,252,.08)}
+.stat-card{padding:22px;border-radius:14px;background:#fff;border:1px solid #E6E9EF;box-shadow:0 1px 4px rgba(0,0,0,.03);transition:box-shadow .3s ease;position:relative;overflow:hidden}
+.stat-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.06)}
 
 /* TEAM TILES */
-.team-tile{border-radius:12px;background:#fff;border:1px solid #E6E9EF;box-shadow:0 1px 4px rgba(0,0,0,.03);transition:all .4s var(--ease-spring)}
-.team-tile:hover{border-color:#579BFC;box-shadow:0 12px 36px rgba(87,155,252,.12);transform:translateY(-4px) scale(1.02)}
+.team-tile{border-radius:14px;background:#fff;border:1px solid #E6E9EF;box-shadow:0 1px 4px rgba(0,0,0,.03);transition:box-shadow .3s ease, border-color .3s ease}
+.team-tile:hover{border-color:#579BFC;box-shadow:0 6px 20px rgba(87,155,252,.08)}
 
 /* LOGIN MEMBER BUTTONS */
-.login-member{transition:all .3s var(--ease-spring)!important}
-.login-member:hover{transform:translateY(-2px)!important;border-color:#579BFC!important;box-shadow:0 8px 24px rgba(87,155,252,.12)!important}
-.login-member:active{transform:translateY(0) scale(.98)!important}
+.login-member{transition:all .2s ease!important}
+.login-member:hover{border-color:#579BFC!important;box-shadow:0 4px 16px rgba(87,155,252,.1)!important}
+.login-member:active{transform:scale(.98)!important}
 
 /* PAGE ANIMATIONS */
 .page-enter{animation:pageSlide .5s var(--ease-expo) both}
@@ -96,15 +94,15 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
 /* ANIMATED BACKGROUND */
 .main-bg{position:relative}
-.main-bg::before{content:"";position:fixed;top:-50%;right:-30%;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(87,155,252,.06) 0%,transparent 70%);pointer-events:none;animation:floatOrb 20s ease-in-out infinite}
-.main-bg::after{content:"";position:fixed;bottom:-40%;left:-20%;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(0,202,114,.05) 0%,transparent 70%);pointer-events:none;animation:floatOrb 25s ease-in-out infinite reverse}
-@keyframes floatOrb{0%,100%{transform:translate(0,0)}25%{transform:translate(30px,-40px)}50%{transform:translate(-20px,30px)}75%{transform:translate(40px,20px)}}
+.main-bg::before{display:none}
+.main-bg::after{display:none}
+
 
 /* SIDEBAR GLOW */
 .nav-btn.active::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:60%;background:#579BFC;border-radius:0 4px 4px 0;box-shadow:0 0 12px rgba(87,155,252,.6),0 0 30px rgba(87,155,252,.3)}
 .nav-btn{position:relative;overflow:hidden}
 .nav-btn::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.03),transparent);transform:translateX(-100%);transition:none}
-.nav-btn:hover::after{transform:translateX(100%);transition:transform .6s}
+.nav-btn:hover::after{display:none}
 
 /* SIDEBAR LOGO PULSE */
 .sidebar-logo{animation:logoPulse 3s ease-in-out infinite}
@@ -112,7 +110,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
 /* CARD HOVER LIFT */
 .mission-card{transform:translateY(0)}
-.mission-card:hover{transform:translateY(-3px)}
+.mission-card:hover{transform:translateY(-1px)}
 
 /* TASK ITEM HOVER */
 .task-item{transition:all .25s var(--ease-spring);border-radius:8px;padding:12px 0;margin:0 -8px;padding-left:8px;padding-right:8px}
@@ -120,7 +118,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
 /* CHECKBOX ANIMATION */
 .check-box{transition:all .2s var(--ease-spring)}
-.check-box:hover{transform:scale(1.15);border-color:#579BFC!important}
+.check-box:hover{transform:scale(1.05);border-color:#579BFC!important}
 .check-box:active{transform:scale(.9)}
 
 /* STAT COUNTER ANIMATION */
@@ -128,11 +126,11 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
 /* TAG HOVER */
 .tag-badge{transition:all .2s var(--ease-spring)}
-.tag-badge:hover{transform:scale(1.08)}
+.tag-badge:hover{transform:scale(1.03)}
 
 /* CALENDAR DAY HOVER */
 .cal-day{transition:all .2s var(--ease-spring);border-radius:0}
-.cal-day:hover{background:rgba(87,155,252,.06)!important;transform:scale(1.02)}
+.cal-day:hover{background:rgba(87,155,252,.06)!important;}
 
 /* TABLE ROW HOVER */
 .table-row-hover:hover{background:rgba(87,155,252,.04)!important}
@@ -143,7 +141,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 /* BUTTON RIPPLE */
 .mission-btn-primary{position:relative;overflow:hidden}
 .mission-btn-primary::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);transform:translateX(-100%)}
-.mission-btn-primary:hover::after{transform:translateX(100%);transition:transform .5s}
+.mission-btn-primary:hover::after{display:none}
 
 /* LOGIN ANIMATED BG */
 .login-bg{background:linear-gradient(-45deg,#F0F7FF,#F7F8FA,#E8FFF3,#F5F0FF);background-size:400% 400%;animation:loginGrad 12s ease infinite}
@@ -159,12 +157,12 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .tab-btn:active{transform:translateY(1px) scale(.97)}
 
 /* AVATAR HOVER */
-.av-hover:hover{transform:scale(1.08);box-shadow:0 4px 16px rgba(0,0,0,.12)!important}
+.av-hover:hover{transform:scale(1.03);box-shadow:0 4px 16px rgba(0,0,0,.12)!important}
 .av-hover{transition:all .3s var(--ease-spring)!important}
 
 /* SHEET TAB PILL */
 .sheet-tab{transition:all .3s var(--ease-spring)}
-.sheet-tab:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.sheet-tab:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
 
 /* PROGRESS BAR */
 @keyframes progressPulse{0%,100%{opacity:.8}50%{opacity:1}}
@@ -532,8 +530,8 @@ function Tag({t}){const m={high:{b:"#FEE2E2",c:C.rd},medium:{b:"#FEF3C7",c:"#D97
 function Btn({primary,children,onClick,style:sx,className='',...p}){return<button className={`mission-btn ${primary?'mission-btn-primary':''} ${className}`.trim()} onClick={onClick} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"7px 16px",borderRadius:8,fontSize:12,fontWeight:600,cursor:"pointer",...sx}} {...p}>{children}</button>}
 function Inp({className='',...p}){return<input className={`mission-field ${className}`.trim()} style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:10,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",...(p.style||{})}} {...p}/>}
 function Sel({style:sx,className='',...p}){return<select className={`mission-field ${className}`.trim()} style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:10,color:C.fg,fontSize:13,fontFamily:"inherit",...(sx||{})}} {...p}/>}
-function Lbl({children}){return<label style={{display:"block",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginBottom:5}}>{children}</label>}
-function Card({children,style:sx,className=''}){return<div className={`mission-card ${className}`.trim()} style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:12,overflow:"hidden",marginBottom:14,...(sx||{})}}>{children}</div>}
+function Lbl({children}){return<label style={{display:"block",fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc,marginBottom:5}}>{children}</label>}
+function Card({children,style:sx,className=''}){return<div className={`mission-card ${className}`.trim()} style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:14,overflow:"hidden",marginBottom:14,boxShadow:"0 1px 3px rgba(0,0,0,.03)",...(sx||{})}}>{children}</div>}
 function CardH({children,right}){return<div style={{padding:"12px 18px",borderBottom:"1px solid "+C.bgA,display:"flex",alignItems:"center",justifyContent:"space-between"}}><span style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>{children}</span>{right}</div>}
 
 // === FIREBASE HELPERS ===
@@ -552,7 +550,7 @@ function Login({onLogin,passwords,team}){
       <div style={{textAlign:"center",marginBottom:32}}>
         <img src={LOGO} alt="" style={{width:48,height:48,borderRadius:12,marginBottom:10}}/>
         <h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400}}>Mission Control</h1>
-        <div style={{marginTop:8,display:"inline-flex",alignItems:"center",gap:6,padding:"4px 12px",borderRadius:20,background:"rgba(20,144,176,0.08)",border:"1px solid rgba(20,144,176,0.15)",fontSize:11,fontWeight:600,color:"#1490B0"}}><span style={{width:6,height:6,borderRadius:3,background:"#1490B0",display:"inline-block"}}></span> Synced in real time</div>
+        <div style={{marginTop:8,fontSize:11,color:C.mt}}>Internal Team Hub</div>
       </div>
       <div className="login-panel page-enter login-float" style={{padding:28}}>
         {!sel?<div>
@@ -603,7 +601,7 @@ function Sidebar({tab,setTab,me,team,logout}){
     </div>
     <nav style={{flex:1,overflowY:"auto",padding:"4px 0"}}>
       {items.filter(i=>i.show).map((i)=><React.Fragment key={i.id}>
-          {i.sec&&<div style={{fontSize:9,fontWeight:700,letterSpacing:"0.15em",color:"rgba(248,250,252,.2)",padding:"14px 22px 4px",marginTop:i.sec!=='WORKSPACE'?6:0}}>{i.sec}</div>}
+          {i.sec&&<div style={{fontSize:10,fontWeight:700,letterSpacing:"0.12em",color:"rgba(248,250,252,.35)",padding:"18px 22px 6px",marginTop:i.sec!=='WORKSPACE'?10:0}}>{i.sec}</div>}
           <button className={`nav-btn${tab===i.id?' active':''}`} onClick={()=>setTab(i.id)}><span style={{fontSize:10,color:tab===i.id?'rgba(248,250,252,.55)':'rgba(248,250,252,.36)',minWidth:18,fontFamily:"monospace"}}>{i.n}</span>{i.label}</button>
         </React.Fragment>)}
     </nav>
@@ -619,10 +617,10 @@ function MyWork({db,tasks,events,team,me}){
   const toggle=t=>{db.ref('hub/tasks/'+t._fbKey+'/done').set(!t.done);if(!t.done)db.ref('hub/tasks/'+t._fbKey+'/doneDate').set(new Date().toISOString().split('T')[0])};
   const hr=new Date().getHours();
   return(<div>
-    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>01 &#8212; My Work</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Good {hr<12?"morning":hr<18?"afternoon":"evening"}, {fn(meD?.name)}</h1></div>
+    <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>01 &#8212; My Work</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Good {hr<12?"morning":hr<18?"afternoon":"evening"}, {fn(meD?.name)}</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
     <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:22}}>
-      {[[pending.length,"Open Tasks"],[done.length,"Completed"],[myEv.length,"Upcoming"]].map(([n,l],i)=><Reveal key={i} delay={i*80} scale><div className="stat-card" style={{border:"1px solid "+C.cb}}><div className="stat-number" style={{fontFamily:F.sf,fontSize:34,fontWeight:400,lineHeight:1}}>{n}</div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt,marginTop:6}}>{l}</div></div></Reveal>)}
+      {[[pending.length,"Open Tasks"],[done.length,"Completed"],[myEv.length,"Upcoming"]].map(([n,l],i)=><Reveal key={i} delay={i*80} scale><div className="stat-card" style={{border:"1px solid "+C.cb}}><div className="stat-number" style={{fontFamily:F.sf,fontSize:34,fontWeight:400,lineHeight:1}}>{n}</div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc,marginTop:6}}>{l}</div></div></Reveal>)}
     </div>
     <Card>
       <CardH right={<span style={{fontFamily:"monospace",fontSize:11,color:C.mt}}>{pending.length} open</span>}>Your Assignments</CardH>
@@ -652,7 +650,7 @@ function TeamBoard({db,tasks,team,me}){
   const toggle=t=>{db.ref('hub/tasks/'+t._fbKey+'/done').set(!t.done);if(!t.done)db.ref('hub/tasks/'+t._fbKey+'/doneDate').set(new Date().toISOString().split('T')[0])};
   const del=t=>{if(isA)db.ref('hub/tasks/'+t._fbKey).remove()};
   return(<div>
-    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>02 &#8212; Team Board</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Everyone's Work</h1></div>
+    <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>02 &#8212; Team Board</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Everyone's Work</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
     <div style={{display:"grid",gridTemplateColumns:"repeat("+Math.min(team.length,3)+",1fr)",gap:14,marginBottom:22}}>
       {team.map((m,idx)=>{const ts=tasks.filter(t=>t.assignee===m.id);const op=ts.filter(t=>!t.done).length;const dn=ts.filter(t=>t.done).length;const od=ts.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;
@@ -703,7 +701,7 @@ function Assign({db,tasks,team,me,hubData}){
   const totalOpen=tasks.filter(t=>!t.done).length;const totalDone=tasks.filter(t=>t.done).length;const totalOverdue=tasks.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;
   const pColors={high:'#EF4444',medium:'#F59E0B',low:'#3B82F6'};
   return(<div>
-    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>&#9889; Command Center</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Assign Work</h1></div>
+    <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>&#9889; Assign Work</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Assign Work</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
 
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12,marginBottom:20}}>
@@ -725,7 +723,7 @@ function Assign({db,tasks,team,me,hubData}){
       <Card>
         <div style={{padding:"16px 20px",borderBottom:"1px solid "+C.bgA,display:"flex",alignItems:"center",gap:10}}>
           <div style={{width:8,height:8,borderRadius:4,background:sent?"#10B981":"#579BFC",animation:sent?"none":"pulseDot 2s ease-in-out infinite"}}/>
-          <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:sent?"#10B981":"#323338"}}>{sent?"Mission Dispatched":"New Mission"}</span>
+          <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:sent?"#10B981":"#323338"}}>{sent?"Task Assigned":"New Task"}</span>
         </div>
         {sent?<div className="send-success" style={{padding:"48px 20px",textAlign:"center"}}>
           <div style={{width:56,height:56,borderRadius:"50%",background:"#D1FAE5",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px"}}>
@@ -753,10 +751,10 @@ function Assign({db,tasks,team,me,hubData}){
               </div>)}
             </div>}
           </div>
-          <div style={{marginBottom:14}}><Lbl>Mission Brief</Lbl><Inp value={form.text} onChange={e=>setForm({...form,text:e.target.value})} placeholder="What needs to be done?" onKeyDown={e=>e.key==='Enter'&&assign()}/></div>
-          <div style={{marginBottom:14}}><Lbl>Intel</Lbl><textarea style={{width:"100%",padding:"9px 12px",background:"#fff",border:"1px solid "+C.rl,borderRadius:8,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",minHeight:50,resize:"vertical",transition:"all .3s var(--ease-expo)"}} value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})} placeholder="Links, context, details..." onFocus={e=>e.target.style.borderColor='#579BFC'} onBlur={e=>e.target.style.borderColor=C.rl}/></div>
+          <div style={{marginBottom:14}}><Lbl>Task Description</Lbl><Inp value={form.text} onChange={e=>setForm({...form,text:e.target.value})} placeholder="What needs to be done?" onKeyDown={e=>e.key==='Enter'&&assign()}/></div>
+          <div style={{marginBottom:14}}><Lbl>Notes & Context</Lbl><textarea style={{width:"100%",padding:"9px 12px",background:"#fff",border:"1px solid "+C.rl,borderRadius:8,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",minHeight:50,resize:"vertical",transition:"all .3s var(--ease-expo)"}} value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})} placeholder="Links, context, details..." onFocus={e=>e.target.style.borderColor='#579BFC'} onBlur={e=>e.target.style.borderColor=C.rl}/></div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-            <div><Lbl>Threat Level</Lbl>
+            <div><Lbl>Priority</Lbl>
               <div style={{display:"flex",gap:6}}>
                 {[['high','High','#EF4444'],['medium','Medium','#F59E0B'],['low','Low','#3B82F6']].map(([v,l,col])=>
                   <button key={v} onClick={()=>setForm({...form,priority:v})} style={{
@@ -859,24 +857,24 @@ function Cal({db,events,tasks,team,me}){
   const editTaskDue=(t,newDue)=>{db.ref('hub/tasks/'+t._fbKey+'/due').set(newDue)};
   const taskTone=t=>t.done?{b:"#D1FAE5",c:C.gn}:t.priority==='high'?{b:"#FEE2E2",c:C.rd}:t.priority==='low'?{b:"#DBEAFE",c:"#2563EB"}:{b:"#FEF3C7",c:"#D97706"};
   return(<div>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}><div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>03 &#8212; Calendar</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Calendar</h1></div>{isA&&<Btn primary onClick={()=>setModal(true)}>+ Event</Btn>}</div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}><div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>03 &#8212; Calendar</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Calendar</h1></div>{isA&&<Btn primary onClick={()=>setModal(true)}>+ Event</Btn>}</div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
       <button onClick={()=>setCur(new Date(y,mo-1))} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:14,color:C.sc}}>&#8592;</button>
       <span style={{fontFamily:F.sf,fontSize:19}}>{mos[mo]} {y}</span>
       <button onClick={()=>setCur(new Date(y,mo+1))} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:14,color:C.sc}}>&#8594;</button></div>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:1,background:C.rl,border:"1px solid "+C.rl,borderRadius:8,overflow:"hidden",marginBottom:22}}>
-      {['S','M','T','W','T','F','S'].map((d,i)=><div key={i} style={{background:C.bgA,padding:8,textAlign:"center",fontFamily:"monospace",fontSize:10,color:C.mt}}>{d}</div>)}
-      {cells.map((c,i)=>{const s=cellDate(c);const items=itemsOn(s);return(<div key={i} onClick={()=>setSel(s)} className="cal-day" style={{background:isTd(c.d,c.c)?C.bgA:C.cd,minHeight:74,padding:"5px 6px",cursor:"pointer",fontSize:12,color:!c.c?C.mt:C.fg}}>
-        <div style={{fontFamily:"monospace",fontSize:11,fontWeight:isTd(c.d,c.c)?800:"inherit"}}>{c.d}</div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,background:C.rl,border:"1px solid "+C.rl,borderRadius:12,overflow:"hidden",marginBottom:22}}>
+      {['S','M','T','W','T','F','S'].map((d,i)=><div key={i} style={{background:C.bgA,padding:"10px 8px",textAlign:"center",fontSize:11,fontWeight:600,color:C.sc}}>{d}</div>)}
+      {cells.map((c,i)=>{const s=cellDate(c);const items=itemsOn(s);return(<div key={i} onClick={()=>setSel(s)} className="cal-day" style={{background:sel===s?"#EBF3FF":isTd(c.d,c.c)?C.bgA:C.cd,minHeight:82,padding:"6px 7px",cursor:"pointer",fontSize:12,color:!c.c?C.mt:C.fg,borderLeft:sel===s?"2px solid #579BFC":"2px solid transparent"}}>
+        <div style={{fontSize:13,fontWeight:isTd(c.d,c.c)?800:500,marginBottom:3}}>{c.d}</div>
         {items.slice(0,3).map(item=>item.kind==='task'
-          ?<div key={`t-${item._fbKey}`} style={{padding:"1px 4px",fontSize:8.5,fontWeight:700,borderRadius:4,background:taskTone(item).b,color:taskTone(item).c,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fn(team.find(t=>t.id===item.assignee)?.name)}: {item.text}</div>
-          :<div key={`e-${item._fbKey}`} style={{padding:"1px 4px",fontSize:8.5,fontWeight:600,borderRadius:4,background:C.tg,color:C.td,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.title}</div>
+          ?<div key={`t-${item._fbKey}`} style={{padding:"3px 6px",fontSize:11,fontWeight:600,borderRadius:5,background:taskTone(item).b,color:taskTone(item).c,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fn(team.find(t=>t.id===item.assignee)?.name)}: {item.text}</div>
+          :<div key={`e-${item._fbKey}`} style={{padding:"3px 6px",fontSize:11,fontWeight:600,borderRadius:5,background:C.tg,color:C.td,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.title}</div>
         )}
-        {items.length>3&&<div style={{marginTop:2,fontSize:8.5,fontFamily:"monospace",color:C.mt}}>+{items.length-3} more</div>}
+        {items.length>3&&<div style={{marginTop:2,fontSize:10,color:C.mt}}>+{items.length-3} more</div>}
       </div>)})}
     </div>
-    {sel&&<Card><div style={{padding:"12px 18px",borderBottom:"1px solid "+C.bgA,display:"flex",justifyContent:"space-between"}}><span style={{fontWeight:700,color:C.sc}}>{sel}</span><button onClick={()=>setSel(null)} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.sc,fontFamily:"inherit"}}>Close</button></div>
+    {sel&&<Card style={{borderLeft:"3px solid #579BFC"}}><div style={{padding:"14px 18px",borderBottom:"1px solid "+C.bgA,display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:700,fontSize:14,color:C.fg}}>{sel}</span><button onClick={()=>setSel(null)} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.sc,fontFamily:"inherit"}}>Close</button></div>
       <div style={{padding:"14px 18px"}}>
         {tasksOn(sel).length===0&&events.filter(e=>e.date===sel).length===0&&<div style={{textAlign:"center",padding:20,color:C.mt}}>No events or due tasks</div>}
         {tasksOn(sel).length>0&&<>
@@ -910,7 +908,7 @@ function Contacts({db,team,me}){
   const startEdit=m=>{setEd(m.id);setForm({phone:m.phone||'',email:m.email||''})};
   const saveEdit=(id,idx)=>{db.ref('hub/team/'+idx+'/phone').set(form.phone||'');db.ref('hub/team/'+idx+'/email').set(form.email||'');setEd(null)};
   return(<div>
-    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>04 &#8212; Contacts</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Team Directory</h1></div>
+    <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>04 &#8212; Contacts</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Team Directory</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
     <Card><div style={{padding:"14px 18px"}}>{team.map((m,idx)=><div key={m.id} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 0",borderBottom:"1px solid "+C.bgA}}>
       <Av m={m}/><div style={{flex:1}}>
@@ -1073,7 +1071,7 @@ function Sheets({db,hubData,team,me}){
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-        <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>05 &#8212; Sheets</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Data Room</h1></div>
+        <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>05 &#8212; Sheets</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Data Room</h1></div>
         <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8}}>
           {syncing&&<div style={{width:14,height:14,border:"2px solid #E6E9EF",borderTopColor:"#579BFC",borderRadius:"50%",animation:"spin .8s linear infinite"}}/>}
           <span style={{fontSize:10,color:syncing?"#579BFC":"#B0B8C4",fontWeight:syncing?600:400}}>{syncing?'Syncing...':(()=>{const lt=lastSync?.getTime()||0;const bt=_lastBgSync||0;const best=Math.max(lt,bt);return best?'Synced '+new Date(best).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'\u2014'})()}</span>
@@ -1127,7 +1125,7 @@ function Sheets({db,hubData,team,me}){
           <colgroup>{visibleCols.map((ci,i)=><col key={i} style={{width:isPriCol(cleanHeaders[ci])?"80px":(100/visibleCols.length)+"%"}}/>)}<col style={{width:"36px"}}/></colgroup>
           <thead><tr>{visibleCols.map((ci,i)=>{
             const h=cleanHeaders[ci]||'';const pri=isPriCol(h);
-            return<th key={i} style={{padding:"7px 10px",textAlign:"left",borderBottom:"2px solid "+C.rl,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.04em",color:pri?"#0C6B8E":"#323338",background:pri?"rgba(20,144,176,0.08)":"#F5F6F8",position:"sticky",top:0,zIndex:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fmtH(h)}</th>
+            return<th key={i} style={{padding:"9px 12px",textAlign:"left",borderBottom:"2px solid "+C.rl,fontSize:11,fontWeight:700,letterSpacing:"0.02em",color:pri?"#0C6B8E":"#323338",background:pri?"rgba(20,144,176,0.08)":"#F5F6F8",position:"sticky",top:0,zIndex:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fmtH(h)}</th>
           })}<th style={{width:36,padding:0,borderBottom:"2px solid "+C.rl,background:"#F5F6F8",position:"sticky",top:0,zIndex:2}}></th></tr></thead>
           <tbody>{allRows.map((row,i)=>{
             const isViewing=editCell&&editCell.view===i;
@@ -1556,7 +1554,7 @@ function Emails({db,hubData,team,me}){
   const previewRow=manualMode?[manualName,manualEmail]:(validSelected[Math.min(previewIdx,Math.max(validSelected.length-1,0))]?.row||[]);
 
   return(<div>
-    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>07 &#8212; Comms</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Email Center</h1></div>
+    <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>07 &#8212; Comms</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Email Center</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 18px"}}/>
 
     {!senderReady?<div style={{padding:"14px 16px",borderRadius:10,background:"#FFF5F5",border:"1px solid #FECACA",marginBottom:16,fontSize:12.5}}>
@@ -1769,7 +1767,7 @@ function Board({db,announcements,team,me}){
   const del=a=>{if(confirm('Delete this announcement?'))db.ref('hub/announcements/'+a._fbKey).remove()};
   const sorted=[...announcements].sort((a,b)=>(b.ts||0)-(a.ts||0));
   return(<div>
-    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>06 &#8212; Announcements</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Board</h1></div>
+    <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>06 &#8212; Announcements</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Board</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
     <Card style={{marginBottom:18}}><div style={{padding:"14px 18px",display:"flex",gap:8}}>
       <textarea style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:7,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",minHeight:44,resize:"vertical"}} placeholder="Post an update..." value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(text.trim())post()}}}/>
@@ -1817,8 +1815,8 @@ function Roadmap({db,hubData,team,me}){
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:12}}>
       <div>
-        <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>{'\uD83D\uDE80'} Roadmap</div>
-        <h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Future Plans</h1>
+        <div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>{'\uD83D\uDE80'} Roadmap</div>
+        <h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Future Plans</h1>
       </div>
       <Btn primary onClick={()=>setAdding(!adding)}>{adding?'Cancel':'+ New Initiative'}</Btn>
     </div>
@@ -1953,8 +1951,8 @@ function Partnerships({db,hubData,team,me}){
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:12}}>
       <div>
-        <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>&#129309; Partnerships</div>
-        <h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Partnership Tracker</h1>
+        <div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>&#129309; Partnerships</div>
+        <h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Partnership Tracker</h1>
       </div>
       <Btn primary onClick={()=>setAdding(!adding)}>{adding?'Cancel':'+ Add Partnership'}</Btn>
     </div>
@@ -2210,7 +2208,7 @@ function Settings({db,passwords,team,hubData}){
   const chPw=()=>{if(!np)return;db.ref('hub/passwords/'+pu).set(np);setNp('');alert('Updated')};
   const resetFb=()=>{if(!confirm('Sign out everywhere on this device?'))return;localStorage.removeItem(LK);window.location.reload()};
   return(<div>
-    <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>Settings</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Configuration</h1></div>
+    <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>Settings</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Configuration</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
 
     <Card><CardH>Passwords</CardH><div style={{padding:"14px 18px"}}><div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
