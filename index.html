@@ -182,28 +182,6 @@ button:disabled{opacity:.4;cursor:not-allowed}
 @keyframes successCheck{0%{stroke-dashoffset:24}100%{stroke-dashoffset:0}}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* SURVEILLANCE CENTER */
-@keyframes scanLine{0%{top:-2px}100%{top:100%}}
-@keyframes matrixRain{0%{transform:translateY(-100%);opacity:1}90%{opacity:1}100%{transform:translateY(100vh);opacity:0}}
-@keyframes flicker{0%,100%{opacity:1}50%{opacity:.85}}
-@keyframes glitch{0%,100%{transform:translateX(0)}20%{transform:translateX(-2px)}40%{transform:translateX(2px)}60%{transform:translateX(-1px)}80%{transform:translateX(1px)}}
-@keyframes radarSweep{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-@keyframes pulseRing{0%{transform:scale(.8);opacity:.6}50%{transform:scale(1.2);opacity:0}100%{transform:scale(.8);opacity:.6}}
-@keyframes typewriter{from{width:0}to{width:100%}}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-@keyframes slideData{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
-@keyframes hexPulse{0%,100%{opacity:.02}50%{opacity:.06}}
-.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,255,65,.15),transparent);animation:scanLine 4s linear infinite;pointer-events:none;z-index:1}
-.matrix-col{position:absolute;top:0;font-family:monospace;font-size:10px;color:rgba(0,255,65,.12);line-height:1;animation:matrixRain 8s linear infinite;pointer-events:none;white-space:pre}
-.surv-title{animation:flicker 3s ease-in-out infinite}
-@keyframes warningPulse{0%,100%{box-shadow:0 0 5px rgba(255,0,0,.2)}50%{box-shadow:0 0 30px rgba(255,0,0,.4),0 0 60px rgba(255,0,0,.1)}}
-@keyframes eyeGlow{0%,100%{text-shadow:0 0 10px rgba(255,0,0,.6)}50%{text-shadow:0 0 30px rgba(255,0,0,.8),0 0 60px rgba(255,0,0,.3)}}
-@keyframes heartbeat{0%,100%{transform:scale(1)}14%{transform:scale(1.1)}28%{transform:scale(1)}42%{transform:scale(1.05)}}
-@keyframes intruderAlert{0%,100%{border-color:rgba(255,68,68,.2)}50%{border-color:rgba(255,68,68,.5)}}
-@keyframes dataStream{0%{background-position:0 0}100%{background-position:0 100%}}
-.threat-row{animation:intruderAlert 2s ease-in-out infinite}
-.heartbeat{animation:heartbeat 1.5s ease-in-out infinite}
-.threat-flash{animation:glitch .3s ease-in-out}
 .send-success{animation:successPop .5s var(--ease-spring) both}
 </style>
 </head>
@@ -1766,207 +1744,162 @@ function Board({db,announcements,team,me}){
 
 // === LOGS ===
 function Logs({hubData,team,db}){
+  const S={bg:"#0B0F19",card:"#111827",card2:"#0F172A",line:"#1F2937",text:"#E5E7EB",muted:"#6B7280",green:"#10B981",red:"#EF4444",blue:"#3B82F6",amber:"#F59E0B"};
   const logs=fbToArr(hubData.logs||{}).sort((a,b)=>(b.ts||0)-(a.ts||0));
   const[filter,setFilter]=useState('all');
   const[expanded,setExpanded]=useState(null);
+  const[hovered,setHovered]=useState(null);
   const[search,setSearch]=useState('');
-  const filtered=(filter==='all'?logs:logs.filter(l=>l.type===filter)).filter(l=>{
-    if(!search)return true;const s=search.toLowerCase();
-    return JSON.stringify(l).toLowerCase().includes(s);
-  });
-  const getName=id=>{const m=team.find(t=>t.id===id);return m?fn(m.name):id||'?'};
+  const[now,setNow]=useState(Date.now());
+  useEffect(()=>{const id=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(id)},[]);
+  const meta={login:{label:'LOGIN',color:S.green,bg:'rgba(16,185,129,.12)'},logout:{label:'LOGOUT',color:S.muted,bg:'rgba(107,114,128,.14)'},page_view:{label:'PAGE VIEW',color:S.blue,bg:'rgba(59,130,246,.12)'},tab_away:{label:'TAB AWAY',color:S.amber,bg:'rgba(245,158,11,.12)'},tab_return:{label:'TAB RETURN',color:S.blue,bg:'rgba(59,130,246,.10)'},sheet_edit:{label:'SHEET EDIT',color:'#8B5CF6',bg:'rgba(139,92,246,.12)'},task_assign:{label:'TASK ASSIGN',color:'#EC4899',bg:'rgba(236,72,153,.12)'},email_sent:{label:'EMAIL SENT',color:'#06B6D4',bg:'rgba(6,182,212,.12)'},message_sent:{label:'MESSAGE SENT',color:S.amber,bg:'rgba(245,158,11,.12)'}};
+  const getName=id=>{const m=team.find(t=>t.id===id);return m?fn(m.name):id||'Unknown'};
+  const tsOf=l=>{const t=l.ts||Date.parse(l.time||'');return Number.isFinite(t)?t:0};
+  const fmtTime=t=>{if(!t)return'--';try{return new Date(t).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit'})}catch{return'--'}};
+  const fmtShort=t=>{if(!t)return'--';try{return new Date(t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}catch{return'--'}};
+  const safeIso=t=>{try{return t?new Date(t).toISOString():'N/A'}catch{return'Invalid'}};
+  const ago=t=>{const s=Math.max(0,Math.floor((now-t)/1000));if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago'};
+  const isThreat=l=>l.isProxy==='Yes'||l.isHosting==='Yes';
+  const matches=(filter==='all'?logs:logs.filter(l=>l.type===filter)).filter(l=>!search||JSON.stringify(l).toLowerCase().includes(search.toLowerCase()));
   const deleteLog=key=>{if(db)db.ref('hub/logs/'+key).remove()};
-  const clearAll=()=>{if(!confirm('PURGE ALL '+filtered.length+' RECORDS?'))return;filtered.forEach(l=>{if(l._fbKey&&db)db.ref('hub/logs/'+l._fbKey).remove()})};
-  const typeLabel={login:'LOGIN',logout:'LOGOUT',sheet_edit:'EDIT',task_assign:'TASK',email_sent:'EMAIL',message_sent:'SMS',page_view:'NAV',tab_away:'AWAY',tab_return:'RETURN'};
-  const typeColor={login:'#00FF41',logout:'#FF6B35',sheet_edit:'#00D4FF',task_assign:'#FFD700',email_sent:'#DA70D6',message_sent:'#FF1493',page_view:'#7B68EE',tab_away:'#FF4444',tab_return:'#44FF44'};
-  const fmtTime=t=>{if(!t)return'';return new Date(t).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:false})};
-  const ago=ts=>{if(!ts)return'';const s=Math.floor((Date.now()-ts)/1000);if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m';if(s<86400)return Math.floor(s/3600)+'h';return Math.floor(s/86400)+'d'};
-  const mkCell=(label,val,color)=><div style={{padding:"12px 14px",background:"rgba(0,255,65,0.03)",border:"1px solid rgba(0,255,65,0.1)",borderRadius:4}}>
-    <div style={{fontSize:11,fontWeight:700,letterSpacing:"0.15em",color:color||"#00FF41",opacity:.6,marginBottom:3}}>{label}</div>
-    <div style={{fontSize:15,fontFamily:"'Courier New',monospace",color:"#C8FFD4",wordBreak:"break-all"}}>{val||'N/A'}</div>
+  const clearAll=()=>{if(!confirm('PURGE ALL '+matches.length+' RECORDS?'))return;matches.forEach(l=>{if(l._fbKey&&db)db.ref('hub/logs/'+l._fbKey).remove()})};
+  const dayStart=new Date();dayStart.setHours(0,0,0,0);
+  const last24=now-86400000;
+  const todayLogs=logs.filter(l=>tsOf(l)>=dayStart.getTime());
+  const loginToday=todayLogs.filter(l=>l.type==='login');
+  const activeUsersToday=[...new Set(loginToday.map(l=>l.user).filter(Boolean))];
+  const uniqueIPs24=[...new Set(logs.filter(l=>tsOf(l)>=last24).map(l=>l.ip).filter(Boolean))].length;
+  const threatCount24=logs.filter(l=>tsOf(l)>=last24&&isThreat(l)).length;
+  const userCounts=todayLogs.reduce((a,l)=>{const k=l.user||'?';a[k]=(a[k]||0)+1;return a},{});
+  const mostActiveEntry=Object.keys(userCounts).sort((a,b)=>userCounts[b]-userCounts[a])[0];
+  const lastLogin=logs.find(l=>l.type==='login');
+  const series=pred=>Array.from({length:7},(_,i)=>{const start=new Date(dayStart);start.setDate(start.getDate()-(6-i));const end=new Date(start);end.setDate(end.getDate()+1);return logs.filter(l=>pred(l)&&tsOf(l)>=start.getTime()&&tsOf(l)<end.getTime()).length});
+  const spark=(pts,color)=>{const max=Math.max(1,...pts);return<div style={{display:'flex',gap:4,alignItems:'flex-end',height:28,marginTop:12}}>{pts.map((n,i)=><span key={i} style={{flex:1,height:Math.max(5,Math.round((n/max)*28)),borderRadius:999,background:n?color+'CC':S.line,opacity:n?1:.55}}/>)}</div>};
+  const cards=[
+    {k:'AU',label:'Active Sessions Today',value:String(activeUsersToday.length),sub:activeUsersToday.length?'Users with login events today':'No logins today',color:S.green,series:series(l=>l.type==='login')},
+    {k:'IP',label:'Unique IPs (24h)',value:String(uniqueIPs24),sub:'Distinct addresses seen in last 24h',color:S.blue,series:series(l=>!!l.ip)},
+    {k:'TH',label:'Threats Detected',value:String(threatCount24),sub:threatCount24?'Proxy or datacenter signals in last 24h':'No threat signals in last 24h',color:threatCount24?S.red:S.muted,series:series(l=>isThreat(l))},
+    {k:'MU',label:'Most Active User Today',value:mostActiveEntry?getName(mostActiveEntry):'--',sub:mostActiveEntry?(userCounts[mostActiveEntry]+' events today'):'No activity today',color:S.amber,series:series(l=>l.user===mostActiveEntry)},
+    {k:'LL',label:'Last Login',value:lastLogin?fmtShort(lastLogin.time||lastLogin.ts):'--',sub:lastLogin?(lastLogin.city||lastLogin.ip||'Unknown source'):'No recent login found',color:S.blue,series:series(l=>l.type==='login')}
+  ];
+  const summary=l=>{
+    if(l.type==='login')return isThreat(l)?'Login from flagged network':'User signed in';
+    if(l.type==='logout')return'User signed out';
+    if(l.type==='page_view')return(l.from||'?')+' \u2192 '+(l.page||'?');
+    if(l.type==='tab_away')return'User moved away from Mission Control';
+    if(l.type==='tab_return')return'User returned to Mission Control';
+    if(l.type==='sheet_edit')return(l.sheet||'Sheet')+' ['+(l.cell||'?')+'] '+((l.oldValue||'').slice(0,18)||'empty')+' \u2192 '+((l.newValue||'').slice(0,18)||'empty');
+    if(l.type==='task_assign')return'"'+((l.task||'').slice(0,54)||'Task')+'" \u2192 '+getName(l.assignee);
+    if(l.type==='email_sent')return(l.subject||'Email sent').slice(0,72);
+    if(l.type==='message_sent')return'To '+(l.toName||'?')+': "'+((l.message||'').slice(0,48))+'"';
+    return'Activity recorded';
+  };
+  const location=l=>[l.city,l.region,l.country].filter(Boolean).join(', ')||l.ip||'--';
+  const detailSection=(title,items,color)=><div style={{background:S.card2,border:'1px solid '+S.line,borderRadius:14,padding:14}}>
+    <div style={{fontSize:11,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase',color:color||S.muted,marginBottom:12}}>{title}</div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:10}}>
+      {items.map(([label,val],i)=><div key={i} style={{padding:'10px 12px',borderRadius:10,background:'rgba(255,255,255,.02)',border:'1px solid rgba(255,255,255,.04)'}}>
+        <div style={{fontSize:10,fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',color:S.muted,marginBottom:4}}>{label}</div>
+        <div style={{fontSize:13,fontFamily:"'Courier New',monospace",color:S.text,wordBreak:'break-word'}}>{val||'N/A'}</div>
+      </div>)}
+    </div>
   </div>;
-  const S={bg:'#0A0E14',card:'#0D1117',border:'#1B2838',green:'#00FF41',dim:'#3A5068',text:'#8BA4B8'};
+  const types=['all',...Object.keys(meta).filter(k=>logs.some(l=>l.type===k))];
 
-  const matrixChars='01001011001CFB00110THREAT0BREACH';
-  const matrixCols=React.useMemo(()=>Array.from({length:15},(_,i)=>({left:i*7+'%',delay:Math.random()*8,speed:5+Math.random()*8,chars:Array.from({length:25},()=>matrixChars[Math.floor(Math.random()*matrixChars.length)]).join('\n')})),[]);
-  const threats=logs.filter(l=>l.isProxy==='Yes'||l.isHosting==='Yes').length;
-  const uniqueIPs=[...new Set(logs.map(l=>l.ip).filter(Boolean))].length;
-  const uniqueDevices=[...new Set(logs.map(l=>l.canvasFP).filter(Boolean))].length;
-  const awayCount=logs.filter(l=>l.type==='tab_away').length;
+  return(<div style={{margin:'-28px -36px -40px',padding:'24px 28px 32px',minHeight:'calc(100vh - 60px)',background:S.bg,color:S.text,fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:16,marginBottom:20,flexWrap:'wrap'}}>
+      <div>
+        <div style={{fontSize:28,fontWeight:700,letterSpacing:'-0.02em'}}>Security Operations</div>
+        <div style={{marginTop:6,fontSize:13,color:S.muted}}>{logs.length} total records  |  Last updated {new Date(now).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'})}</div>
+      </div>
+      <div style={{display:'inline-flex',alignItems:'center',gap:10,padding:'10px 14px',borderRadius:999,background:S.card,border:'1px solid '+S.line}}>
+        <span style={{width:8,height:8,borderRadius:99,background:S.green,display:'inline-block',animation:'logoPulse 2.6s ease-in-out infinite'}}/>
+        <span style={{fontSize:12,fontWeight:700,color:S.text}}>Live</span>
+      </div>
+    </div>
 
-  return(<div style={{margin:"-28px -36px -40px",padding:0,minHeight:"calc(100vh - 60px)",background:"#050508",color:"#00FF41",fontFamily:"'Courier New',monospace",position:"relative",overflow:"hidden"}}>
-    
-    <div className="scan-line"/>
-    {matrixCols.map((col,i)=><div key={i} className="matrix-col" style={{left:col.left,animationDuration:col.speed+'s',animationDelay:col.delay+'s',fontSize:11}}>{col.chars}</div>)}
-    <div style={{position:"absolute",inset:0,backgroundImage:"radial-gradient(circle,rgba(0,255,65,.015) 1px,transparent 1px)",backgroundSize:"24px 24px",animation:"hexPulse 4s ease-in-out infinite",pointerEvents:"none"}}/>
-    
-    <div style={{position:"relative",zIndex:2,padding:"24px 32px 32px"}}>
-    
-    {/* HEADER */}
-    <div style={{borderBottom:"1px solid #1a1a2e",paddingBottom:18,marginBottom:18}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-        <div>
-          <div style={{fontSize:12,fontWeight:700,letterSpacing:"0.4em",color:"#FF4444",marginBottom:6,animation:"eyeGlow 3s ease-in-out infinite"}}>&#128065; CLASSIFIED // EYES ONLY</div>
-          <div className="surv-title" style={{fontSize:52,fontWeight:900,letterSpacing:"0.06em",color:"#00FF41",textShadow:"0 0 40px rgba(0,255,65,.5),0 0 80px rgba(0,255,65,.15)",lineHeight:1}}>SURVEILLANCE</div>
-          <div style={{fontSize:16,color:"#00FF41",opacity:.4,letterSpacing:"0.25em",marginTop:4}}>CAREFORBRAINS SECURITY OPS</div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:14,marginBottom:18}}>
+      {cards.map((c,i)=><div key={i} style={{background:S.card,border:'1px solid '+(c.k==='TH'&&threatCount24?c.color+'55':S.line),borderRadius:16,padding:'16px 16px 14px',boxShadow:'0 12px 30px rgba(0,0,0,.18)'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:10}}>
+          <span style={{width:34,height:34,borderRadius:10,display:'inline-flex',alignItems:'center',justifyContent:'center',fontFamily:"'Courier New',monospace",fontSize:12,fontWeight:700,background:c.color+'1A',color:c.color}}>{c.k}</span>
+          <span style={{fontSize:10,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase',color:S.muted}}>Today</span>
         </div>
-        
-        <div style={{width:90,height:90,position:"relative",flexShrink:0}}>
-          <div style={{position:"absolute",inset:0,borderRadius:"50%",border:"1px solid rgba(0,255,65,.2)"}}/>
-          <div style={{position:"absolute",inset:12,borderRadius:"50%",border:"1px solid rgba(0,255,65,.12)"}}/>
-          <div style={{position:"absolute",inset:24,borderRadius:"50%",border:"1px solid rgba(0,255,65,.06)"}}/>
-          <div style={{position:"absolute",top:"50%",left:"50%",width:45,height:2,transformOrigin:"0 50%",background:"linear-gradient(90deg,rgba(0,255,65,.7),transparent)",animation:"radarSweep 2.5s linear infinite"}}/>
-          <div style={{position:"absolute",top:"50%",left:"50%",width:5,height:5,marginTop:-2.5,marginLeft:-2.5,borderRadius:"50%",background:"#00FF41",boxShadow:"0 0 8px #00FF41"}}/>
-          <div style={{position:"absolute",inset:-4,borderRadius:"50%",border:"1px solid rgba(0,255,65,.05)",animation:"pulseRing 3s ease-in-out infinite"}}/>
-        </div>
-      </div>
-      
-      {/* Stat cards */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:8,marginTop:16}}>
-        {[
-          [logs.length,'INTERCEPTS','#00FF41'],
-          [uniqueIPs,'UNIQUE IPs','#00D4FF'],
-          [uniqueDevices,'DEVICES','#DA70D6'],
-          [threats,'THREATS','#FF4444'],
-          [awayCount,'DESERTIONS','#FF6B35']
-        ].map(([n,l,col],i)=><div key={i} style={{padding:"18px 16px",background:"rgba(0,0,0,.4)",border:"1px solid "+col+"33",borderRadius:4,textAlign:"center"}}>
-          <div className={n>0&&l==='THREATS'?"heartbeat":""} style={{fontSize:36,fontWeight:900,color:col,textShadow:"0 0 15px "+col+"66"}}>{n}</div>
-          <div style={{fontSize:11,fontWeight:700,letterSpacing:"0.2em",color:col,opacity:.5,marginTop:4}}>{l}</div>
-        </div>)}
-      </div>
+        <div style={{marginTop:14,fontSize:c.k==='MU'?18:30,fontWeight:700,letterSpacing:'-0.02em',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{c.value}</div>
+        <div style={{marginTop:4,fontSize:12,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.08em',color:S.muted}}>{c.label}</div>
+        <div style={{marginTop:6,fontSize:12,color:S.muted,minHeight:34}}>{c.sub}</div>
+        {spark(c.series,c.color)}
+      </div>)}
     </div>
-    
-    {/* LIVE TICKER */}
-    <div style={{overflow:"hidden",border:"1px solid #1a1a2e",borderRadius:3,padding:"5px 0",marginBottom:14,background:"rgba(0,0,0,.3)"}}>
-      <div style={{display:"flex",animation:"slideData 40s linear infinite",whiteSpace:"nowrap"}}>
-        {logs.slice(0,30).map((l,i)=><span key={i} style={{fontSize:12,color:typeColor[l.type]||"#3A5068",marginRight:40,opacity:.6}}>
-          [{fmtTime(l.time)}] {typeLabel[l.type]} // {getName(l.user)} // {l.ip||''} {l.city?' // '+l.city:''}{l.isp?' // '+l.isp:''}
-        </span>)}
+
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap',padding:'14px 16px',background:S.card,border:'1px solid '+S.line,borderRadius:16,marginBottom:16}}>
+      <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+        {types.map(t=>{const count=t==='all'?logs.length:logs.filter(l=>l.type===t).length;const m=meta[t]||{label:'ALL',color:S.text,bg:'rgba(255,255,255,.04)'};const active=filter===t;return<button key={t} onClick={()=>setFilter(t)} style={{padding:'9px 14px',borderRadius:999,border:'1px solid '+(active?m.color:S.line),background:active?m.bg:'transparent',color:active?m.color:S.text,cursor:'pointer',fontFamily:'inherit',fontSize:12,fontWeight:700,letterSpacing:'0.02em'}}>{t==='all'?'All Events':m.label} <span style={{color:active?m.color:S.muted}}>{count}</span></button>})}
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',marginLeft:'auto'}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder='Search IP, user, device, event...' style={{width:280,maxWidth:'100%',padding:'10px 14px',background:S.card2,border:'1px solid '+S.line,borderRadius:12,color:S.text,fontSize:13,fontFamily:'inherit',outline:'none'}}/>
+        <button onClick={()=>{setFilter('all');setSearch('')}} style={{padding:'10px 12px',borderRadius:12,border:'1px solid '+S.line,background:'transparent',color:S.muted,cursor:'pointer',fontFamily:'inherit',fontSize:12,fontWeight:700}}>Clear All</button>
+        <button onClick={clearAll} style={{padding:'10px 12px',borderRadius:12,border:'1px solid '+S.red+'66',background:'rgba(239,68,68,.10)',color:S.red,cursor:'pointer',fontFamily:'inherit',fontSize:12,fontWeight:700}}>Purge {matches.length}</button>
       </div>
     </div>
 
-    {/* FILTERS */}
-    <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:10,alignItems:"center"}}>
-      <button onClick={()=>setFilter('all')} style={{padding:"8px 14px",border:"1px solid "+(filter==='all'?"#00FF41":"#1a1a2e"),borderRadius:3,background:filter==='all'?"rgba(0,255,65,.1)":"transparent",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,color:filter==='all'?"#00FF41":"#3A5068",letterSpacing:"0.08em"}}>ALL {logs.length}</button>
-      {Object.keys(typeLabel).map(k=>{const n=logs.filter(l=>l.type===k).length;if(!n)return null;return<button key={k} onClick={()=>setFilter(filter===k?'all':k)} style={{
-        padding:"8px 14px",border:"1px solid "+(filter===k?typeColor[k]:"#1a1a2e"),borderRadius:3,
-        background:filter===k?typeColor[k]+"15":"transparent",cursor:"pointer",fontFamily:"inherit",
-        fontSize:13,fontWeight:700,color:filter===k?typeColor[k]:"#3A5068",letterSpacing:"0.08em"
-      }}>{typeLabel[k]} {n}</button>})}
-      <div style={{flex:1}}/>
-      <button onClick={clearAll} style={{padding:"5px 12px",borderRadius:3,border:"1px solid #FF4444",background:"rgba(255,68,68,.08)",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:700,color:"#FF4444",letterSpacing:"0.12em",animation:threats>0?"warningPulse 2s infinite":"none"}}>&#9760; PURGE ALL</button>
-    </div>
-
-    {/* SEARCH */}
-    <div style={{position:"relative",marginBottom:14}}>
-      <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:13,color:"#3A5068"}}>&#9655;</span>
-      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="SEARCH ALL INTERCEPTS..." style={{
-        width:"100%",padding:"14px 18px 14px 34px",background:"rgba(0,0,0,.4)",border:"1px solid #1a1a2e",borderRadius:4,
-        fontFamily:"inherit",fontSize:16,color:"#00FF41",outline:"none",letterSpacing:"0.05em",
-        boxShadow:search?"0 0 20px rgba(0,255,65,.08),inset 0 0 20px rgba(0,255,65,.03)":"none"
-      }}/>
-    </div>
-
-    {/* LOG ENTRIES */}
-    <div style={{border:"1px solid #1a1a2e",borderRadius:4,overflow:"hidden",background:"rgba(5,5,8,.9)"}}>
-      <div style={{overflowY:"auto",maxHeight:"60vh"}}>
-        {filtered.length===0?<div style={{padding:50,textAlign:"center",color:"#3A5068",fontSize:14,letterSpacing:"0.15em"}}>NO INTERCEPTS FOUND</div>:
-        filtered.slice(0,300).map(l=>{
-          const isThreat=l.isProxy==='Yes'||l.isHosting==='Yes';
-          return<div key={l._fbKey}>
-          <div onClick={()=>setExpanded(expanded===l._fbKey?null:l._fbKey)} className={isThreat?"threat-row":""} style={{
-            display:"flex",alignItems:"center",gap:12,padding:"12px 18px",cursor:"pointer",
-            borderBottom:"1px solid #0f0f1a",
-            background:isThreat?"rgba(255,68,68,.04)":expanded===l._fbKey?"rgba(0,255,65,0.04)":"transparent"
-          }}>
-            <span style={{width:7,height:7,borderRadius:4,background:typeColor[l.type]||"#3A5068",boxShadow:"0 0 8px "+(typeColor[l.type]||"#3A5068"),flexShrink:0}}/>
-            <span style={{fontSize:14,color:"#4A6070",fontFamily:"monospace",width:140,flexShrink:0}}>{fmtTime(l.time)}</span>
-            <span style={{fontSize:12,padding:"4px 10px",borderRadius:3,border:"1px solid "+(typeColor[l.type]||"#3A5068"),color:typeColor[l.type]||"#3A5068",fontWeight:700,letterSpacing:"0.1em",flexShrink:0}}>{typeLabel[l.type]||l.type}</span>
-            <span style={{fontSize:16,color:"#FFD700",fontWeight:700,width:85,flexShrink:0}}>{getName(l.user)}</span>
-            <span style={{fontSize:15,color:"#8BA4B8",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-              {l.type==='login'&&<span>{l.city?<span><span style={{color:"#00D4FF"}}>{l.city}, {l.region}</span> // {l.isp}{isThreat&&<span style={{color:"#FF4444",fontWeight:900}}> &#9888; PROXY/VPN</span>}</span>:'IP: '+l.ip}</span>}
-              {l.type==='logout'&&<span style={{color:"#FF6B35"}}>SESSION TERMINATED</span>}
-              {l.type==='sheet_edit'&&<span>{l.sheet} <span style={{color:"#3A5068"}}>[{l.cell}]</span> {l.oldValue&&<span style={{color:"#FF4444",textDecoration:"line-through"}}>{(l.oldValue||'').slice(0,15)}</span>} <span style={{color:"#00FF41"}}>{(l.newValue||'').slice(0,15)}</span></span>}
-              {l.type==='task_assign'&&<span>"{(l.task||'').slice(0,35)}" <span style={{color:"#3A5068"}}>&gt;</span> {getName(l.assignee)}</span>}
-              {l.type==='email_sent'&&<span>{(l.subject||'').slice(0,40)} <span style={{color:"#3A5068"}}>&gt;</span> {l.to}</span>}
-              {l.type==='message_sent'&&<span>&gt; {l.toName}: "{(l.message||'').slice(0,30)}"</span>}
-              {l.type==='page_view'&&<span>{l.from} <span style={{color:"#3A5068"}}>&gt;</span> <span style={{color:"#7B68EE"}}>{l.page}</span></span>}
-              {l.type==='tab_away'&&<span style={{color:"#FF4444",fontWeight:700}}>&#9888; SUBJECT LEFT MISSION CONTROL</span>}
-              {l.type==='tab_return'&&<span style={{color:"#44FF44"}}>&#10003; SUBJECT RETURNED</span>}
-            </span>
-            <span style={{fontSize:13,color:"#3A5068",flexShrink:0}}>{ago(l.ts)}</span>
-            <span style={{fontSize:10,color:"#3A5068",transform:expanded===l._fbKey?"rotate(180deg)":"",transition:"transform .2s"}}>&#9660;</span>
-          </div>
-          {expanded===l._fbKey&&<div style={{padding:"14px",background:"rgba(0,255,65,0.015)",borderBottom:"2px solid "+(typeColor[l.type]||"#1a1a2e")+"55"}}>
-            {isThreat&&<div style={{padding:"8px 12px",background:"rgba(255,68,68,.08)",border:"1px solid rgba(255,68,68,.3)",borderRadius:4,marginBottom:10,fontSize:16,color:"#FF4444",fontWeight:700,letterSpacing:"0.1em",textAlign:"center",animation:"warningPulse 2s infinite"}}>&#9888; THREAT DETECTED — {l.isProxy==='Yes'?'PROXY/VPN':'DATACENTER IP'} — POSSIBLE IDENTITY MASKING &#9888;</div>}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
-              {mkCell('TIMESTAMP',(()=>{try{return l.time?new Date(l.time).toISOString():'N/A'}catch(e){return'Invalid'}})())}
-              {mkCell('IPv4 ADDRESS',l.ip,'#FF6B35')}
-              {mkCell('CITY',l.city)}
-              {mkCell('STATE/REGION',l.region)}
-              {mkCell('COUNTRY',l.country)}
-              {mkCell('ZIP/POSTAL',l.zip)}
-              {mkCell('GPS COORDINATES',(l.lat&&l.lon)?l.lat+', '+l.lon:'')}
-              {mkCell('ISP',l.isp,'#00D4FF')}
-              {mkCell('ORGANIZATION',l.org)}
-              {mkCell('ASN',l.asn)}
-              {mkCell('MOBILE NET',l.isMobile)}
-              {mkCell('PROXY/VPN',l.isProxy,'#FF4444')}
-              {mkCell('DATACENTER',l.isHosting,'#FF4444')}
-              {mkCell('DEVICE TYPE',l.device)}
-              {mkCell('BROWSER',l.browser)}
-              {mkCell('OS',l.os)}
-              {mkCell('SCREEN RES',l.screen)}
-              {mkCell('WINDOW SIZE',l.window)}
-              {mkCell('PIXEL RATIO',l.pixelRatio)}
-              {mkCell('COLOR DEPTH',l.colorDepth)}
-              {mkCell('CANVAS HASH',l.canvasFP,'#DA70D6')}
-              {mkCell('GPU RENDERER',l.gpu)}
-              {mkCell('GPU VENDOR',l.gpuVendor)}
-              {mkCell('CPU CORES',l.cpuCores)}
-              {mkCell('RAM',l.ram)}
-              {mkCell('TOUCHSCREEN',l.touch)}
-              {mkCell('PLATFORM',l.platform)}
-              {mkCell('DARK MODE',l.darkMode)}
-              {mkCell('NETWORK',l.network)}
-              {mkCell('BANDWIDTH',l.downlink)}
-              {mkCell('BATTERY',l.battery)}
-              {mkCell('INSTALLED FONTS',l.fontsDetected)}
-              {mkCell('PLUGINS',l.plugins)}
-              {mkCell('COOKIES',l.cookiesEnabled)}
-              {mkCell('DNT HEADER',l.doNotTrack)}
-              {mkCell('AD BLOCKER',l.adBlock,'#FFD700')}
-              {mkCell('ENTRY POINT',l.referrer)}
-              {mkCell('SESSION INIT',l.sessionStart)}
-              {mkCell('TIMEZONE',l.tz)}
-              {mkCell('LANGUAGES',l.languages||l.lang)}
-            </div>
-            {l.lat&&l.lon&&<div style={{marginTop:8,padding:"6px 12px",background:"rgba(0,255,65,0.03)",border:"1px solid rgba(0,255,65,0.12)",borderRadius:3,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <span style={{fontSize:14,color:"#00FF41",letterSpacing:"0.1em"}}>&#127758; GEO TARGET: {l.lat}, {l.lon}</span>
-              <a href={"https://www.google.com/maps?q="+l.lat+","+l.lon} target="_blank" rel="noreferrer" style={{fontSize:14,color:"#00D4FF",letterSpacing:"0.08em",textDecoration:"none"}}>OPEN IN MAPS &#8599;</a>
-            </div>}
-            {l.type==='sheet_edit'&&<div style={{marginTop:6,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4}}>
-              {mkCell('TARGET SHEET',l.sheet)}{mkCell('TARGET CELL',l.cell)}{mkCell('DATA CHANGE',(l.oldValue||'null')+' > '+(l.newValue||'null'))}
-            </div>}
-            {l.type==='email_sent'&&<div style={{marginTop:6,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4}}>
-              {mkCell('TEMPLATE',l.template)}{mkCell('RECIPIENT',l.to)}{mkCell('SUBJECT LINE',l.subject)}
-            </div>}
-            {l.type==='task_assign'&&<div style={{marginTop:6,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4}}>
-              {mkCell('MISSION BRIEF',l.task)}{mkCell('ASSIGNED OPERATOR',getName(l.assignee))}{mkCell('THREAT LEVEL',l.priority)}
-            </div>}
-            <div style={{marginTop:10,display:"flex",justifyContent:"space-between",alignItems:"center",borderTop:"1px solid #1a1a2e",paddingTop:8}}>
-              <span style={{fontSize:9,color:"#1a1a2e",letterSpacing:"0.1em"}}>RECORD ID: {l._fbKey?.slice(-12)}</span>
-              <button onClick={e=>{e.stopPropagation();if(confirm('PERMANENTLY DESTROY THIS RECORD?')){deleteLog(l._fbKey);setExpanded(null)}}} style={{padding:"4px 12px",borderRadius:3,border:"1px solid #FF4444",background:"rgba(255,68,68,.06)",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,color:"#FF4444",letterSpacing:"0.12em"}}>&#9760; DESTROY RECORD</button>
-            </div>
-          </div>}
-        </div>})}
+    <div style={{background:S.card,border:'1px solid '+S.line,borderRadius:18,overflow:'hidden',boxShadow:'0 16px 40px rgba(0,0,0,.22)'}}>
+      <div style={{overflowX:'auto'}}>
+        <table style={{width:'100%',borderCollapse:'collapse',minWidth:980}}>
+          <thead>
+            <tr style={{background:S.card2}}>
+              {['Time','Type','User','Summary','Location'].map((h,i)=><th key={i} style={{position:'sticky',top:0,zIndex:2,padding:'14px 16px',borderBottom:'1px solid '+S.line,textAlign:'left',fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.12em',color:S.muted}}>{h}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {matches.length===0?<tr><td colSpan={5} style={{padding:'48px 20px',textAlign:'center',color:S.muted,fontSize:14}}>No matching activity records.</td></tr>:matches.slice(0,300).map((l,i)=>{
+              const m=meta[l.type]||{label:(l.type||'EVENT').toUpperCase(),color:S.text,bg:'rgba(255,255,255,.06)'};
+              const quiet=l.type==='page_view'||l.type==='tab_return';
+              const accent=isThreat(l)?S.red:l.type==='tab_away'?S.amber:l.type==='login'?S.green:'transparent';
+              const open=expanded===l._fbKey;
+              const rowBg=open?S.card2:(hovered===l._fbKey?'rgba(255,255,255,.02)':i%2?S.card:'#0E1626');
+              return<React.Fragment key={l._fbKey}>
+                <tr onClick={()=>setExpanded(open?null:l._fbKey)} onMouseEnter={()=>setHovered(l._fbKey)} onMouseLeave={()=>setHovered(null)} style={{cursor:'pointer',background:rowBg,boxShadow:accent!=='transparent'?'inset 3px 0 0 '+accent:'none',opacity:quiet?0.82:1,transition:'background .16s ease'}}>
+                  <td style={{padding:'14px 16px',borderBottom:'1px solid '+S.line,fontSize:13,color:S.text,fontFamily:"'Courier New',monospace",whiteSpace:'nowrap'}}>{fmtTime(l.time||l.ts)}<div style={{fontSize:11,color:S.muted,marginTop:4}}>{ago(tsOf(l))}</div></td>
+                  <td style={{padding:'14px 16px',borderBottom:'1px solid '+S.line}}><span style={{display:'inline-flex',padding:'6px 10px',borderRadius:999,border:'1px solid '+m.color+'33',background:m.bg,color:m.color,fontSize:11,fontWeight:700,letterSpacing:'0.08em',textTransform:'uppercase'}}>{m.label}</span></td>
+                  <td style={{padding:'14px 16px',borderBottom:'1px solid '+S.line,fontSize:14,fontWeight:600,color:S.text}}>{getName(l.user)}</td>
+                  <td style={{padding:'14px 16px',borderBottom:'1px solid '+S.line,fontSize:14,color:quiet?S.muted:S.text}}>
+                    {summary(l)}
+                    {isThreat(l)&&<span style={{marginLeft:8,padding:'3px 8px',borderRadius:999,background:'rgba(239,68,68,.10)',color:S.red,fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.08em'}}>Flagged Network</span>}
+                  </td>
+                  <td style={{padding:'14px 16px',borderBottom:'1px solid '+S.line,fontSize:13,color:S.muted}}>{location(l)}</td>
+                </tr>
+                {open&&<tr>
+                  <td colSpan={5} style={{padding:0,borderBottom:'1px solid '+S.line}}>
+                    <div style={{padding:'18px 18px 20px',background:'#0D1422'}}>
+                      {isThreat(l)&&<div style={{marginBottom:14,padding:'12px 14px',borderRadius:12,background:'rgba(239,68,68,.10)',border:'1px solid rgba(239,68,68,.28)',color:'#FCA5A5',fontSize:13,fontWeight:700}}>Threat detected: {l.isProxy==='Yes'?'proxy/VPN signal':'datacenter IP signal'}.</div>}
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',gap:12}}>
+                        {detailSection('Location',[['Timestamp',safeIso(l.time)],['IP',l.ip],['City',l.city],['Region',l.region],['Country',l.country],['ISP',l.isp],['Organization',l.org],['ASN',l.asn],['Map',l.lat&&l.lon?<a href={'https://www.google.com/maps?q='+l.lat+','+l.lon} target="_blank" rel="noreferrer" style={{color:S.blue,textDecoration:'none'}}>Open map \u2197</a>:'N/A']],S.blue)}
+                        {detailSection('Device',[['Browser',l.browser],['OS',l.os],['Device',l.device],['Platform',l.platform],['Screen',l.screen],['Window',l.window],['GPU',l.gpu],['Touch',l.touch]],S.green)}
+                        {detailSection('Fingerprint',[['Canvas Hash',l.canvasFP],['Fonts',l.fontsDetected],['Plugins',l.plugins],['Ad Blocker',l.adBlock],['Cookies',l.cookiesEnabled],['DNT',l.doNotTrack]],'#A78BFA')}
+                        {detailSection('Network',[['Connection',l.network],['Bandwidth',l.downlink],['Battery',l.battery],['Mobile',l.isMobile],['Proxy/VPN',l.isProxy],['Datacenter',l.isHosting]],S.amber)}
+                        {detailSection('Session',[['Referrer',l.referrer],['Session Start',l.sessionStart],['Timezone',l.tz],['Languages',l.languages||l.lang],['Record ID',l._fbKey?.slice(-12)],['User',getName(l.user)]],S.muted)}
+                      </div>
+                      {(l.type==='sheet_edit'||l.type==='task_assign'||l.type==='email_sent'||l.type==='message_sent')&&<div style={{marginTop:12,padding:'14px',borderRadius:14,background:S.card2,border:'1px solid '+S.line}}>
+                        <div style={{fontSize:11,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase',color:S.muted,marginBottom:12}}>Event Context</div>
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:10}}>
+                          {l.type==='sheet_edit'&&[['Sheet',l.sheet],['Cell',l.cell],['Before',l.oldValue||'empty'],['After',l.newValue||'empty']].map(([k,v])=><div key={k} style={{fontSize:13,color:S.text}}><div style={{fontSize:10,color:S.muted,textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:4}}>{k}</div><div style={{fontFamily:"'Courier New',monospace"}}>{v}</div></div>)}
+                          {l.type==='task_assign'&&[['Task',l.task],['Assignee',getName(l.assignee)],['Priority',l.priority]].map(([k,v])=><div key={k} style={{fontSize:13,color:S.text}}><div style={{fontSize:10,color:S.muted,textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:4}}>{k}</div><div style={{fontFamily:"'Courier New',monospace"}}>{v}</div></div>)}
+                          {l.type==='email_sent'&&[['Template',l.template],['Recipient',l.to],['Subject',l.subject]].map(([k,v])=><div key={k} style={{fontSize:13,color:S.text}}><div style={{fontSize:10,color:S.muted,textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:4}}>{k}</div><div style={{fontFamily:"'Courier New',monospace"}}>{v}</div></div>)}
+                          {l.type==='message_sent'&&[['Recipient',l.toName],['SMS Status',l.smsStatus],['Email Sent',l.emailSent],['Message',l.message]].map(([k,v])=><div key={k} style={{fontSize:13,color:S.text}}><div style={{fontSize:10,color:S.muted,textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:4}}>{k}</div><div style={{fontFamily:"'Courier New',monospace"}}>{v||'N/A'}</div></div>)}
+                        </div>
+                      </div>}
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:14,gap:12,flexWrap:'wrap'}}>
+                        <div style={{fontSize:11,color:S.muted,fontFamily:"'Courier New',monospace"}}>{l._fbKey}</div>
+                        <button onClick={e=>{e.stopPropagation();if(confirm('PERMANENTLY DESTROY THIS RECORD?')){deleteLog(l._fbKey);setExpanded(null)}}} style={{padding:'10px 12px',borderRadius:12,border:'1px solid '+S.red+'66',background:'rgba(239,68,68,.10)',color:S.red,cursor:'pointer',fontFamily:'inherit',fontSize:12,fontWeight:700}}>Delete Record</button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>}
+              </React.Fragment>
+            })}
+          </tbody>
+        </table>
       </div>
-    </div>
-    <div style={{marginTop:12,display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,color:"#2a2a3e",letterSpacing:"0.12em"}}>
-      <span>CFB-SEC // SURVEILLANCE SYSTEM v3.0</span>
-      <span>CLEARANCE: TANMAY VASUDEVA // CEO</span>
-      <span>{filtered.length} RECORDS ACTIVE</span>
-    </div>
     </div>
   </div>);
 }
