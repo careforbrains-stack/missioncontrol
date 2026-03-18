@@ -285,6 +285,7 @@ const fmtSyncTime=ts=>{
 let _gToken=null;
 let _gEmail=null;
 let _lastSheetEdit={};
+let _lastBgSync=null;
 let _activeSheet='';
 let _tokenClient=null;
 const colToLetter=c=>{let s='';while(c>=0){s=String.fromCharCode(65+(c%26))+s;c=Math.floor(c/26)-1}return s};
@@ -600,7 +601,6 @@ function Sidebar({tab,setTab,me,team,logout}){
     <div className="sidebar-profile" style={{padding:"14px 18px 8px",display:"flex",alignItems:"center",gap:10}}>
       <Av m={meD} s={32}/><div><div style={{fontWeight:700,fontSize:12.5,color:"#F8FAFC"}}>{fn(meD?.name)}</div><div style={{fontSize:9.5,color:"#38C0D4",fontWeight:600,fontFamily:"monospace"}}>{isA?'ADMIN':'MEMBER'}</div></div>
     </div>
-    <div className="sidebar-label" style={{fontSize:9.5,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.12em",padding:"14px 18px 4px"}}>Workspace</div>
     <nav style={{flex:1,overflowY:"auto",padding:"4px 0"}}>
       {items.filter(i=>i.show).map((i)=><React.Fragment key={i.id}>
           {i.sec&&<div style={{fontSize:9,fontWeight:700,letterSpacing:"0.15em",color:"rgba(248,250,252,.2)",padding:"14px 22px 4px",marginTop:i.sec!=='WORKSPACE'?6:0}}>{i.sec}</div>}
@@ -813,7 +813,7 @@ function Assign({db,tasks,team,me,hubData}){
 
     <Card style={{marginTop:16}}>
       <div style={{padding:"16px 20px",borderBottom:"1px solid "+C.bgA,display:"flex",alignItems:"center",gap:10}}>
-        <div style={{width:8,height:8,borderRadius:4,background:msgSent==='sent'?"#10B981":msgSent?"#F59E0B":"#F59E0B"}}/>
+        <div style={{width:8,height:8,borderRadius:4,background:msgSent==='sent'?"#10B981":msgSent==='partial'?"#F59E0B":msgSent==='none'?"#EF4444":"#F59E0B"}}/>
         <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:"#323338"}}>Quick Message</span>
       </div>
       {msgSent?<div className="send-success" style={{padding:"32px 20px",textAlign:"center"}}>
@@ -1076,7 +1076,7 @@ function Sheets({db,hubData,team,me}){
         <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.1em",color:C.mt}}>05 &#8212; Sheets</div><h1 style={{fontFamily:F.sf,fontSize:26,fontWeight:400,marginTop:3}}>Data Room</h1></div>
         <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8}}>
           {syncing&&<div style={{width:14,height:14,border:"2px solid #E6E9EF",borderTopColor:"#579BFC",borderRadius:"50%",animation:"spin .8s linear infinite"}}/>}
-          <span style={{fontSize:10,color:syncing?"#579BFC":"#B0B8C4",fontWeight:syncing?600:400}}>{syncing?'Syncing...':lastSync?'Synced '+lastSync.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'—'}</span>
+          <span style={{fontSize:10,color:syncing?"#579BFC":"#B0B8C4",fontWeight:syncing?600:400}}>{syncing?'Syncing...':(()=>{const lt=lastSync?.getTime()||0;const bt=_lastBgSync||0;const best=Math.max(lt,bt);return best?'Synced '+new Date(best).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'\u2014'})()}</span>
           <button onClick={()=>syncAllSheets(true)} disabled={syncing} style={{padding:"4px 10px",borderRadius:5,border:"1px solid "+C.rl,background:"#fff",fontSize:10,fontWeight:600,color:"#579BFC",cursor:"pointer",fontFamily:"inherit"}}>Refresh</button>
         </div>
       </div>
@@ -1856,7 +1856,7 @@ function Roadmap({db,hubData,team,me}){
       const pc=priColors[p.priority]||C.mt;
       const updates=Array.isArray(p.updates)?p.updates:[];
       const tags=Array.isArray(p.tags)?p.tags:[];
-      const daysUntil=p.target?Math.ceil((new Date(p.target)-new Date())/(1000*60*60*24)):null;
+      const daysUntil=p.target?(()=>{const[y,m,d]=p.target.split('-').map(Number);const t=new Date(y,m-1,d);const n=new Date();n.setHours(0,0,0,0);return Math.ceil((t-n)/(1000*60*60*24))})():null;
       return<Card key={p._fbKey} style={{marginBottom:10,borderLeft:"3px solid "+sc}}>
         <div onClick={()=>setExpanded(open?null:p._fbKey)} style={{padding:"14px 18px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12}}>
           <div style={{flex:1,minWidth:0}}>
@@ -1870,7 +1870,7 @@ function Roadmap({db,hubData,team,me}){
             </div>
             <div style={{fontSize:12,color:C.mt,marginTop:4}}>
               {p.lead&&<span>Lead: {getName(p.lead)} {'\u00B7'} </span>}
-              {p.target&&<span>Target: {new Date(p.target).toLocaleDateString()} {daysUntil!==null&&<span style={{color:daysUntil<0?'#EF4444':daysUntil<14?'#F59E0B':'#10B981'}}>({daysUntil<0?Math.abs(daysUntil)+'d overdue':daysUntil+'d left'})</span>} {'\u00B7'} </span>}
+              {p.target&&<span>Target: {(()=>{const[y,m,d]=p.target.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString()})()} {daysUntil!==null&&<span style={{color:daysUntil<0?'#EF4444':daysUntil<14?'#F59E0B':'#10B981'}}>({daysUntil<0?Math.abs(daysUntil)+'d overdue':daysUntil+'d left'})</span>} {'\u00B7'} </span>}
               {p.description&&<span style={{color:C.sc}}>{p.description.slice(0,80)}{p.description.length>80?'...':''}</span>}
             </div>
           </div>
@@ -1882,7 +1882,7 @@ function Roadmap({db,hubData,team,me}){
 
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginTop:14}}>
             <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Lead</div><div style={{fontSize:13}}>{p.lead?getName(p.lead):'Unassigned'}</div></div>
-            <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Target Date</div><div style={{fontSize:13}}>{p.target?new Date(p.target).toLocaleDateString():'Not set'}</div></div>
+            <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Target Date</div><div style={{fontSize:13}}>{p.target?(()=>{const[y,m,d]=p.target.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString()})():'Not set'}</div></div>
             <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Added</div><div style={{fontSize:13}}>{getName(p.addedBy)} {'\u00B7'} {new Date(p.created).toLocaleDateString()}</div></div>
           </div>
 
@@ -2010,7 +2010,7 @@ function Partnerships({db,hubData,team,me}){
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginTop:14}}>
             <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Contact</div><div style={{fontSize:13}}>{p.contact||'Not set'}</div></div>
             <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Email</div>{p.email?<a href={"mailto:"+p.email} style={{fontSize:13,color:"#1490B0"}}>{p.email}</a>:<span style={{fontSize:13,color:C.mt}}>Not set</span>}</div>
-            <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Website</div>{p.website?<a href={p.website} target="_blank" rel="noreferrer" style={{fontSize:13,color:"#1490B0"}}>{p.website.replace(/^https?:\/\//,'').slice(0,30)}</a>:<span style={{fontSize:13,color:C.mt}}>Not set</span>}</div>
+            <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Website</div>{p.website?<a href={/^https?:\/\//.test(p.website)?p.website:'https://'+p.website} target="_blank" rel="noreferrer" style={{fontSize:13,color:"#1490B0"}}>{p.website.replace(/^https?:\/\//,'').slice(0,30)}</a>:<span style={{fontSize:13,color:C.mt}}>Not set</span>}</div>
           </div>
 
           <div style={{marginTop:14}}>
@@ -2199,6 +2199,7 @@ function Logs({hubData,team,db}){
           </tbody>
         </table>
       </div>
+      {matches.length>300&&<div style={{padding:'12px 16px',borderTop:'1px solid '+S.line,fontSize:12,color:S.muted,textAlign:'center'}}>Showing 300 of {matches.length} matching records. Use search or filters to narrow results.</div>}
     </div>
   </div>);
 }
@@ -2270,6 +2271,7 @@ function App(){
           if(rows.length>0)db.ref('hub/sheetData/'+s.id).set(rows);
         }catch(e){}
       }
+      _lastBgSync=Date.now();
     };
     syncAll();
     const iv=setInterval(syncAll,30000);
