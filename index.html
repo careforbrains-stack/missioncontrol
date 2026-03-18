@@ -17,7 +17,7 @@ body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif
 button,input,select,textarea{font-family:inherit}
 button{cursor:pointer}
 button:disabled{opacity:.4;cursor:not-allowed}
-::selection{background:rgba(87,155,252,.2)}
+::selection{background:rgba(20,144,176,.2)}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(50,51,56,.12);border-radius:8px}
@@ -28,8 +28,8 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .sidebar-profile{border-bottom:1px solid rgba(255,255,255,.06)}
 .sidebar-label{color:rgba(255,255,255,.25)}
 .nav-btn{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:13px;font-weight:500;color:rgba(255,255,255,.42);background:transparent;border:none;border-left:3px solid transparent;width:100%;text-align:left;font-family:inherit;transition:all .35s var(--ease-spring)}
-.nav-btn:hover{color:rgba(255,255,255,.88);background:rgba(255,255,255,.04);transform:translateX(2px);border-left-color:rgba(87,155,252,.3)}
-.nav-btn.active{color:#fff;background:rgba(87,155,252,.14);border-left-color:#579BFC;font-weight:700;transform:translateX(0)}
+.nav-btn:hover{color:rgba(255,255,255,.88);background:rgba(255,255,255,.04);transform:translateX(2px);border-left-color:rgba(20,144,176,.3)}
+.nav-btn.active{color:#fff;background:rgba(20,144,176,.14);border-left-color:#1490B0;font-weight:700;transform:translateX(0)}
 
 /* SURFACES */
 .login-panel{background:#fff;border:1px solid #E6E9EF;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.04),0 24px 60px rgba(0,0,0,.06)}
@@ -41,12 +41,12 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .mission-btn:not(.mission-btn-primary){background:#F5F6F8;color:#323338;border:1px solid #E6E9EF}
 .mission-btn:not(.mission-btn-primary):hover{background:#ECEDF5;border-color:#D0D4DC;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
 .mission-btn:not(:disabled):active{transform:translateY(0) scale(.96)!important;transition-duration:.1s}
-.mission-btn-primary{background:#579BFC;color:#fff;border:1px solid #4B8AE8;box-shadow:0 4px 14px rgba(87,155,252,.25)}
-.mission-btn-primary:hover{background:#4B8AE8;box-shadow:0 8px 28px rgba(87,155,252,.35);transform:translateY(-1px)}
+.mission-btn-primary{background:#1490B0;color:#fff;border:1px solid #4B8AE8;box-shadow:0 4px 14px rgba(20,144,176,.25)}
+.mission-btn-primary:hover{background:#0F7B94;box-shadow:0 8px 28px rgba(20,144,176,.35);transform:translateY(-1px)}
 
 /* FIELDS */
 .mission-field{border:1px solid #E6E9EF;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;background:#fff;color:#323338;transition:all .3s var(--ease-expo)}
-.mission-field:focus{border-color:#579BFC;box-shadow:0 0 0 4px rgba(87,155,252,.1);transform:scale(1.01)}
+.mission-field:focus{border-color:#1490B0;box-shadow:0 0 0 4px rgba(20,144,176,.1);transform:scale(1.01)}
 
 /* TOPBAR */
 .topbar-shell{background:rgba(255,255,255,.85);backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5);border-bottom:1px solid rgba(230,233,239,.6)}
@@ -62,11 +62,11 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
 /* TEAM TILES */
 .team-tile{border-radius:14px;background:#fff;border:1px solid #E6E9EF;box-shadow:0 1px 4px rgba(0,0,0,.03);transition:box-shadow .3s ease, border-color .3s ease}
-.team-tile:hover{border-color:#579BFC;box-shadow:0 6px 20px rgba(87,155,252,.08)}
+.team-tile:hover{border-color:#1490B0;box-shadow:0 6px 20px rgba(20,144,176,.08)}
 
 /* LOGIN MEMBER BUTTONS */
 .login-member{transition:all .2s ease!important}
-.login-member:hover{border-color:#579BFC!important;box-shadow:0 4px 16px rgba(87,155,252,.1)!important}
+.login-member:hover{border-color:#1490B0!important;box-shadow:0 4px 16px rgba(20,144,176,.1)!important}
 .login-member:active{transform:scale(.98)!important}
 
 /* PAGE ANIMATIONS */
@@ -88,7 +88,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 }
 .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:56px;background:#1C2038;z-index:999;justify-content:space-around;align-items:center;box-shadow:0 -2px 12px rgba(0,0,0,.15);border-top:1px solid rgba(255,255,255,.06)}
 .mobile-nav button{background:none;border:none;color:rgba(255,255,255,.4);font-size:9px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;letter-spacing:.02em;font-weight:600}
-.mobile-nav button.mnav-active{color:#579BFC}
+.mobile-nav button.mnav-active{color:#1490B0}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 
@@ -99,14 +99,14 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
 
 /* SIDEBAR GLOW */
-.nav-btn.active::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:60%;background:#579BFC;border-radius:0 4px 4px 0;box-shadow:0 0 12px rgba(87,155,252,.6),0 0 30px rgba(87,155,252,.3)}
+.nav-btn.active::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:60%;background:#1490B0;border-radius:0 4px 4px 0;box-shadow:0 0 12px rgba(20,144,176,.6),0 0 30px rgba(20,144,176,.3)}
 .nav-btn{position:relative;overflow:hidden}
 .nav-btn::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.03),transparent);transform:translateX(-100%);transition:none}
 .nav-btn:hover::after{display:none}
 
 /* SIDEBAR LOGO PULSE */
 .sidebar-logo{animation:logoPulse 3s ease-in-out infinite}
-@keyframes logoPulse{0%,100%{filter:brightness(1) drop-shadow(0 0 0 transparent)}50%{filter:brightness(1.1) drop-shadow(0 0 8px rgba(87,155,252,.3))}}
+@keyframes logoPulse{0%,100%{filter:brightness(1) drop-shadow(0 0 0 transparent)}50%{filter:brightness(1.1) drop-shadow(0 0 8px rgba(20,144,176,.3))}}
 
 /* CARD HOVER LIFT */
 .mission-card{transform:translateY(0)}
@@ -114,15 +114,15 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
 /* TASK ITEM HOVER */
 .task-item{transition:all .25s var(--ease-spring);border-radius:8px;padding:12px 0;margin:0 -8px;padding-left:8px;padding-right:8px}
-.task-item:hover{background:rgba(87,155,252,.04)}
+.task-item:hover{background:rgba(20,144,176,.04)}
 
 /* CHECKBOX ANIMATION */
 .check-box{transition:all .2s var(--ease-spring)}
-.check-box:hover{transform:scale(1.05);border-color:#579BFC!important}
+.check-box:hover{transform:scale(1.05);border-color:#1490B0!important}
 .check-box:active{transform:scale(.9)}
 
 /* STAT COUNTER ANIMATION */
-.stat-number{background:linear-gradient(135deg,#1B2838,#579BFC);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-number{background:linear-gradient(135deg,#1B2838,#1490B0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
 /* TAG HOVER */
 .tag-badge{transition:all .2s var(--ease-spring)}
@@ -130,10 +130,10 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
 /* CALENDAR DAY HOVER */
 .cal-day{transition:all .2s var(--ease-spring);border-radius:0}
-.cal-day:hover{background:rgba(87,155,252,.06)!important;}
+.cal-day:hover{background:rgba(20,144,176,.06)!important;}
 
 /* TABLE ROW HOVER */
-.table-row-hover:hover{background:rgba(87,155,252,.04)!important}
+.table-row-hover:hover{background:rgba(20,144,176,.04)!important}
 
 /* TOPBAR TITLE */
 .topbar-title{background:linear-gradient(135deg,#1B2838,#3A5068);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
@@ -524,7 +524,7 @@ function logEvent(db,type,data){
 
 function Av({m,s=38}){
   const initials=(m?.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2);
-  return<div style={{width:s,height:s,borderRadius:s>30?10:7,background:m?.color||'#579BFC',display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:s*.34,flexShrink:0,letterSpacing:"-0.02em",textTransform:"uppercase",userSelect:"none",boxShadow:"0 2px 8px "+(m?.color||'#579BFC')+"33"}} className="av-hover">{initials}</div>
+  return<div style={{width:s,height:s,borderRadius:s>30?10:7,background:m?.color||'#1490B0',display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:s*.34,flexShrink:0,letterSpacing:"-0.02em",textTransform:"uppercase",userSelect:"none",boxShadow:"0 2px 8px "+(m?.color||'#1490B0')+"33"}} className="av-hover">{initials}</div>
 }
 function Tag({t}){const m={high:{b:"#FEE2E2",c:C.rd},medium:{b:"#FEF3C7",c:"#D97706"},low:{b:"#DBEAFE",c:"#2563EB"},done:{b:"#D1FAE5",c:C.gn}};const v=m[t]||m.medium;return<span style={{display:"inline-flex",padding:"2px 8px",borderRadius:4,fontSize:9.5,fontWeight:700,background:v.b,color:v.c,textTransform:"uppercase",letterSpacing:"0.04em",fontFamily:"monospace"}}>{t}</span>}
 function Btn({primary,children,onClick,style:sx,className='',...p}){return<button className={`mission-btn ${primary?'mission-btn-primary':''} ${className}`.trim()} onClick={onClick} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"7px 16px",borderRadius:8,fontSize:12,fontWeight:600,cursor:"pointer",...sx}} {...p}>{children}</button>}
@@ -649,7 +649,7 @@ function MyWork({db,tasks,events,team,me,hubData}){
 
   return(<div>
     <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>01 &#8212; Dashboard</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Good {hr<12?"morning":hr<18?"afternoon":"evening"}, {fn(meD?.name)}</h1></div>
-    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <hr style={{border:"none",borderTop:"1px solid "+C.rl,margin:"12px 0 22px"}}/>
 
     {/* KPI ROW */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12,marginBottom:22}}>
@@ -715,13 +715,13 @@ function MyWork({db,tasks,events,team,me,hubData}){
           <div style={{width:70,fontSize:12,fontWeight:600}}>{fn(w.name)}</div>
           <div style={{flex:1,height:20,background:C.bgA,borderRadius:4,overflow:"hidden",display:"flex"}}>
             <div style={{width:((w.done/maxLoad)*100)+'%',background:'#10B981',transition:"width .3s"}}/>
-            <div style={{width:((w.open/maxLoad)*100)+'%',background:'#579BFC',transition:"width .3s"}}/>
+            <div style={{width:((w.open/maxLoad)*100)+'%',background:'#1490B0',transition:"width .3s"}}/>
           </div>
           <div style={{fontSize:10,color:C.mt,width:60,textAlign:"right"}}>{w.open} open · {w.done}</div>
         </div>)}
         <div style={{display:"flex",gap:16,marginTop:8,fontSize:10,color:C.mt}}>
           <span><span style={{display:"inline-block",width:8,height:8,borderRadius:2,background:"#10B981",marginRight:4}}/>Done</span>
-          <span><span style={{display:"inline-block",width:8,height:8,borderRadius:2,background:"#579BFC",marginRight:4}}/>Open</span>
+          <span><span style={{display:"inline-block",width:8,height:8,borderRadius:2,background:"#1490B0",marginRight:4}}/>Open</span>
         </div>
       </div>
     </Card>
@@ -770,10 +770,10 @@ function MyWork({db,tasks,events,team,me,hubData}){
 function TeamBoard({db,tasks,team,me}){
   const[view,setView]=useState(null);const isA=team.find(t=>t.id===me)?.admin;
   const toggle=t=>{db.ref('hub/tasks/'+t._fbKey+'/done').set(!t.done);if(!t.done)db.ref('hub/tasks/'+t._fbKey+'/doneDate').set(new Date().toISOString().split('T')[0])};
-  const del=t=>{if(isA)db.ref('hub/tasks/'+t._fbKey).remove()};
+  const del=t=>{if(isA&&confirm('Delete task "'+t.text+'"?'))db.ref('hub/tasks/'+t._fbKey).remove()};
   return(<div>
     <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>02 &#8212; Team Board</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Everyone's Work</h1></div>
-    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <hr style={{border:"none",borderTop:"1px solid "+C.rl,margin:"12px 0 22px"}}/>
     <div style={{display:"grid",gridTemplateColumns:"repeat("+Math.min(team.length,3)+",1fr)",gap:14,marginBottom:22}}>
       {team.map((m,idx)=>{const ts=tasks.filter(t=>t.assignee===m.id);const op=ts.filter(t=>!t.done).length;const dn=ts.filter(t=>t.done).length;const od=ts.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;
         return(<Reveal key={m.id} delay={idx*60} scale><div className="team-tile" onClick={()=>setView(view===m.id?null:m.id)} style={{background:C.cd,border:"1px solid "+(m.id===me?C.tl:view===m.id?C.td:C.cb),boxShadow:m.id===me?"0 0 0 1px "+C.tl:view===m.id?"0 0 0 1px "+C.td:"none",cursor:"pointer",padding:16}}>
@@ -812,10 +812,11 @@ function Assign({db,tasks,team,me,hubData}){
     const m=team.find(t=>t.id===msgTo);if(!m)return;
     const meName=fn(team.find(t=>t.id===me)?.name);
 
-    if(_gToken)doEmail(m,'Message from '+meName,'<div style="font-family:sans-serif;padding:20px"><p>'+msgText.trim()+'</p><p style="color:#888;margin-top:16px">- '+meName+'</p></div>');
+    // email send moved to await block above
     let smsStatus='none';
     if(m.phone&&hubData?.twilio?.sid)try{await sendSMS(hubData.twilio,m.phone,'[CareForBrains] '+msgText.trim()+' - '+meName);smsStatus='sent'}catch(e){console.error('SMS:',e);smsStatus='failed'}
-    const emailSent=!!(_gToken&&m.email);
+    let emailSent=false;
+    if(_gToken&&m.email)try{await doEmail(m,'Message from '+meName,'<div style="font-family:sans-serif;padding:20px"><p>'+msgText.trim()+'</p><p style="color:#888;margin-top:16px">- '+meName+'</p></div>');emailSent=true}catch(e){console.error('Email:',e)}
     logEvent(db,'message_sent',{user:me,to:msgTo,toName:fn(m.name),message:msgText.trim().slice(0,50),smsStatus,emailSent:emailSent?'yes':'no'});
     setMsgSent(smsStatus==='sent'||emailSent?'sent':smsStatus==='failed'?'partial':'none');setMsgText('');setTimeout(()=>setMsgSent(false),2200);
   };
@@ -824,11 +825,11 @@ function Assign({db,tasks,team,me,hubData}){
   const pColors={high:'#EF4444',medium:'#F59E0B',low:'#3B82F6'};
   return(<div>
     <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>&#9889; Assign Work</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Assign Work</h1></div>
-    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <hr style={{border:"none",borderTop:"1px solid "+C.rl,margin:"12px 0 22px"}}/>
 
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12,marginBottom:20}}>
       {[
-        [totalOpen+totalDone,'Total Tasks','#579BFC'],
+        [totalOpen+totalDone,'Total Tasks','#1490B0'],
         [totalOpen,'Active','#F59E0B'],
         [totalDone,'Completed','#10B981'],
         [totalOverdue,'Overdue','#EF4444']
@@ -844,7 +845,7 @@ function Assign({db,tasks,team,me,hubData}){
     <div style={{display:"grid",gridTemplateColumns:"1.2fr 1fr",gap:16}}>
       <Card>
         <div style={{padding:"16px 20px",borderBottom:"1px solid "+C.bgA,display:"flex",alignItems:"center",gap:10}}>
-          <div style={{width:8,height:8,borderRadius:4,background:sent?"#10B981":"#579BFC",animation:sent?"none":"pulseDot 2s ease-in-out infinite"}}/>
+          <div style={{width:8,height:8,borderRadius:4,background:sent?"#10B981":"#1490B0",animation:sent?"none":"pulseDot 2s ease-in-out infinite"}}/>
           <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:sent?"#10B981":"#323338"}}>{sent?"Task Assigned":"New Task"}</span>
         </div>
         {sent?<div className="send-success" style={{padding:"48px 20px",textAlign:"center"}}>
@@ -858,14 +859,14 @@ function Assign({db,tasks,team,me,hubData}){
           <div style={{marginBottom:14}}>
             <Lbl>Operator</Lbl>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-              <label style={{display:"flex",alignItems:"center",gap:5,fontSize:12,color:bulk?"#579BFC":C.sc,cursor:"pointer",padding:"6px 12px",border:bulk?"2px solid #579BFC":"1px solid "+C.rl,borderRadius:8,background:bulk?"rgba(87,155,252,.06)":"#fff",transition:"all .2s",fontWeight:bulk?600:400}}>
+              <label style={{display:"flex",alignItems:"center",gap:5,fontSize:12,color:bulk?"#1490B0":C.sc,cursor:"pointer",padding:"6px 12px",border:bulk?"2px solid #1490B0":"1px solid "+C.rl,borderRadius:8,background:bulk?"rgba(20,144,176,.06)":"#fff",transition:"all .2s",fontWeight:bulk?600:400}}>
                 <input type="checkbox" checked={bulk} onChange={e=>setBulk(e.target.checked)} style={{display:"none"}}/>{bulk?"✓ ":""}All Members
               </label>
             </div>
             {!bulk&&<div style={{display:"grid",gridTemplateColumns:"repeat("+Math.min(team.length,5)+",1fr)",gap:6}}>
               {team.map(m=><div key={m.id} onClick={()=>setForm({...form,assignee:m.id})} style={{
                 padding:"10px 8px",borderRadius:10,border:form.assignee===m.id?"2px solid "+(m.color||C.tl):"1px solid "+C.rl,
-                background:form.assignee===m.id?"rgba(87,155,252,.04)":"#fff",cursor:"pointer",textAlign:"center",
+                background:form.assignee===m.id?"rgba(20,144,176,.04)":"#fff",cursor:"pointer",textAlign:"center",
                 transition:"all .25s var(--ease-spring)",transform:form.assignee===m.id?"scale(1.03)":"scale(1)"
               }}>
                 <Av m={m} s={32}/>
@@ -874,7 +875,7 @@ function Assign({db,tasks,team,me,hubData}){
             </div>}
           </div>
           <div style={{marginBottom:14}}><Lbl>Task Description</Lbl><Inp value={form.text} onChange={e=>setForm({...form,text:e.target.value})} placeholder="What needs to be done?" onKeyDown={e=>e.key==='Enter'&&assign()}/></div>
-          <div style={{marginBottom:14}}><Lbl>Notes & Context</Lbl><textarea style={{width:"100%",padding:"9px 12px",background:"#fff",border:"1px solid "+C.rl,borderRadius:8,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",minHeight:50,resize:"vertical",transition:"all .3s var(--ease-expo)"}} value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})} placeholder="Links, context, details..." onFocus={e=>e.target.style.borderColor='#579BFC'} onBlur={e=>e.target.style.borderColor=C.rl}/></div>
+          <div style={{marginBottom:14}}><Lbl>Notes & Context</Lbl><textarea style={{width:"100%",padding:"9px 12px",background:"#fff",border:"1px solid "+C.rl,borderRadius:8,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",minHeight:50,resize:"vertical",transition:"all .3s var(--ease-expo)"}} value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})} placeholder="Links, context, details..." onFocus={e=>e.target.style.borderColor='#1490B0'} onBlur={e=>e.target.style.borderColor=C.rl}/></div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
             <div><Lbl>Priority</Lbl>
               <div style={{display:"flex",gap:6}}>
@@ -892,8 +893,8 @@ function Assign({db,tasks,team,me,hubData}){
           <button onClick={assign} disabled={!form.text.trim()} style={{
             width:"100%",padding:"13px",borderRadius:10,border:"none",cursor:"pointer",fontFamily:"inherit",
             fontSize:14,fontWeight:700,letterSpacing:"0.5px",color:"#fff",
-            background:form.text.trim()?"linear-gradient(135deg,#579BFC,#3B82F6)":"#E6E9EF",
-            boxShadow:form.text.trim()?"0 4px 14px rgba(87,155,252,.3)":"none",
+            background:form.text.trim()?"linear-gradient(135deg,#1490B0,#0C6B8E)":"#E6E9EF",
+            boxShadow:form.text.trim()?"0 4px 14px rgba(20,144,176,.3)":"none",
             transition:"all .3s var(--ease-spring)",transform:"translateY(0)"
           }} onMouseEnter={e=>{if(form.text.trim())e.target.style.transform='translateY(-2px)'}} onMouseLeave={e=>e.target.style.transform='translateY(0)'}>
             {bulk?"Deploy to All":"Deploy to "+fn(team.find(t=>t.id===form.assignee)?.name)}
@@ -908,7 +909,7 @@ function Assign({db,tasks,team,me,hubData}){
           </div>
           <div style={{padding:"8px 12px"}}>
             {team.map(m=>{const ts=tasks.filter(t=>t.assignee===m.id);const op=ts.filter(t=>!t.done).length;const dn=ts.filter(t=>t.done).length;const od=ts.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;const total=op+dn;const pct=total>0?Math.round(dn/total*100):0;
-            return(<div key={m.id} style={{padding:"12px 8px",borderBottom:"1px solid "+C.bgA,transition:"all .2s",borderRadius:6}} onMouseEnter={e=>e.currentTarget.style.background='rgba(87,155,252,.03)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+            return(<div key={m.id} style={{padding:"12px 8px",borderBottom:"1px solid "+C.bgA,transition:"all .2s",borderRadius:6}} onMouseEnter={e=>e.currentTarget.style.background='rgba(20,144,176,.03)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
                 <Av m={m} s={28}/>
                 <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13}}>{fn(m.name)}</div></div>
@@ -919,7 +920,7 @@ function Assign({db,tasks,team,me,hubData}){
                 </div>
               </div>
               <div style={{height:4,background:"#F0F1F3",borderRadius:2,overflow:"hidden"}}>
-                <div style={{height:"100%",borderRadius:2,background:pct===100?"#10B981":"#579BFC",width:pct+"%",transition:"width .8s var(--ease-expo)"}}/>
+                <div style={{height:"100%",borderRadius:2,background:pct===100?"#10B981":"#1490B0",width:pct+"%",transition:"width .8s var(--ease-expo)"}}/>
               </div>
               <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
                 <span style={{fontSize:9,color:"#B0B8C4"}}>{dn} done</span>
@@ -943,7 +944,7 @@ function Assign({db,tasks,team,me,hubData}){
       <div style={{padding:"16px 20px"}}>
         <div style={{display:"flex",gap:10,alignItems:"flex-end"}}>
           <div style={{display:"flex",gap:6}}>
-            {team.map(m=><div key={m.id} onClick={()=>setMsgTo(m.id)} style={{cursor:"pointer",textAlign:"center",padding:6,borderRadius:8,border:msgTo===m.id?"2px solid "+(m.color||"#579BFC"):"2px solid transparent",opacity:msgTo===m.id?1:.5,transition:"all .2s"}}>
+            {team.map(m=><div key={m.id} onClick={()=>setMsgTo(m.id)} style={{cursor:"pointer",textAlign:"center",padding:6,borderRadius:8,border:msgTo===m.id?"2px solid "+(m.color||"#1490B0"):"2px solid transparent",opacity:msgTo===m.id?1:.5,transition:"all .2s"}}>
               <Av m={m} s={28}/><div style={{fontSize:8,fontWeight:600,marginTop:3}}>{fn(m.name)}</div>
             </div>)}
           </div>
@@ -980,14 +981,14 @@ function Cal({db,events,tasks,team,me}){
   const taskTone=t=>t.done?{b:"#D1FAE5",c:C.gn}:t.priority==='high'?{b:"#FEE2E2",c:C.rd}:t.priority==='low'?{b:"#DBEAFE",c:"#2563EB"}:{b:"#FEF3C7",c:"#D97706"};
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}><div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>03 &#8212; Calendar</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Calendar</h1></div>{isA&&<Btn primary onClick={()=>setModal(true)}>+ Event</Btn>}</div>
-    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <hr style={{border:"none",borderTop:"1px solid "+C.rl,margin:"12px 0 22px"}}/>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
       <button onClick={()=>setCur(new Date(y,mo-1))} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:14,color:C.sc}}>&#8592;</button>
       <span style={{fontFamily:F.sf,fontSize:19}}>{mos[mo]} {y}</span>
       <button onClick={()=>setCur(new Date(y,mo+1))} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:14,color:C.sc}}>&#8594;</button></div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,background:C.rl,border:"1px solid "+C.rl,borderRadius:12,overflow:"hidden",marginBottom:22}}>
       {['S','M','T','W','T','F','S'].map((d,i)=><div key={i} style={{background:C.bgA,padding:"10px 8px",textAlign:"center",fontSize:11,fontWeight:600,color:C.sc}}>{d}</div>)}
-      {cells.map((c,i)=>{const s=cellDate(c);const items=itemsOn(s);return(<div key={i} onClick={()=>setSel(s)} className="cal-day" style={{background:sel===s?"#EBF3FF":isTd(c.d,c.c)?C.bgA:C.cd,minHeight:82,padding:"6px 7px",cursor:"pointer",fontSize:12,color:!c.c?C.mt:C.fg,borderLeft:sel===s?"2px solid #579BFC":"2px solid transparent"}}>
+      {cells.map((c,i)=>{const s=cellDate(c);const items=itemsOn(s);return(<div key={i} onClick={()=>setSel(s)} className="cal-day" style={{background:sel===s?"#E6F7F9":isTd(c.d,c.c)?C.bgA:C.cd,minHeight:82,padding:"6px 7px",cursor:"pointer",fontSize:12,color:!c.c?C.mt:C.fg,borderLeft:sel===s?"2px solid #1490B0":"2px solid transparent"}}>
         <div style={{fontSize:13,fontWeight:isTd(c.d,c.c)?800:500,marginBottom:3}}>{c.d}</div>
         {items.slice(0,3).map(item=>item.kind==='task'
           ?<div key={`t-${item._fbKey}`} style={{padding:"3px 6px",fontSize:11,fontWeight:600,borderRadius:5,background:taskTone(item).b,color:taskTone(item).c,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fn(team.find(t=>t.id===item.assignee)?.name)}: {item.text}</div>
@@ -996,7 +997,7 @@ function Cal({db,events,tasks,team,me}){
         {items.length>3&&<div style={{marginTop:2,fontSize:10,color:C.mt}}>+{items.length-3} more</div>}
       </div>)})}
     </div>
-    {sel&&<Card style={{borderLeft:"3px solid #579BFC"}}><div style={{padding:"14px 18px",borderBottom:"1px solid "+C.bgA,display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:700,fontSize:14,color:C.fg}}>{sel}</span><button onClick={()=>setSel(null)} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.sc,fontFamily:"inherit"}}>Close</button></div>
+    {sel&&<Card style={{borderLeft:"3px solid #1490B0"}}><div style={{padding:"14px 18px",borderBottom:"1px solid "+C.bgA,display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:700,fontSize:14,color:C.fg}}>{sel}</span><button onClick={()=>setSel(null)} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:C.sc,fontFamily:"inherit"}}>Close</button></div>
       <div style={{padding:"14px 18px"}}>
         {tasksOn(sel).length===0&&events.filter(e=>e.date===sel).length===0&&<div style={{textAlign:"center",padding:20,color:C.mt}}>No events or due tasks</div>}
         {tasksOn(sel).length>0&&<>
@@ -1031,7 +1032,7 @@ function Contacts({db,team,me}){
   const saveEdit=(id)=>{const idx=team.findIndex(t=>t.id===id);if(idx<0)return;db.ref('hub/team/'+idx+'/phone').set(form.phone||'');db.ref('hub/team/'+idx+'/email').set(form.email||'');setEd(null)};
   return(<div>
     <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>04 &#8212; Contacts</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Team Directory</h1></div>
-    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <hr style={{border:"none",borderTop:"1px solid "+C.rl,margin:"12px 0 22px"}}/>
     <Card><div style={{padding:"14px 18px"}}>{team.map((m,idx)=><div key={m.id} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 0",borderBottom:"1px solid "+C.bgA}}>
       <Av m={m}/><div style={{flex:1}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontWeight:700,fontSize:14}}>{m.name}</span>{m.admin&&<span style={{fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:3,background:C.tg,color:C.tl,fontFamily:"monospace"}}>ADMIN</span>}</div>
@@ -1195,9 +1196,9 @@ function Sheets({db,hubData,team,me}){
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
         <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>05 &#8212; Sheets</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Data Room</h1></div>
         <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8}}>
-          {syncing&&<div style={{width:14,height:14,border:"2px solid #E6E9EF",borderTopColor:"#579BFC",borderRadius:"50%",animation:"spin .8s linear infinite"}}/>}
-          <span style={{fontSize:10,color:syncing?"#579BFC":"#B0B8C4",fontWeight:syncing?600:400}}>{syncing?'Syncing...':(()=>{const lt=lastSync?.getTime()||0;const bt=_lastBgSync||0;const best=Math.max(lt,bt);return best?'Synced '+new Date(best).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'\u2014'})()}</span>
-          <button onClick={()=>syncAllSheets(true)} disabled={syncing} style={{padding:"4px 10px",borderRadius:5,border:"1px solid "+C.rl,background:"#fff",fontSize:10,fontWeight:600,color:"#579BFC",cursor:"pointer",fontFamily:"inherit"}}>Refresh</button>
+          {syncing&&<div style={{width:14,height:14,border:"2px solid #E6E9EF",borderTopColor:"#1490B0",borderRadius:"50%",animation:"spin .8s linear infinite"}}/>}
+          <span style={{fontSize:10,color:syncing?"#1490B0":"#B0B8C4",fontWeight:syncing?600:400}}>{syncing?'Syncing...':(()=>{const lt=lastSync?.getTime()||0;const bt=_lastBgSync||0;const best=Math.max(lt,bt);return best?'Synced '+new Date(best).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'\u2014'})()}</span>
+          <button onClick={()=>syncAllSheets(true)} disabled={syncing} style={{padding:"4px 10px",borderRadius:5,border:"1px solid "+C.rl,background:"#fff",fontSize:10,fontWeight:600,color:"#1490B0",cursor:"pointer",fontFamily:"inherit"}}>Refresh</button>
         </div>
       </div>
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
@@ -1618,7 +1619,7 @@ function Emails({db,hubData,team,me}){
 
   const downloadCert=async(name,hours,program)=>{
     const svg=generateCertSVG(name,hours||'50',program||'Volunteer',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
-    const pdfB64=await svgToPdfBase64(svg);
+    let pdfB64;try{pdfB64=await svgToPdfBase64(svg)}catch(e){alert('Certificate generation failed. Try refreshing the page.');console.error(e);return}
     const byteChars=atob(pdfB64);const byteArr=new Uint8Array(byteChars.length);
     for(let i=0;i<byteChars.length;i++)byteArr[i]=byteChars.charCodeAt(i);
     const blob=new Blob([byteArr],{type:'application/pdf'});
@@ -1656,7 +1657,7 @@ function Emails({db,hubData,team,me}){
           }
           if(template==='stem_done'){certProgram='STEM Exploration';certHours='40'}
           const svg=generateCertSVG(name,certHours,certProgram,new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
-          const pdfB64=await svgToPdfBase64(svg);
+          let pdfB64;try{pdfB64=await svgToPdfBase64(svg)}catch(e){alert('Certificate generation failed. Try refreshing the page.');console.error(e);return}
           pdfAttachment={name:'CareForBrains_Certificate_'+name.replace(/\s+/g,'_')+'.pdf',data:pdfB64};
         }
         const isStem=template==='stem_accept'||template==='stem_done';
@@ -1703,7 +1704,7 @@ function Emails({db,hubData,team,me}){
 
     <div style={{display:"flex",gap:8,marginBottom:20}}>
       {[1,2,3].map(s=><div key={s} style={{display:"flex",alignItems:"center",gap:8}}>
-        <div style={{width:28,height:28,borderRadius:"50%",background:step>=s?"#579BFC":"#E6E9EF",color:step>=s?"#fff":"#676879",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,transition:"all .3s var(--ease-spring)"}}>{s}</div>
+        <div style={{width:28,height:28,borderRadius:"50%",background:step>=s?"#1490B0":"#E6E9EF",color:step>=s?"#fff":"#676879",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,transition:"all .3s var(--ease-spring)"}}>{s}</div>
         <span style={{fontSize:12,fontWeight:step===s?700:500,color:step===s?"#323338":"#676879"}}>{s===1?'Select Data':s===2?'Choose Template':'Review & Send'}</span>
         {s<3&&<div style={{width:40,height:1,background:"#E6E9EF"}}/>}
       </div>)}
@@ -1711,8 +1712,8 @@ function Emails({db,hubData,team,me}){
 
     {step===1&&<div>
       <div style={{display:"flex",gap:10,marginBottom:14}}>
-        <button onClick={()=>{setManualMode(false)}} style={{flex:1,padding:"14px",border:!manualMode?"2px solid #579BFC":"1px solid "+C.rl,borderRadius:10,background:!manualMode?"#EBF5FF":"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:!manualMode?700:500,color:!manualMode?"#323338":"#676879",transition:"all .3s var(--ease-spring)"}}>From Sheet</button>
-        <button onClick={()=>{setManualMode(true);setChecked({})}} style={{flex:1,padding:"14px",border:manualMode?"2px solid #579BFC":"1px solid "+C.rl,borderRadius:10,background:manualMode?"#EBF5FF":"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:manualMode?700:500,color:manualMode?"#323338":"#676879",transition:"all .3s var(--ease-spring)"}}>Manual Email</button>
+        <button onClick={()=>{setManualMode(false)}} style={{flex:1,padding:"14px",border:!manualMode?"2px solid #1490B0":"1px solid "+C.rl,borderRadius:10,background:!manualMode?"#E6F7F9":"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:!manualMode?700:500,color:!manualMode?"#323338":"#676879",transition:"all .3s var(--ease-spring)"}}>From Sheet</button>
+        <button onClick={()=>{setManualMode(true);setChecked({})}} style={{flex:1,padding:"14px",border:manualMode?"2px solid #1490B0":"1px solid "+C.rl,borderRadius:10,background:manualMode?"#E6F7F9":"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:manualMode?700:500,color:manualMode?"#323338":"#676879",transition:"all .3s var(--ease-spring)"}}>Manual Email</button>
       </div>
       {manualMode?<Card><CardH>Send to Anyone</CardH><div style={{padding:"16px 18px"}}>
         <div style={{marginBottom:10}}><Lbl>Recipient Name</Lbl><Inp value={manualName} onChange={e=>setManualName(e.target.value)} placeholder="Full name..."/></div>
@@ -1744,7 +1745,7 @@ function Emails({db,hubData,team,me}){
                 const statusVal=statusColIdx>=0?(row[statusColIdx]||'').trim().toLowerCase():'';
                 const yesWords=['yes','y','ye','si','ok','done','true','completed','approved','accepted','yas','ues','uyes'];
                 const responded=!!statusVal&&yesWords.some(w=>statusVal.startsWith(w));
-                const rowBg=checked[i]?"rgba(87,155,252,.06)":responded?"rgba(0,202,114,.06)":"transparent";
+                const rowBg=checked[i]?"rgba(20,144,176,.06)":responded?"rgba(0,202,114,.06)":"transparent";
                 return<tr key={i} style={{background:rowBg,opacity:valid?1:.5}}>
                 <td style={{padding:"5px 10px",borderBottom:"1px solid #F0F1F3",textAlign:"center"}}><input type="checkbox" checked={!!checked[i]} disabled={!valid} onChange={e=>{const n={...checked};if(e.target.checked)n[i]=true;else delete n[i];setChecked(n)}}/></td>
                 <td style={{padding:"5px 10px",borderBottom:"1px solid #F0F1F3"}}>{name||'\u2014'}</td>
@@ -1767,8 +1768,8 @@ function Emails({db,hubData,team,me}){
       <Btn onClick={()=>setStep(1)} style={{marginBottom:14,fontSize:12,color:C.tl,background:"transparent",border:"none",padding:0}}>&larr; Back to data</Btn>
       <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:18}}>
         {Object.entries(EMAIL_TEMPLATES).map(([k,t])=><div key={k} onClick={()=>setTemplate(k)} style={{
-          padding:"18px",border:template===k?"2px solid #579BFC":"1px solid "+C.rl,borderRadius:12,cursor:"pointer",
-          background:template===k?"#EBF5FF":"#fff",transition:"all .3s var(--ease-spring)"
+          padding:"18px",border:template===k?"2px solid #1490B0":"1px solid "+C.rl,borderRadius:12,cursor:"pointer",
+          background:template===k?"#E6F7F9":"#fff",transition:"all .3s var(--ease-spring)"
         }}>
           <div style={{fontSize:22,marginBottom:6}}>{t.icon}</div>
           <div style={{fontWeight:700,fontSize:13,marginBottom:4}}>{t.name}</div>
@@ -1836,7 +1837,7 @@ function Emails({db,hubData,team,me}){
           <span style={{fontSize:11,color:C.mt}}>{previewIdx+1}/{validSelected.length}</span>
           <button onClick={()=>setPreviewIdx(Math.min(validSelected.length-1,previewIdx+1))} disabled={previewIdx>=validSelected.length-1} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:C.sc}}>&rarr;</button>
         </div>}>Live Preview</CardH><div style={{padding:"16px 18px"}}>
-          <div style={{fontSize:11,color:C.mt,marginBottom:3}}>To: <strong style={{color:"#323338"}}>{eIdx>=0?(previewRow[eIdx]||''):''}</strong></div>
+          <div style={{fontSize:11,color:C.mt,marginBottom:3}}>To: <strong style={{color:"#323338"}}>{manualMode?manualEmail:(eIdx>=0?(previewRow[eIdx]||''):'')}</strong></div>
           <div style={{fontSize:11,color:C.mt,marginBottom:8}}>Subject: <strong style={{color:"#323338"}}>{fill(subj,previewRow)}</strong></div>
           <div style={{background:"#F5F6F8",borderRadius:8,padding:12,fontSize:12,lineHeight:1.6,whiteSpace:"pre-wrap",color:"#676879",maxHeight:180,overflow:"auto"}}>{template==="custom"?fill(customBody,previewRow):getBody(manualMode?manualName:(nIdx>=0?(previewRow[nIdx]||""):""))}</div>
         </div></Card>
@@ -1870,7 +1871,7 @@ function Emails({db,hubData,team,me}){
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div>
           {sending&&<div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{width:20,height:20,border:"3px solid #E6E9EF",borderTopColor:"#579BFC",borderRadius:"50%",animation:"spin .8s linear infinite"}}></div>
+            <div style={{width:20,height:20,border:"3px solid #E6E9EF",borderTopColor:"#1490B0",borderRadius:"50%",animation:"spin .8s linear infinite"}}></div>
             <span style={{fontSize:13,color:C.tl,fontWeight:600}}>Sending {sendStats.done}/{sendStats.total}...</span>
           </div>}
         </div>
@@ -1890,7 +1891,7 @@ function Board({db,announcements,team,me}){
   const sorted=[...announcements].sort((a,b)=>(b.ts||0)-(a.ts||0));
   return(<div>
     <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>06 &#8212; Announcements</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Board</h1></div>
-    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <hr style={{border:"none",borderTop:"1px solid "+C.rl,margin:"12px 0 22px"}}/>
     <Card style={{marginBottom:18}}><div style={{padding:"14px 18px",display:"flex",gap:8}}>
       <textarea style={{width:"100%",padding:"9px 12px",background:C.cd,border:"1px solid "+C.rl,borderRadius:7,color:C.fg,fontSize:13,fontFamily:"inherit",outline:"none",minHeight:44,resize:"vertical"}} placeholder="Post an update..." value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(text.trim())post()}}}/>
       <Btn primary onClick={post} style={{alignSelf:"flex-end"}}>Post</Btn></div></Card>
@@ -1976,7 +1977,7 @@ function VolunteerCRM({hubData,team,me}){
       v.programCount=v.programs.length;
       return v;
     });
-  },[JSON.stringify(Object.keys(sheetData))]);
+  },[JSON.stringify(sheetData)]);
 
   const statusLabels={applied:'Applied',active:'Active',completed:'Completed',chapter_leader:'Chapter Leader'};
   const statusColors={applied:'#F59E0B',active:'#3B82F6',completed:'#10B981',chapter_leader:'#8B5CF6'};
@@ -2007,11 +2008,11 @@ function VolunteerCRM({hubData,team,me}){
       </div>
       <div style={{fontSize:13,color:C.mt}}>{volunteers.length} total volunteers across {programs.length} programs</div>
     </div>
-    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <hr style={{border:"none",borderTop:"1px solid "+C.rl,margin:"12px 0 22px"}}/>
 
     {/* Pipeline cards */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10,marginBottom:20}}>
-      {[['all','All Volunteers',volunteers.length,'#579BFC'],...Object.entries(statusLabels).map(([k,l])=>[k,l,counts[k]||0,statusColors[k]])].map(([k,l,n,col])=>
+      {[['all','All Volunteers',volunteers.length,'#1490B0'],...Object.entries(statusLabels).map(([k,l])=>[k,l,counts[k]||0,statusColors[k]])].map(([k,l,n,col])=>
         <button key={k} onClick={()=>setStatusFilter(k)} style={{padding:"14px 12px",borderRadius:10,border:"1px solid "+(statusFilter===k?col:C.rl),background:statusFilter===k?col+"10":"#fff",cursor:"pointer",fontFamily:"inherit",textAlign:"center",transition:"all .2s"}}>
           <div style={{fontSize:28,fontWeight:800,color:statusFilter===k?col:C.fg}}>{n}</div>
           <div style={{fontSize:11,fontWeight:600,color:statusFilter===k?col:C.mt,marginTop:2}}>{l}</div>
@@ -2157,10 +2158,10 @@ function Roadmap({db,hubData,team,me}){
       </div>
       <Btn primary onClick={()=>setAdding(!adding)}>{adding?'Cancel':'+ New Initiative'}</Btn>
     </div>
-    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <hr style={{border:"none",borderTop:"1px solid "+C.rl,margin:"12px 0 22px"}}/>
 
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(90px,1fr))",gap:8,marginBottom:18}}>
-      {[['all','All',plans.length,'#579BFC'],...Object.entries(statusLabels).map(([k,l])=>[k,l,counts[k]||0,statusColors[k]])].map(([k,l,n,col])=>
+      {[['all','All',plans.length,'#1490B0'],...Object.entries(statusLabels).map(([k,l])=>[k,l,counts[k]||0,statusColors[k]])].map(([k,l,n,col])=>
         <button key={k} onClick={()=>setViewFilter(k)} style={{padding:"10px 6px",borderRadius:8,border:"1px solid "+(viewFilter===k?col:C.rl),background:viewFilter===k?col+"12":"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:600,color:viewFilter===k?col:C.sc,textAlign:"center"}}>
           <div style={{fontSize:18,marginBottom:2}}>{k==='all'?'\uD83D\uDCCA':statusIcons[k]}</div>
           <div style={{fontSize:18,fontWeight:700,color:viewFilter===k?col:C.fg}}>{n}</div>{l}
@@ -2295,10 +2296,10 @@ function Partnerships({db,hubData,team,me}){
       </div>
       <Btn primary onClick={()=>setAdding(!adding)}>{adding?'Cancel':'+ Add Partnership'}</Btn>
     </div>
-    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <hr style={{border:"none",borderTop:"1px solid "+C.rl,margin:"12px 0 22px"}}/>
 
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:8,marginBottom:18}}>
-      {[['all','All',partners.length,'#579BFC'],...Object.entries(statusLabels).map(([k,l])=>[k,l,counts[k]||0,statusColors[k]])].map(([k,l,n,col])=>
+      {[['all','All',partners.length,'#1490B0'],...Object.entries(statusLabels).map(([k,l])=>[k,l,counts[k]||0,statusColors[k]])].map(([k,l,n,col])=>
         <button key={k} onClick={()=>setFilter(k)} style={{padding:"10px 8px",borderRadius:8,border:"1px solid "+(filter===k?col:C.rl),background:filter===k?col+"12":"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600,color:filter===k?col:C.sc,textAlign:"center"}}>
           <div style={{fontSize:20,fontWeight:700,color:filter===k?col:C.fg}}>{n}</div>{l}
         </button>
@@ -2548,7 +2549,7 @@ function Settings({db,passwords,team,hubData}){
   const resetFb=()=>{if(!confirm('Sign out everywhere on this device?'))return;localStorage.removeItem(LK);window.location.reload()};
   return(<div>
     <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>Settings</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Configuration</h1></div>
-    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+    <hr style={{border:"none",borderTop:"1px solid "+C.rl,margin:"12px 0 22px"}}/>
 
     <Card><CardH>Passwords</CardH><div style={{padding:"14px 18px"}}><div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
       <div><Lbl>Member</Lbl><Sel style={{width:160}} value={pu} onChange={e=>setPu(e.target.value)}>{team.map(m=><option key={m.id} value={m.id}>{fn(m.name)}</option>)}</Sel></div>
