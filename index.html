@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500&family=Cinzel:wght@400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display+SC:wght@400;700;900&family=EB+Garamond:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Great+Vibes&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--ease-expo:cubic-bezier(.16,1,.3,1);--ease-spring:cubic-bezier(.34,1.56,.64,1);--ease-smooth:cubic-bezier(.23,1,.32,1)}
+:root{--ease-expo:cubic-bezier(.16,1,.3,1);--ease-spring:cubic-bezier(.34,1.56,.64,1);--ease-smooth:cubic-bezier(.23,1,.32,1);--accent-teal:#1490B0;--accent-teal-deep:#0C6B8E;--accent-warm:#FB923C;--wash-aqua:#E6F7F9;--wash-seafoam:#D0F0F4;--ink:#0B1A26;--ink-soft:#3A5068}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{min-height:100%;background:#F7F8FA}
 body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;color:#1A1D21;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
@@ -181,6 +181,59 @@ button:disabled{opacity:.4;cursor:not-allowed}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 .send-success{animation:successPop .5s var(--ease-spring) both}
+
+/* HUMANIZED VISUAL SYSTEM */
+.section-hero{position:relative;overflow:hidden;border:1px solid #D7E6EB;border-radius:28px;padding:28px 30px;margin-bottom:22px;isolation:isolate;box-shadow:0 12px 38px rgba(11,26,38,.06)}
+.section-hero::before,.section-hero::after{content:"";position:absolute;pointer-events:none;z-index:0}
+.section-hero::before{width:320px;height:320px;border-radius:50%;right:-110px;top:-170px;border:1px solid rgba(20,144,176,.12);box-shadow:0 0 0 26px rgba(20,144,176,.07),0 0 0 58px rgba(20,144,176,.04)}
+.section-hero::after{width:220px;height:220px;border-radius:50%;right:42px;bottom:-150px;background:radial-gradient(circle,rgba(251,146,60,.14) 0%,rgba(251,146,60,.08) 36%,rgba(251,146,60,0) 72%)}
+.section-hero.workspace{background:linear-gradient(135deg,#FFF9F3 0%,#FFFFFF 48%,#EAF8FB 100%)}
+.section-hero.data{background:linear-gradient(135deg,#F6FBFC 0%,#FFFFFF 55%,#F3FAFC 100%)}
+.section-hero.strategy{background:linear-gradient(135deg,#F3FBFC 0%,#FFFFFF 44%,#FFF7EF 100%)}
+.section-hero.admin{background:linear-gradient(135deg,#F9FAFB 0%,#FFFFFF 100%)}
+.hero-kicker{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#5B7788;margin-bottom:8px}
+.hero-title{font-family:'Playfair Display',Georgia,serif;font-size:31px;line-height:1.05;letter-spacing:-.03em;color:#091A26}
+.hero-sub{font-size:14px;line-height:1.7;color:#4F6678;max-width:760px;margin-top:10px}
+.meta-chip{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.7);border:1px solid rgba(20,144,176,.12);font-size:11px;font-weight:700;color:#345062;backdrop-filter:blur(12px)}
+.meta-chip.warm{background:rgba(251,146,60,.09);border-color:rgba(251,146,60,.16);color:#C65D10}
+.orbital-panel{position:relative;overflow:hidden;border-radius:24px;background:linear-gradient(135deg,#0F2032 0%,#17324A 55%,#1E4255 100%);color:#F8FBFC;border:1px solid rgba(255,255,255,.08);box-shadow:0 24px 70px rgba(9,26,38,.18)}
+.orbital-panel::before,.orbital-panel::after{content:"";position:absolute;border-radius:50%;pointer-events:none}
+.orbital-panel::before{width:340px;height:340px;right:-120px;top:-120px;border:1px solid rgba(112,224,244,.2);box-shadow:0 0 0 26px rgba(112,224,244,.1),0 0 0 54px rgba(112,224,244,.05)}
+.orbital-panel::after{width:240px;height:240px;left:-90px;bottom:-110px;background:radial-gradient(circle,rgba(251,146,60,.24) 0%,rgba(251,146,60,.12) 38%,rgba(251,146,60,0) 76%)}
+.orbital-ribbon{position:absolute;inset:0;pointer-events:none;opacity:.95}
+.orbital-ribbon::before,.orbital-ribbon::after{content:"";position:absolute;border-radius:50%;border:1px solid rgba(112,224,244,.16)}
+.orbital-ribbon::before{width:340px;height:200px;left:-120px;top:46px;transform:rotate(-14deg)}
+.orbital-ribbon::after{width:290px;height:160px;right:-90px;bottom:42px;transform:rotate(18deg)}
+.empty-state-card{padding:34px 24px;border-radius:22px;border:1px dashed rgba(20,144,176,.25);background:linear-gradient(135deg,#FFFFFF 0%,#F3FBFC 100%);text-align:center}
+.empty-state-ill{width:68px;height:68px;margin:0 auto 14px;border-radius:20px;background:linear-gradient(135deg,rgba(20,144,176,.14),rgba(251,146,60,.16));display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
+.empty-state-title{font-family:'Playfair Display',Georgia,serif;font-size:22px;color:#0B1A26}
+.empty-state-copy{font-size:13px;line-height:1.7;color:#5B7788;max-width:420px;margin:8px auto 0}
+.login-stage{width:min(1100px,100%);display:grid;grid-template-columns:minmax(330px,1.05fr) minmax(340px,.95fr);gap:24px;align-items:stretch}
+.login-brand-copy{position:relative;z-index:1;padding:34px}
+.login-brand-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:24px}
+.login-stat{padding:14px 12px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px)}
+.login-auth-shell{padding:18px}
+.login-auth-card{padding:30px}
+.login-lock{padding:16px;border-radius:20px;background:linear-gradient(135deg,#F5FBFC 0%,#FFFFFF 100%);border:1px solid rgba(20,144,176,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+.morning-brief{position:relative;overflow:hidden;border-radius:28px;background:linear-gradient(135deg,#FFF9F2 0%,#FFFFFF 46%,#ECFAFC 100%);border:1px solid #D7E6EB;padding:28px 30px;box-shadow:0 16px 40px rgba(11,26,38,.06);margin-bottom:22px}
+.morning-brief::before{content:"";position:absolute;right:-72px;top:-92px;width:280px;height:280px;border-radius:50%;border:1px solid rgba(20,144,176,.12);box-shadow:0 0 0 24px rgba(20,144,176,.06),0 0 0 52px rgba(20,144,176,.03)}
+.brief-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(260px,.8fr);gap:18px;align-items:stretch}
+.brief-panel{position:relative;z-index:1;padding:18px;border-radius:22px;background:rgba(255,255,255,.72);border:1px solid rgba(20,144,176,.12);backdrop-filter:blur(18px)}
+.brief-kicker{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6C8696;margin-bottom:8px}
+.brief-highlight{font-size:25px;line-height:1.15;font-family:'Playfair Display',Georgia,serif;color:#0B1A26}
+.brief-copy{font-size:13px;line-height:1.7;color:#567080;margin-top:8px}
+.brief-stack{display:grid;gap:14px}
+.brief-mini{padding:16px 18px;border-radius:18px;background:#fff;border:1px solid rgba(20,144,176,.12);box-shadow:0 8px 22px rgba(11,26,38,.05)}
+.brief-ring{display:flex;align-items:center;justify-content:center;min-height:188px;padding:10px;border-radius:24px;background:linear-gradient(180deg,#FFFFFF 0%,#F4FBFC 100%);border:1px solid rgba(20,144,176,.12)}
+.pulse-list{display:grid;gap:10px}
+.pulse-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(205,218,230,.55)}
+.pulse-dot{width:9px;height:9px;border-radius:999px;flex-shrink:0;margin-top:6px}
+.soft-divider{height:1px;background:linear-gradient(90deg,rgba(20,144,176,.18),rgba(20,144,176,0));margin:16px 0}
+.celebration-toast{position:fixed;top:88px;right:38px;z-index:180;display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:20px;background:linear-gradient(135deg,#0F2032 0%,#17324A 48%,#1E5866 100%);color:#F8FBFC;border:1px solid rgba(112,224,244,.18);box-shadow:0 20px 50px rgba(9,26,38,.26);animation:toastLift .48s var(--ease-spring) both}
+.celebration-badge{width:36px;height:36px;border-radius:14px;background:linear-gradient(135deg,rgba(16,185,129,.24),rgba(251,146,60,.28));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 0 10px rgba(16,185,129,.06)}
+@keyframes toastLift{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:1120px){.login-stage,.brief-grid{grid-template-columns:1fr}.login-brand-metrics{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.section-hero,.morning-brief{padding:22px 20px;border-radius:22px}.hero-title{font-size:27px}.login-brand-metrics{grid-template-columns:1fr}.login-brand-copy,.login-auth-card{padding:24px}.celebration-toast{left:20px;right:20px;top:76px}}
 </style>
 </head>
 <body>
@@ -266,7 +319,7 @@ async function fetchSheetValues(url,key){
   }
 }
 
-const C={bg:"#F8FAFC",bgA:"#EDF2F8",dk:"#091A26",fg:"#0B1A26",sc:"#3A5068",mt:"#7A8FA4",tl:"#1490B0",td:"#0C6B8E",tg:"rgba(20,144,176,0.12)",rl:"#CDDAE6",cd:"#FFF",cb:"#C8D8E6",rd:"#EF4444",gn:"#10B981"};
+const C={bg:"#F8FAFC",bgA:"#EDF2F8",dk:"#091A26",fg:"#0B1A26",sc:"#3A5068",mt:"#7A8FA4",tl:"#1490B0",td:"#0C6B8E",tg:"rgba(20,144,176,0.12)",rl:"#CDDAE6",cd:"#FFF",cb:"#C8D8E6",rd:"#EF4444",gn:"#10B981",wm:"#FB923C",aq:"#E6F7F9",sf:"#D0F0F4"};
 const F={sf:"'Playfair Display',Georgia,serif",sn:"'Plus Jakarta Sans',-apple-system,sans-serif"};
 const SHEET_SOURCES={general:{id:"general",label:"CareForBrains",tag:"GENERAL"},stem:{id:"stem",label:"STEM",tag:"STEM"}};
 const SHEET_AUTO_SYNC_MS=1000*60*15;
@@ -533,6 +586,39 @@ function Sel({style:sx,className='',...p}){return<select className={`mission-fie
 function Lbl({children}){return<label style={{display:"block",fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc,marginBottom:5}}>{children}</label>}
 function Card({children,style:sx,className=''}){return<div className={`mission-card ${className}`.trim()} style={{background:C.cd,border:"1px solid "+C.cb,borderRadius:14,overflow:"hidden",marginBottom:14,boxShadow:"0 1px 3px rgba(0,0,0,.03)",...(sx||{})}}>{children}</div>}
 function CardH({children,right}){return<div style={{padding:"12px 18px",borderBottom:"1px solid "+C.bgA,display:"flex",alignItems:"center",justifyContent:"space-between"}}><span style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>{children}</span>{right}</div>}
+function SectionHeader({variant='data',kicker,title,subtitle,actions,meta=[],children,style:sx}){
+  return<div className={`section-hero ${variant}`.trim()} style={sx}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:18,flexWrap:"wrap",position:"relative",zIndex:1}}>
+      <div style={{flex:"1 1 420px",minWidth:0}}>
+        {kicker&&<div className="hero-kicker">{kicker}</div>}
+        <div className="hero-title">{title}</div>
+        {subtitle&&<div className="hero-sub">{subtitle}</div>}
+        {!!meta.length&&<div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:14}}>
+          {meta.map((m,i)=><span key={i} className={`meta-chip ${m?.warm?'warm':''}`}>{m?.label||m}</span>)}
+        </div>}
+      </div>
+      {actions&&<div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",position:"relative",zIndex:1}}>{actions}</div>}
+    </div>
+    {children&&<div style={{marginTop:20,position:"relative",zIndex:1}}>{children}</div>}
+  </div>;
+}
+function ProgressRing({value=0,total=1,label,subLabel,color=C.tl,size=154}){
+  const safeTotal=Math.max(total||1,1);
+  const pct=Math.max(0,Math.min(1,value/safeTotal));
+  const r=size/2-12;
+  const c=2*Math.PI*r;
+  return<div className="brief-ring">
+    <div style={{textAlign:"center"}}>
+      <svg width={size} height={size} style={{display:"block",margin:"0 auto"}}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(20,144,176,.09)" strokeWidth="10"/>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="10" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c-(c*pct)} transform={`rotate(-90 ${size/2} ${size/2})`}/>
+      </svg>
+      <div style={{marginTop:-102,fontFamily:F.sf,fontSize:36,lineHeight:1,color:C.fg}}>{Math.round(pct*100)}%</div>
+      <div style={{fontSize:11,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:C.sc,marginTop:10}}>{label}</div>
+      <div style={{fontSize:12,color:C.mt,marginTop:6,maxWidth:170,lineHeight:1.5}}>{subLabel}</div>
+    </div>
+  </div>;
+}
 
 // === FIREBASE HELPERS ===
 // Convert Firebase objects (with keys) to arrays, filtering _seed markers
@@ -545,27 +631,74 @@ function Login({onLogin,passwords,team}){
     // Log the login - geo data comes from _geoInfo (fetched on page load)
     if(firebase.apps.length){logEvent(firebase.database(),'login',{user:sel})}
     onLogin(sel)};
-  return(<div className="login-shell" style={{minHeight:"100vh",background:"#F8FAFC",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.sn,padding:"32px 20px"}}>
-    <div style={{width:440,maxWidth:"90vw"}}>
-      <div style={{textAlign:"center",marginBottom:32}}>
-        <img src={LOGO} alt="" style={{width:48,height:48,borderRadius:12,marginBottom:10}}/>
-        <h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400}}>Mission Control</h1>
-        <div style={{marginTop:8,fontSize:11,color:C.mt}}>Internal Team Hub</div>
+  const selM=team.find(t=>t.id===sel);
+  const greeting=new Date().getHours()<12?'Good morning':new Date().getHours()<18?'Good afternoon':'Good evening';
+  return(<div className="login-shell login-bg" style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.sn,padding:"32px 20px"}}>
+    <div className="login-stage page-enter">
+      <div className="orbital-panel">
+        <div className="orbital-ribbon"></div>
+        <div className="login-brand-copy">
+          <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"8px 12px",borderRadius:999,background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.1)",fontSize:11,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",color:"rgba(248,251,252,.82)"}}>CareForBrains internal hub</div>
+          <div style={{marginTop:22,display:"flex",alignItems:"center",gap:16}}>
+            <div style={{width:82,height:82,borderRadius:26,background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.1)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"inset 0 1px 0 rgba(255,255,255,.15)"}}>
+              <img src={LOGO} alt="" style={{width:58,height:58,borderRadius:18}}/>
+            </div>
+            <div>
+              <div style={{fontFamily:F.sf,fontSize:42,lineHeight:1,color:"#FFFFFF"}}>Mission Control</div>
+              <div style={{marginTop:6,fontSize:13,color:"rgba(232,247,249,.72)",maxWidth:280,lineHeight:1.6}}>Coordinate chapters, volunteers, outreach, and momentum from one room.</div>
+            </div>
+          </div>
+          <div style={{marginTop:34,fontFamily:F.sf,fontSize:27,lineHeight:1.18,color:"#F8FBFC",maxWidth:520}}>A calm command center for a small team running something much bigger than itself.</div>
+          <div style={{marginTop:14,fontSize:14,lineHeight:1.7,color:"rgba(232,247,249,.78)",maxWidth:520}}>{greeting}. Sign in to manage tasks, campaigns, chapters, partnerships, and the day’s next move.</div>
+          <div className="login-brand-metrics">
+            {[['18+','Chapters'],['800+','Volunteers'],['Daily','Ops hub']].map(([n,l])=><div key={l} className="login-stat">
+              <div style={{fontFamily:F.sf,fontSize:28,lineHeight:1,color:"#FFFFFF"}}>{n}</div>
+              <div style={{fontSize:11,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:"rgba(232,247,249,.56)",marginTop:8}}>{l}</div>
+            </div>)}
+          </div>
+          <div style={{marginTop:18,display:"inline-flex",alignItems:"center",gap:8,padding:"10px 14px",borderRadius:16,background:"rgba(251,146,60,.12)",border:"1px solid rgba(251,146,60,.18)",fontSize:13,color:"#FCE7D0"}}>
+            <span style={{width:8,height:8,borderRadius:999,background:C.wm,boxShadow:"0 0 0 6px rgba(251,146,60,.12)"}}></span>
+            Built for five leaders moving fast, not fifty people sitting in meetings.
+          </div>
+        </div>
       </div>
-      <div className="login-panel page-enter login-float" style={{padding:28}}>
-        {!sel?<div>
-          <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.12em",color:C.mt,marginBottom:14}}>Sign in as</div>
-          {team.map(m=><button key={m.id} onClick={()=>setSel(m.id)} style={{display:"flex",alignItems:"center",gap:12,width:"100%",padding:"14px 16px",border:"1px solid "+C.rl,borderRadius:12,background:"#fff",cursor:"pointer",marginBottom:8,fontFamily:"inherit",textAlign:"left",transition:"all .3s cubic-bezier(0.16,1,0.3,1)",boxShadow:"0 1px 3px rgba(9,26,38,.03)"}} onMouseEnter={e=>{e.currentTarget.style.borderColor='#1490B0';e.currentTarget.style.boxShadow='0 4px 20px rgba(20,144,176,.1)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.rl;e.currentTarget.style.boxShadow='0 1px 3px rgba(9,26,38,.03)'}}>
-            <Av m={m} s={36}/><div style={{flex:1}}><div style={{fontWeight:700,fontSize:14}}>{m.name}</div><div style={{fontSize:10.5,color:C.mt}}>{m.role}</div></div>
-            {m.admin&&<span style={{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:4,background:C.tg,color:C.tl,fontFamily:"monospace"}}>ADMIN</span>}
-          </button>)}
-        </div>:<div>
-          <button onClick={()=>{setSel(null);setPass('');setErr('')}} style={{fontSize:12,color:C.tl,background:"none",border:"none",cursor:"pointer",marginBottom:16,fontFamily:"inherit",fontWeight:600}}>&#8592; Back</button>
-          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Av m={team.find(t=>t.id===sel)} s={44}/><div style={{fontWeight:700,fontSize:16}}>{team.find(t=>t.id===sel)?.name}</div></div>
-          <div style={{marginBottom:14}}><Lbl>Password</Lbl><input type="password" style={{width:"100%",padding:"11px 14px",background:C.cd,border:"1px solid "+C.rl,borderRadius:8,color:C.fg,fontSize:14,fontFamily:"inherit",outline:"none"}} value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==='Enter'&&go()} autoFocus/></div>
-          {err&&<div style={{color:C.rd,fontSize:12,fontWeight:600,marginBottom:10}}>{err}</div>}
-          <button onClick={go} style={{width:"100%",padding:"12px",borderRadius:10,background:"#091A26",color:"#fff",fontWeight:700,fontSize:13.5,border:"none",cursor:"pointer",fontFamily:"inherit",boxShadow:"0 3px 12px rgba(9,26,38,.2)",transition:"all .3s cubic-bezier(0.34,1.56,0.64,1)",letterSpacing:"-0.01em"}}>Sign In</button>
-        </div>}
+      <div className="login-auth-shell">
+        <div className="login-panel login-auth-card">
+          {!sel?<div>
+            <div className="hero-kicker" style={{marginBottom:10}}>Choose your seat</div>
+            <div style={{fontFamily:F.sf,fontSize:31,lineHeight:1.08,color:C.fg}}>Who’s stepping into Mission Control?</div>
+            <div style={{marginTop:10,fontSize:13,lineHeight:1.7,color:C.mt,maxWidth:420}}>Pick your profile first. Once you lock in, the sign-in step should feel like your own workspace, not a generic admin screen.</div>
+            <div style={{display:"grid",gap:10,marginTop:22}}>
+              {team.map(m=><button key={m.id} onClick={()=>setSel(m.id)} className="login-member" style={{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 18px",border:"1px solid "+C.rl,borderRadius:18,background:"#fff",cursor:"pointer",fontFamily:"inherit",textAlign:"left",boxShadow:"0 8px 22px rgba(9,26,38,.03)"}}>
+                <Av m={m} s={42}/>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:15,color:C.fg}}>{m.name}</div>
+                  <div style={{fontSize:11.5,color:C.mt,marginTop:3,lineHeight:1.5}}>{m.role}</div>
+                </div>
+                {m.admin&&<span style={{fontSize:9,fontWeight:700,padding:"4px 8px",borderRadius:999,background:"rgba(20,144,176,.1)",color:C.tl,fontFamily:"monospace",letterSpacing:"0.08em"}}>ADMIN</span>}
+              </button>)}
+            </div>
+          </div>:<div>
+            <button onClick={()=>{setSel(null);setPass('');setErr('')}} style={{fontSize:12,color:C.tl,background:"none",border:"none",cursor:"pointer",marginBottom:16,fontFamily:"inherit",fontWeight:700}}>&#8592; Switch teammate</button>
+            <div className="login-lock">
+              <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",color:C.sc,marginBottom:10}}>Locked in</div>
+              <div style={{display:"flex",alignItems:"center",gap:14}}>
+                <Av m={selM} s={56}/>
+                <div style={{minWidth:0}}>
+                  <div style={{fontFamily:F.sf,fontSize:28,lineHeight:1.05,color:C.fg}}>{fn(selM?.name)}</div>
+                  <div style={{fontSize:13,color:C.mt,marginTop:6}}>{selM?.role}</div>
+                </div>
+              </div>
+            </div>
+            <div style={{marginTop:20,fontSize:13,color:C.sc,lineHeight:1.7}}>Enter your password to open your day’s queue, shared comms, and chapter operations.</div>
+            <div style={{marginTop:18,marginBottom:14}}>
+              <Lbl>Password</Lbl>
+              <input type="password" style={{width:"100%",padding:"13px 14px",background:C.cd,border:"1px solid "+C.rl,borderRadius:12,color:C.fg,fontSize:14,fontFamily:"inherit",outline:"none",boxShadow:"inset 0 1px 0 rgba(255,255,255,.7)"}} value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==='Enter'&&go()} autoFocus/>
+            </div>
+            {err&&<div style={{color:C.rd,fontSize:12,fontWeight:700,marginBottom:12}}>{err}</div>}
+            <button onClick={go} style={{width:"100%",padding:"13px 16px",borderRadius:14,background:"linear-gradient(135deg,#0F2032 0%,#17324A 100%)",color:"#fff",fontWeight:700,fontSize:14,border:"none",cursor:"pointer",fontFamily:"inherit",boxShadow:"0 14px 28px rgba(9,26,38,.18)",letterSpacing:"-0.01em"}}>Enter Mission Control</button>
+          </div>}
+        </div>
       </div>
     </div>
   </div>);
@@ -616,7 +749,11 @@ function MyWork({db,tasks,events,team,me,hubData}){
   const pending=my.filter(t=>!t.done).sort((a,b)=>{const p={high:0,medium:1,low:2};return(p[a.priority]||1)-(p[b.priority]||1)});
   const done=my.filter(t=>t.done);
   const myEv=events.filter(e=>e.assignee===me&&new Date(e.date)>=new Date()).sort((a,b)=>a.date.localeCompare(b.date));
-  const toggle=t=>{db.ref('hub/tasks/'+t._fbKey+'/done').set(!t.done);if(!t.done)db.ref('hub/tasks/'+t._fbKey+'/doneDate').set(new Date().toISOString().split('T')[0])};
+  const[celebrate,setCelebrate]=useState('');
+  const celebrateTimer=useRef(null);
+  useEffect(()=>()=>clearTimeout(celebrateTimer.current),[]);
+  const pulseDone=t=>{clearTimeout(celebrateTimer.current);setCelebrate(t.text);celebrateTimer.current=setTimeout(()=>setCelebrate(''),2200)};
+  const toggle=t=>{db.ref('hub/tasks/'+t._fbKey+'/done').set(!t.done);if(!t.done){db.ref('hub/tasks/'+t._fbKey+'/doneDate').set(new Date().toISOString().split('T')[0]);pulseDone(t)}};
   const hr=new Date().getHours();
 
   // Dashboard data
@@ -645,24 +782,64 @@ function MyWork({db,tasks,events,team,me,hubData}){
 
   const getName=id=>{const m=team.find(t=>t.id===id);return m?fn(m.name):id||'?'};
   const priC={high:'#EF4444',medium:'#F59E0B',low:'#3B82F6'};
+  const greeting=hr<12?"morning":hr<18?"afternoon":"evening";
+  const topTask=pending[0]||null;
+  const nextItem=upcoming[0]||myEv[0]||null;
+  const latestPost=announcements[0]||null;
+  const weekStart=new Date();weekStart.setHours(0,0,0,0);weekStart.setDate(weekStart.getDate()-6);
+  const weekDone=done.filter(t=>{if(!t.doneDate)return false;const d=new Date(t.doneDate);return !isNaN(d)&&d>=weekStart}).length;
+  const weeklyGoal=Math.max(4,weekDone+pending.length);
+  const alertLine=topTask?`Lead with ${topTask.text}. ${allOverdue.length>0?allOverdue.length+' overdue item'+(allOverdue.length>1?'s':'')+' still need attention.':nextItem?'Next up is '+nextItem.text+'.':'You have room to wrap more than one thing today.'}`:`You're in a clear pocket right now. Use it to close a lingering task, follow up on a partner, or get ahead on what lands next.`;
 
   return(<div>
-    <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>01 &#8212; Dashboard</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Good {hr<12?"morning":hr<18?"afternoon":"evening"}, {fn(meD?.name)}</h1></div>
-    <hr style={{border:"none",borderTop:"1px solid "+C.rl,margin:"12px 0 22px"}}/>
+    {celebrate&&<div className="celebration-toast">
+      <div className="celebration-badge">✓</div>
+      <div>
+        <div style={{fontSize:12,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",color:"rgba(248,251,252,.68)"}}>Wrapped up</div>
+        <div style={{fontSize:14,fontWeight:700,color:"#FFFFFF",marginTop:2}}>Nice work, {fn(meD?.name)}.</div>
+        <div style={{fontSize:12,color:"rgba(232,247,249,.8)",marginTop:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:280}}>{celebrate}</div>
+      </div>
+    </div>}
 
-    {/* KPI ROW */}
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12,marginBottom:22}}>
-      {[
-        [pending.length,'My Tasks',C.sc,pending.length>0],
-        [allOverdue.length,'Overdue','#EF4444',allOverdue.length>0],
-        [totalVolunteers,'Volunteers','#1490B0',false],
-        [activePartnerships,'Partnerships','#10B981',false],
-        [inProgressPlans,'In Progress','#F59E0B',false],
-        [todayLogs.length,'Activity Today','#8B5CF6',false]
-      ].map(([n,l,col,alert],i)=><div key={i} className="stat-card" style={{border:"1px solid "+(alert?col+"44":C.cb),background:alert?col+"06":"#fff"}}>
-        <div className="stat-number" style={{fontFamily:F.sf,fontSize:32,fontWeight:400,lineHeight:1,color:alert?col:C.fg}}>{n}</div>
-        <div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",color:alert?col:C.sc,marginTop:6}}>{l}</div>
-      </div>)}
+    <div className="morning-brief">
+      <div className="brief-grid">
+        <div style={{position:"relative",zIndex:1}}>
+          <div className="hero-kicker">Morning brief</div>
+          <div className="hero-title">Good {greeting}, {fn(meD?.name)}.</div>
+          <div className="hero-sub">{alertLine}</div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:14}}>
+            <span className="meta-chip">{pending.length} open tasks</span>
+            <span className={`meta-chip ${allOverdue.length?'warm':''}`}>{allOverdue.length} overdue</span>
+            <span className="meta-chip">{todayLogs.length} activity events today</span>
+          </div>
+          <div style={{marginTop:18}} className="brief-panel">
+            <div className="brief-kicker">Today's focus</div>
+            {topTask?<>
+              <div className="brief-highlight">{topTask.text}</div>
+              {topTask.notes&&<div className="brief-copy">{topTask.notes}</div>}
+              <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginTop:12}}>
+                <Tag t={topTask.priority}/>
+                {topTask.due&&<span className={`meta-chip ${new Date(topTask.due)<new Date()?'warm':''}`}>Due {topTask.due}</span>}
+                {topTask.assignedBy&&<span className="meta-chip">From {getName(topTask.assignedBy)}</span>}
+              </div>
+            </>:<div className="empty-state-card" style={{padding:"24px 20px",marginTop:4}}>
+              <div className="empty-state-ill">✦</div>
+              <div className="empty-state-title">All clear</div>
+              <div className="empty-state-copy">No open assignments with your name on them right now. That's rare. Use the breathing room well.</div>
+            </div>}
+          </div>
+        </div>
+        <div className="brief-stack">
+          <div className="brief-mini">
+            <div className="brief-kicker">Coming up next</div>
+            <div style={{fontFamily:F.sf,fontSize:24,lineHeight:1.12,color:C.fg}}>{nextItem?nextItem.text:'Nothing urgent this week'}</div>
+            <div style={{marginTop:8,fontSize:13,lineHeight:1.6,color:C.mt}}>
+              {nextItem?`${nextItem.type==='event'?'Event':'Task'} for ${getName(nextItem.who)} on ${nextItem.date}${nextItem.overdue?' - overdue':''}.`:'You have no deadlines or assigned events in the next seven days.'}
+            </div>
+          </div>
+          <ProgressRing value={weekDone} total={weeklyGoal} label="Weekly follow-through" subLabel={`${weekDone} of ${weeklyGoal} task finishes logged in the last 7 days.`} color={C.tl}/>
+        </div>
+      </div>
     </div>
 
     {/* TWO COLUMN LAYOUT */}
@@ -1191,21 +1368,12 @@ function Sheets({db,hubData,team,me}){
   };
 
   return(<div>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-        <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>05 &#8212; Sheets</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Data Room</h1></div>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8}}>
-          {syncing&&<div style={{width:14,height:14,border:"2px solid #E6E9EF",borderTopColor:"#1490B0",borderRadius:"50%",animation:"spin .8s linear infinite"}}/>}
-          <span style={{fontSize:10,color:syncing?"#1490B0":"#B0B8C4",fontWeight:syncing?600:400}}>{syncing?'Syncing...':(()=>{const lt=lastSync?.getTime()||0;const bt=_lastBgSync||0;const best=Math.max(lt,bt);return best?'Synced '+new Date(best).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'\u2014'})()}</span>
-          <button onClick={()=>syncAllSheets(true)} disabled={syncing} style={{padding:"4px 10px",borderRadius:5,border:"1px solid "+C.rl,background:"#fff",fontSize:10,fontWeight:600,color:"#1490B0",cursor:"pointer",fontFamily:"inherit"}}>Refresh</button>
-        </div>
-      </div>
-      <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        {saving&&<span style={{fontSize:11,color:C.tl}}>Saving...</span>}
-        {!gToken?<Btn onClick={connectGoogle} primary>Connect Google</Btn>:<span style={{fontSize:11,fontWeight:600,color:C.gn}}>&#9679; Connected</span>}
-      </div>
-    </div>
-    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 18px"}}/>
+    <SectionHeader variant="data" kicker="05 - Data Room" title="Sheets" subtitle="Operational sheets, cleaner than raw Google tabs and closer to the work the team actually does here." meta={[`${sheets.length} linked sheets`,gToken?'Google connected':'View only',(()=>{const lt=lastSync?.getTime()||0;const bt=_lastBgSync||0;const best=Math.max(lt,bt);return best?'Synced '+new Date(best).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'Awaiting sync'})()]} actions={<>
+      {saving&&<span style={{fontSize:11,color:C.tl,fontWeight:700}}>Saving...</span>}
+      {syncing&&<div style={{width:16,height:16,border:"2px solid #D8E8EE",borderTopColor:"#1490B0",borderRadius:"50%",animation:"spin .8s linear infinite"}}/>}
+      <Btn onClick={()=>syncAllSheets(true)} disabled={syncing}>Refresh</Btn>
+      {!gToken?<Btn onClick={connectGoogle} primary>Connect Google</Btn>:<span className="meta-chip" style={{color:C.gn}}>&#9679; Connected</span>}
+    </>}/>
     {!gToken&&<div style={{padding:"8px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FECACA",marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
       <span style={{color:"#E44258",fontSize:12,fontWeight:600}}>&#9888; View only</span>
       <span style={{color:"#676879",fontSize:12}}>Connect Google to edit cells.</span>
@@ -2150,14 +2318,7 @@ function Roadmap({db,hubData,team,me}){
   const counts=Object.keys(statusLabels).reduce((a,k)=>{a[k]=plans.filter(p=>p.status===k).length;return a},{});
 
   return(<div>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:12}}>
-      <div>
-        <div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>{'\uD83D\uDE80'} Roadmap</div>
-        <h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Future Plans</h1>
-      </div>
-      <Btn primary onClick={()=>setAdding(!adding)}>{adding?'Cancel':'+ New Initiative'}</Btn>
-    </div>
-    <hr style={{border:"none",borderTop:"1px solid "+C.rl,margin:"12px 0 22px"}}/>
+    <SectionHeader variant="strategy" kicker="Roadmap" title="Future Plans" subtitle="Track what is forming, what is active, and what needs a push before it drifts into someday." meta={[`${plans.length} initiatives`,`${counts.in_progress||0} in progress`,`${counts.done||0} completed`]} actions={<Btn primary onClick={()=>setAdding(!adding)}>{adding?'Cancel':'+ New Initiative'}</Btn>}/>
 
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(90px,1fr))",gap:8,marginBottom:18}}>
       {[['all','All',plans.length,'#1490B0'],...Object.entries(statusLabels).map(([k,l])=>[k,l,counts[k]||0,statusColors[k]])].map(([k,l,n,col])=>
@@ -2184,7 +2345,7 @@ function Roadmap({db,hubData,team,me}){
       </div>
     </Card>}
 
-    {filtered.length===0?<Card><div style={{padding:"40px 24px",textAlign:"center",color:C.mt}}><div style={{fontSize:16}}>No initiatives {viewFilter!=='all'?'with status "'+statusLabels[viewFilter]+'"':''} yet</div><div style={{fontSize:12,marginTop:6}}>Click "+ New Initiative" to start planning</div></div></Card>:
+    {filtered.length===0?<Card><div className="empty-state-card" style={{margin:18}}><div className="empty-state-ill">✦</div><div className="empty-state-title">No initiatives {viewFilter!=='all'?'in "'+statusLabels[viewFilter]+'"':''} yet</div><div className="empty-state-copy">Start with one clear initiative and let the updates thread carry the momentum instead of burying it in notes.</div></div></Card>:
     filtered.map(p=>{
       const open=expanded===p._fbKey;
       const sc=statusColors[p.status]||C.mt;
@@ -2288,14 +2449,7 @@ function Partnerships({db,hubData,team,me}){
   const counts=Object.keys(statusLabels).reduce((a,k)=>{a[k]=partners.filter(p=>p.status===k).length;return a},{});
 
   return(<div>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:12}}>
-      <div>
-        <div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>&#129309; Partnerships</div>
-        <h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Partnership Tracker</h1>
-      </div>
-      <Btn primary onClick={()=>setAdding(!adding)}>{adding?'Cancel':'+ Add Partnership'}</Btn>
-    </div>
-    <hr style={{border:"none",borderTop:"1px solid "+C.rl,margin:"12px 0 22px"}}/>
+    <SectionHeader variant="strategy" kicker="Partnerships" title="Partnership Tracker" subtitle="Keep external relationships warm, visible, and moving forward instead of scattered across inboxes and memory." meta={[`${partners.length} organizations tracked`,`${counts.in_contact||0} in contact`,`${counts.confirmed||0} confirmed`]} actions={<Btn primary onClick={()=>setAdding(!adding)}>{adding?'Cancel':'+ Add Partnership'}</Btn>}/>
 
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:8,marginBottom:18}}>
       {[['all','All',partners.length,'#1490B0'],...Object.entries(statusLabels).map(([k,l])=>[k,l,counts[k]||0,statusColors[k]])].map(([k,l,n,col])=>
@@ -2320,7 +2474,7 @@ function Partnerships({db,hubData,team,me}){
       </div>
     </Card>}
 
-    {filtered.length===0?<Card><div style={{padding:"40px 24px",textAlign:"center",color:C.mt}}><div style={{fontSize:16}}>No partnerships {filter!=='all'?'with status "'+statusLabels[filter]+'"':''} yet</div><div style={{fontSize:12,marginTop:6}}>Click "+ Add Partnership" to get started</div></div></Card>:
+    {filtered.length===0?<Card><div className="empty-state-card" style={{margin:18}}><div className="empty-state-ill">❤</div><div className="empty-state-title">No partnerships {filter!=='all'?'in "'+statusLabels[filter]+'"':''} yet</div><div className="empty-state-copy">Track outreach here so the team can see who is warm, who is stalled, and who needs the next touchpoint.</div></div></Card>:
     filtered.map(p=>{
       const open=expanded===p._fbKey;
       const sc=statusColors[p.status]||C.mt;
@@ -2547,8 +2701,7 @@ function Settings({db,passwords,team,hubData}){
   const chPw=()=>{if(!np)return;db.ref('hub/passwords/'+pu).set(np);setNp('');alert('Updated')};
   const resetFb=()=>{if(!confirm('Sign out everywhere on this device?'))return;localStorage.removeItem(LK);window.location.reload()};
   return(<div>
-    <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>Settings</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Configuration</h1></div>
-    <hr style={{border:"none",borderTop:"1px solid "+C.rl,margin:"12px 0 22px"}}/>
+    <SectionHeader variant="admin" kicker="Admin" title="Configuration" subtitle="Keep account basics and device controls in one quiet, clearly separated place." meta={['Password management','Device reset']}/>
 
     <Card><CardH>Passwords</CardH><div style={{padding:"14px 18px"}}><div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
       <div><Lbl>Member</Lbl><Sel style={{width:160}} value={pu} onChange={e=>setPu(e.target.value)}>{team.map(m=><option key={m.id} value={m.id}>{fn(m.name)}</option>)}</Sel></div>
