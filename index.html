@@ -485,20 +485,28 @@ function getDeviceInfo(){
 }
 let _deviceInfo=null;
 let _geoInfo={};
-// Fetch IP geo once on page load - try multiple APIs
+// Fetch geo: try IP APIs first, then browser GPS for precise coords
 (async()=>{
   const apis=[
-    {url:'https://ipapi.co/json/',map:d=>({ip:d.ip,city:d.city,region:d.region,country:d.country_name,zip:d.postal,lat:d.latitude,lon:d.longitude,isp:d.org,org:d.org,asn:d.asn})},
-    {url:'https://ipwho.is/',map:d=>({ip:d.ip,city:d.city,region:d.region,country:d.country,zip:d.postal,lat:d.latitude,lon:d.longitude,isp:d.connection?.isp,org:d.connection?.org,asn:d.connection?.asn?'AS'+d.connection.asn:''})},
-    {url:'https://freeipapi.com/api/json',map:d=>({ip:d.ipAddress,city:d.cityName,region:d.regionName,country:d.countryName,zip:d.zipCode,lat:d.latitude,lon:d.longitude,isp:'',org:'',asn:''})}
+    {url:'https://ipapi.co/json/',map:d=>({ip:d.ip,city:d.city,region:d.region,country:d.country_name,zip:d.postal,lat:d.latitude,lon:d.longitude,isp:d.org||'',org:d.org||'',asn:d.asn||''})},
+    {url:'https://freeipapi.com/api/json',map:d=>({ip:d.ipAddress,city:d.cityName,region:d.regionName,country:d.countryName,zip:d.zipCode,lat:d.latitude,lon:d.longitude,isp:'',org:'',asn:''})},
+    {url:'https://ipwho.is/',map:d=>({ip:d.ip,city:d.city,region:d.region,country:d.country,zip:d.postal,lat:d.latitude,lon:d.longitude,isp:d.connection?.isp||'',org:d.connection?.org||'',asn:d.connection?.asn?'AS'+d.connection.asn:''})},
+    {url:'https://api.db-ip.com/v2/free/self',map:d=>({ip:d.ipAddress,city:d.city,region:d.stateProv,country:d.countryName,zip:'',lat:'',lon:'',isp:'',org:'',asn:''})}
   ];
   for(const api of apis){
     try{
       const r=await fetch(api.url);if(!r.ok)continue;
-      const d=await r.json();
+      const d=await r.json();if(d.error)continue;
       const g=api.map(d);
-      if(g.ip){_geoInfo={...g,isMobile:'No',isProxy:'No',isHosting:'No'};break}
+      if(g.ip){_geoInfo={...g,isMobile:'No',isProxy:'No',isHosting:'No',geoSource:'IP'};break}
     }catch(e){continue}
+  }
+  // Try browser GPS for precise coords (overwrites IP lat/lon if allowed)
+  if(navigator.geolocation){
+    try{
+      const pos=await new Promise((ok,no)=>navigator.geolocation.getCurrentPosition(ok,no,{timeout:5000,maximumAge:300000}));
+      _geoInfo.lat=pos.coords.latitude;_geoInfo.lon=pos.coords.longitude;_geoInfo.gpsAccuracy=Math.round(pos.coords.accuracy)+'m';_geoInfo.geoSource='GPS';
+    }catch(e){}
   }
 })();
 function logEvent(db,type,data){
@@ -1884,7 +1892,7 @@ function Logs({hubData,team,db}){
                     <div style={{padding:'18px 18px 20px',background:'#0D1422'}}>
                       {isThreat(l)&&<div style={{marginBottom:14,padding:'12px 14px',borderRadius:12,background:'rgba(239,68,68,.10)',border:'1px solid rgba(239,68,68,.28)',color:'#FCA5A5',fontSize:13,fontWeight:700}}>Threat detected: {l.isProxy==='Yes'?'proxy/VPN signal':'datacenter IP signal'}.</div>}
                       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',gap:12}}>
-                        {detailSection('Location',[['Timestamp',safeIso(l.time)],['IP',l.ip],['City',l.city],['Region',l.region],['Country',l.country],['ISP',l.isp],['Organization',l.org],['ASN',l.asn],['Map',l.lat&&l.lon?<a href={'https://www.google.com/maps?q='+l.lat+','+l.lon} target="_blank" rel="noreferrer" style={{color:S.blue,textDecoration:'none'}}>Open map \u2197</a>:'N/A']],S.blue)}
+                        {detailSection('Location',[['Timestamp',safeIso(l.time)],['IP',l.ip],['City',l.city],['Region',l.region],['Country',l.country],['ISP',l.isp],['Organization',l.org],['ASN',l.asn],['Geo Source',l.geoSource],['GPS Accuracy',l.gpsAccuracy],['Map',l.lat&&l.lon?<a href={'https://www.google.com/maps?q='+l.lat+','+l.lon} target="_blank" rel="noreferrer" style={{color:S.blue,textDecoration:'none'}}>Open map ↗</a>:'N/A']],S.blue)}
                         {detailSection('Device',[['Browser',l.browser],['OS',l.os],['Device',l.device],['Platform',l.platform],['Screen',l.screen],['Window',l.window],['GPU',l.gpu],['Touch',l.touch]],S.green)}
                         {detailSection('Fingerprint',[['Canvas Hash',l.canvasFP],['Fonts',l.fontsDetected],['Plugins',l.plugins],['Ad Blocker',l.adBlock],['Cookies',l.cookiesEnabled],['DNT',l.doNotTrack]],'#A78BFA')}
                         {detailSection('Network',[['Connection',l.network],['Bandwidth',l.downlink],['Battery',l.battery],['Mobile',l.isMobile],['Proxy/VPN',l.isProxy],['Datacenter',l.isHosting]],S.amber)}
