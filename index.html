@@ -581,13 +581,14 @@ function Sidebar({tab,setTab,me,team,logout}){
     {id:'assign',label:'Assign Work',n:'\u26A1',show:isA},
     {id:'calendar',label:'Calendar',n:'03',show:true},
     // DATA
-    {id:'sheets',label:'Sheets',n:'04',show:true,sec:'DATA'},
-    {id:'contacts',label:'Contacts',n:'05',show:true},
-    {id:'emails',label:'Comms',n:'06',show:canUseEmails(me)},
+    {id:'volunteers',label:'Volunteers',n:'04',show:true,sec:'DATA'},
+    {id:'sheets',label:'Sheets',n:'05',show:true},
+    {id:'contacts',label:'Contacts',n:'06',show:true},
+    {id:'emails',label:'Comms',n:'07',show:canUseEmails(me)},
     // STRATEGY
-    {id:'roadmap',label:'Future Plans',n:'07',show:true,sec:'STRATEGY'},
-    {id:'partners',label:'Partnerships',n:'08',show:true},
-    {id:'board',label:'Announcements',n:'09',show:true},
+    {id:'roadmap',label:'Future Plans',n:'08',show:true,sec:'STRATEGY'},
+    {id:'partners',label:'Partnerships',n:'09',show:true},
+    {id:'board',label:'Announcements',n:'10',show:true},
     // ADMIN
     {id:'settings',label:'Settings',n:'\u2699',show:isA,sec:'ADMIN'},
     {id:'logs',label:'Activity Log',n:'\u25CF',show:me==='tanmay'}
@@ -610,37 +611,158 @@ function Sidebar({tab,setTab,me,team,logout}){
 }
 
 // === MY WORK ===
-function MyWork({db,tasks,events,team,me}){
-  const meD=team.find(t=>t.id===me);const my=tasks.filter(t=>t.assignee===me);
+function MyWork({db,tasks,events,team,me,hubData}){
+  const meD=team.find(t=>t.id===me);const isA=meD?.admin;
+  const my=tasks.filter(t=>t.assignee===me);
   const pending=my.filter(t=>!t.done).sort((a,b)=>{const p={high:0,medium:1,low:2};return(p[a.priority]||1)-(p[b.priority]||1)});
-  const done=my.filter(t=>t.done);const myEv=events.filter(e=>e.assignee===me&&new Date(e.date)>=new Date());
+  const done=my.filter(t=>t.done);
+  const myEv=events.filter(e=>e.assignee===me&&new Date(e.date)>=new Date()).sort((a,b)=>a.date.localeCompare(b.date));
   const toggle=t=>{db.ref('hub/tasks/'+t._fbKey+'/done').set(!t.done);if(!t.done)db.ref('hub/tasks/'+t._fbKey+'/doneDate').set(new Date().toISOString().split('T')[0])};
   const hr=new Date().getHours();
+
+  // Dashboard data
+  const allOpen=tasks.filter(t=>!t.done);
+  const allOverdue=allOpen.filter(t=>t.due&&new Date(t.due)<new Date());
+  const partnerships=fbToArr(hubData?.partnerships||{});
+  const roadmap=fbToArr(hubData?.roadmap||{});
+  const announcements=fbToArr(hubData?.announcements||{}).sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const logs=fbToArr(hubData?.logs||{}).sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const sheets=hubData?.sheets?Object.keys(hubData.sheets).filter(k=>k!=='_seed').map(k=>normSheetEntry(hubData.sheets[k])):[];
+
+  // Compute KPIs
+  const totalVolunteers=sheets.reduce((s,sh)=>{const d=hubData?.sheetData?.[sh.id];return s+(Array.isArray(d)?Math.max(0,d.length-1):0)},0);
+  const activePartnerships=partnerships.filter(p=>p.status==='in_contact'||p.status==='confirmed').length;
+  const stalePtnrs=partnerships.filter(p=>{if(p.status==='confirmed'||p.status==='declined')return false;const notes=Array.isArray(p.notes)?p.notes:[];if(!notes.length)return true;const last=notes[notes.length-1];return last?.date&&(Date.now()-new Date(last.date).getTime())>7*86400000});
+  const inProgressPlans=roadmap.filter(r=>r.status==='in_progress').length;
+  const todayLogs=logs.filter(l=>{const t=l.ts||0;const ds=new Date();ds.setHours(0,0,0,0);return t>=ds.getTime()});
+
+  // Team workload
+  const workload=team.map(m=>({...m,open:tasks.filter(t=>t.assignee===m.id&&!t.done).length,done:tasks.filter(t=>t.assignee===m.id&&t.done).length}));
+  const maxLoad=Math.max(1,...workload.map(w=>w.open+w.done));
+
+  // Upcoming deadlines (next 7 days, all team)
+  const soon=new Date();soon.setDate(soon.getDate()+7);
+  const upcoming=[...allOpen.filter(t=>t.due&&new Date(t.due)<=soon).map(t=>({type:'task',date:t.due,text:t.text,who:t.assignee,priority:t.priority,overdue:new Date(t.due)<new Date()})),...events.filter(e=>new Date(e.date)>=new Date()&&new Date(e.date)<=soon).map(e=>({type:'event',date:e.date,text:e.title,who:e.assignee}))].sort((a,b)=>a.date.localeCompare(b.date));
+
+  const getName=id=>{const m=team.find(t=>t.id===id);return m?fn(m.name):id||'?'};
+  const priC={high:'#EF4444',medium:'#F59E0B',low:'#3B82F6'};
+
   return(<div>
-    <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>01 &#8212; My Work</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Good {hr<12?"morning":hr<18?"afternoon":"evening"}, {fn(meD?.name)}</h1></div>
+    <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>01 &#8212; Dashboard</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Good {hr<12?"morning":hr<18?"afternoon":"evening"}, {fn(meD?.name)}</h1></div>
     <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:22}}>
-      {[[pending.length,"Open Tasks"],[done.length,"Completed"],[myEv.length,"Upcoming"]].map(([n,l],i)=><Reveal key={i} delay={i*80} scale><div className="stat-card" style={{border:"1px solid "+C.cb}}><div className="stat-number" style={{fontFamily:F.sf,fontSize:34,fontWeight:400,lineHeight:1}}>{n}</div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc,marginTop:6}}>{l}</div></div></Reveal>)}
+
+    {/* KPI ROW */}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12,marginBottom:22}}>
+      {[
+        [pending.length,'My Tasks',C.sc,pending.length>0],
+        [allOverdue.length,'Overdue','#EF4444',allOverdue.length>0],
+        [totalVolunteers,'Volunteers','#1490B0',false],
+        [activePartnerships,'Partnerships','#10B981',false],
+        [inProgressPlans,'In Progress','#F59E0B',false],
+        [todayLogs.length,'Activity Today','#8B5CF6',false]
+      ].map(([n,l,col,alert],i)=><div key={i} className="stat-card" style={{border:"1px solid "+(alert?col+"44":C.cb),background:alert?col+"06":"#fff"}}>
+        <div className="stat-number" style={{fontFamily:F.sf,fontSize:32,fontWeight:400,lineHeight:1,color:alert?col:C.fg}}>{n}</div>
+        <div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",color:alert?col:C.sc,marginTop:6}}>{l}</div>
+      </div>)}
     </div>
-    <Card>
-      <CardH right={<span style={{fontFamily:"monospace",fontSize:11,color:C.mt}}>{pending.length} open</span>}>Your Assignments</CardH>
+
+    {/* TWO COLUMN LAYOUT */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:18}}>
+
+      {/* LEFT: My Tasks */}
+      <Card>
+        <CardH right={<span style={{fontFamily:"monospace",fontSize:11,color:C.mt}}>{pending.length} open</span>}>Your Assignments</CardH>
+        <div style={{padding:"14px 18px",maxHeight:340,overflowY:"auto"}}>
+          {pending.length===0&&done.length===0&&<div style={{textAlign:"center",padding:24,color:C.mt,fontStyle:"italic"}}>No assignments yet</div>}
+          {pending.map(t=>{const by=team.find(m=>m.id===t.assignedBy);return(
+            <div key={t._fbKey} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"10px 0",borderBottom:"1px solid "+C.bgA}}>
+              <div onClick={()=>toggle(t)} className="check-box" style={{width:18,height:18,borderRadius:4,border:"1.5px solid "+C.rl,cursor:"pointer",flexShrink:0,marginTop:2}}/>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:600,fontSize:14}}>{t.text}</div>
+                {t.notes&&<div style={{fontSize:12,color:C.sc,marginTop:2}}>{t.notes.slice(0,60)}</div>}
+                <div style={{display:"flex",alignItems:"center",gap:8,marginTop:4,flexWrap:"wrap"}}>
+                  <Tag t={t.priority}/>{t.due&&<span style={{fontSize:10,fontFamily:"monospace",color:new Date(t.due)<new Date()?C.rd:C.mt}}>Due {t.due}</span>}
+                </div></div></div>)})}
+          {done.length>0&&<div style={{marginTop:10}}><div style={{fontSize:10,fontFamily:"monospace",color:C.mt,marginBottom:4}}>COMPLETED ({done.length})</div>
+            {done.slice(0,3).map(t=><div key={t._fbKey} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 0",opacity:0.35}}>
+              <div onClick={()=>toggle(t)} style={{width:16,height:16,borderRadius:3,background:C.gn,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:9}}>&#10003;</div>
+              <span style={{textDecoration:"line-through",color:C.mt,fontSize:12}}>{t.text}</span></div>)}</div>}
+        </div>
+      </Card>
+
+      {/* RIGHT: Upcoming Deadlines */}
+      <Card>
+        <CardH right={<span style={{fontFamily:"monospace",fontSize:11,color:C.mt}}>next 7 days</span>}>Upcoming Deadlines</CardH>
+        <div style={{padding:"14px 18px",maxHeight:340,overflowY:"auto"}}>
+          {upcoming.length===0?<div style={{textAlign:"center",padding:24,color:C.mt,fontStyle:"italic"}}>Nothing due this week</div>:
+          upcoming.slice(0,10).map((u,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid "+C.bgA}}>
+            <div style={{width:6,height:6,borderRadius:3,background:u.overdue?'#EF4444':u.type==='event'?'#1490B0':'#F59E0B',flexShrink:0}}/>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.text}</div>
+              <div style={{fontSize:10,color:C.mt}}>{getName(u.who)} · {u.date}{u.overdue&&<span style={{color:'#EF4444',fontWeight:700}}> OVERDUE</span>}</div>
+            </div>
+            {u.priority&&<span style={{fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:3,background:priC[u.priority]+"15",color:priC[u.priority]}}>{u.priority.toUpperCase()}</span>}
+          </div>)}
+        </div>
+      </Card>
+    </div>
+
+    {/* TEAM WORKLOAD */}
+    <Card style={{marginBottom:18}}>
+      <CardH>Team Workload</CardH>
       <div style={{padding:"14px 18px"}}>
-        {pending.length===0&&done.length===0&&<div style={{textAlign:"center",padding:36,color:C.mt,fontFamily:F.sf,fontStyle:"italic"}}>No assignments yet</div>}
-        {pending.map(t=>{const by=team.find(m=>m.id===t.assignedBy);return(
-          <div key={t._fbKey} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"12px 0",borderBottom:"1px solid "+C.bgA}}>
-            <div onClick={()=>toggle(t)} style={{width:18,height:18,borderRadius:4,border:"1.5px solid "+C.rl,cursor:"pointer",flexShrink:0,marginTop:2}}/>
-            <div style={{flex:1}}>
-              <div style={{fontWeight:600,fontSize:14}}>{t.text}</div>
-              {t.notes&&<div style={{fontSize:12.5,color:C.sc,marginTop:3}}>{t.notes}</div>}
-              <div style={{display:"flex",alignItems:"center",gap:8,marginTop:6,flexWrap:"wrap"}}>
-                <Tag t={t.priority}/>{t.due&&<span style={{fontSize:10,fontFamily:"monospace",color:new Date(t.due)<new Date()?C.rd:C.mt}}>Due {t.due}</span>}{by&&<span style={{fontSize:10,color:C.mt}}>from {fn(by.name)}</span>}
-              </div></div></div>)})}
-        {done.length>0&&<><div style={{fontFamily:"monospace",fontSize:10,color:C.mt,marginTop:14,marginBottom:6}}>COMPLETED ({done.length})</div>
-          {done.slice(0,5).map(t=><div key={t._fbKey} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",opacity:0.4}}>
-            <div onClick={()=>toggle(t)} style={{width:18,height:18,borderRadius:4,background:C.gn,border:"1.5px solid "+C.gn,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:10}}>&#10003;</div>
-            <span style={{flex:1,textDecoration:"line-through",color:C.mt,fontSize:13}}>{t.text}</span></div>)}</>}
+        {workload.map(w=><div key={w.id} style={{display:"flex",alignItems:"center",gap:12,padding:"6px 0"}}>
+          <div style={{width:70,fontSize:12,fontWeight:600}}>{fn(w.name)}</div>
+          <div style={{flex:1,height:20,background:C.bgA,borderRadius:4,overflow:"hidden",display:"flex"}}>
+            <div style={{width:((w.done/maxLoad)*100)+'%',background:'#10B981',transition:"width .3s"}}/>
+            <div style={{width:((w.open/maxLoad)*100)+'%',background:'#579BFC',transition:"width .3s"}}/>
+          </div>
+          <div style={{fontSize:10,color:C.mt,width:60,textAlign:"right"}}>{w.open} open · {w.done}</div>
+        </div>)}
+        <div style={{display:"flex",gap:16,marginTop:8,fontSize:10,color:C.mt}}>
+          <span><span style={{display:"inline-block",width:8,height:8,borderRadius:2,background:"#10B981",marginRight:4}}/>Done</span>
+          <span><span style={{display:"inline-block",width:8,height:8,borderRadius:2,background:"#579BFC",marginRight:4}}/>Open</span>
+        </div>
       </div>
     </Card>
+
+    {/* BOTTOM ROW: Partnerships + Recent Activity */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+
+      {/* Partnerships needing attention */}
+      <Card>
+        <CardH right={stalePtnrs.length>0?<span style={{fontSize:10,fontWeight:700,color:"#F59E0B"}}>{stalePtnrs.length} need follow-up</span>:null}>Partnerships</CardH>
+        <div style={{padding:"14px 18px",maxHeight:240,overflowY:"auto"}}>
+          {partnerships.length===0?<div style={{textAlign:"center",padding:20,color:C.mt,fontStyle:"italic"}}>No partnerships tracked yet</div>:
+          partnerships.slice(0,8).map(p=>{const sc={reaching_out:'#F59E0B',in_contact:'#3B82F6',confirmed:'#10B981',declined:'#EF4444',paused:'#6B7280'}[p.status]||C.mt;
+            const stale=stalePtnrs.includes(p);
+            return<div key={p._fbKey} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 0",borderBottom:"1px solid "+C.bgA}}>
+              <div style={{width:6,height:6,borderRadius:3,background:sc,flexShrink:0}}/>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</div>
+                <div style={{fontSize:10,color:C.mt}}>{p.status?.replace(/_/g,' ')}{stale&&<span style={{color:'#F59E0B',fontWeight:700}}> · needs follow-up</span>}</div>
+              </div>
+            </div>})}
+        </div>
+      </Card>
+
+      {/* Recent Activity */}
+      <Card>
+        <CardH right={<span style={{fontFamily:"monospace",fontSize:11,color:C.mt}}>today</span>}>Recent Activity</CardH>
+        <div style={{padding:"14px 18px",maxHeight:240,overflowY:"auto"}}>
+          {todayLogs.length===0?<div style={{textAlign:"center",padding:20,color:C.mt,fontStyle:"italic"}}>No activity today</div>:
+          todayLogs.slice(0,10).map(l=>{
+            const typeCol={login:'#10B981',sheet_edit:'#8B5CF6',task_assign:'#F59E0B',email_sent:'#06B6D4',message_sent:'#EC4899',page_view:'#3B82F6'}[l.type]||C.mt;
+            return<div key={l._fbKey} style={{display:"flex",alignItems:"center",gap:10,padding:"5px 0",borderBottom:"1px solid "+C.bgA}}>
+              <div style={{width:6,height:6,borderRadius:3,background:typeCol,flexShrink:0}}/>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}><span style={{fontWeight:600}}>{getName(l.user)}</span> {l.type?.replace(/_/g,' ')}</div>
+              </div>
+              <span style={{fontSize:10,color:C.mt,flexShrink:0}}>{new Date(l.time).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</span>
+            </div>})}
+        </div>
+      </Card>
+    </div>
   </div>);
 }
 
@@ -1779,6 +1901,219 @@ function Board({db,announcements,team,me}){
   </div>);
 }
 
+// === VOLUNTEER CRM ===
+function VolunteerCRM({hubData,team,me}){
+  const[search,setSearch]=useState('');
+  const[statusFilter,setStatusFilter]=useState('all');
+  const[programFilter,setProgramFilter]=useState('all');
+  const[expanded,setExpanded]=useState(null);
+  const[sortBy,setSortBy]=useState('name');
+  const sheetData=hubData.sheetData||{};
+
+  // Sheet-to-program mapping
+  const sheetMeta={
+    vol_responses:{program:'Volunteer',type:'signup',nameCol:null,emailCol:null},
+    vol_done:{program:'Volunteer',type:'done',nameCol:null,emailCol:null},
+    intern_signup:{program:'Internship',type:'signup',nameCol:null,emailCol:null},
+    intern_done:{program:'Internship',type:'done',nameCol:null,emailCol:null},
+    ecard_responses:{program:'E-Card',type:'signup',nameCol:null,emailCol:null},
+    stem_intern_responses:{program:'STEM',type:'signup',nameCol:null,emailCol:null},
+    stem_final_responses:{program:'STEM',type:'done',nameCol:null,emailCol:null},
+    chapter_apps:{program:'Chapter',type:'signup',nameCol:null,emailCol:null}
+  };
+
+  // Build volunteer profiles from sheet data
+  const volunteers=React.useMemo(()=>{
+    const map={};
+    Object.entries(sheetMeta).forEach(([sid,meta])=>{
+      const rows=sheetData[sid];
+      if(!rows||!Array.isArray(rows)||rows.length<2)return;
+      const headers=rows[0]||[];
+      // Find email col
+      let ei=-1;
+      for(let i=0;i<headers.length;i++){const l=(headers[i]||'').toLowerCase();if(l.includes('email')&&!l.includes('school')){ei=i;break}}
+      if(ei<0)return;
+      // Find name col
+      let ni=-1;
+      for(let i=0;i<headers.length;i++){const l=(headers[i]||'').toLowerCase();if(l.includes('full name')||l==='name'||l.includes('name (first')||l.includes('name:')){ni=i;break}}
+      if(ni<0)for(let i=0;i<headers.length;i++){const l=(headers[i]||'').toLowerCase();if(l.includes('name')&&!l.includes('school')&&!l.includes('user')){ni=i;break}}
+      // Find timestamp col
+      let ti=headers.findIndex(h=>(h||'').toLowerCase().includes('timestamp'));
+      // Find status col (for done sheets)
+      const statusWords=['reached','respond','responded','contacted','reply','finished','pvsa'];
+      let si=-1;let sMax=0;
+      for(let ci=0;ci<headers.length;ci++){if(statusWords.some(w=>(headers[ci]||'').toLowerCase().includes(w))){const filled=rows.slice(1).filter(r=>r&&r[ci]&&(r[ci]||'').trim()).length;if(filled>sMax){sMax=filled;si=ci}}}
+
+      rows.slice(1).forEach(row=>{
+        if(!row||ei>=row.length||!row[ei])return;
+        const email=(row[ei]||'').trim().toLowerCase();
+        if(!email||!email.includes('@'))return;
+        const name=(ni>=0&&ni<row.length)?row[ni]?.trim()||'':'';
+        const ts=(ti>=0&&ti<row.length)?row[ti]||'':'';
+        const statusVal=(si>=0&&si<row.length)?(row[si]||'').trim().toLowerCase():'';
+        const responded=statusVal&&['yes','y','ye','si','ok','done','true','completed','approved','accepted','yas','ues'].some(w=>statusVal.startsWith(w));
+
+        if(!map[email]){
+          map[email]={email,name:'',programs:[],signups:[],completions:[],firstSeen:'',lastSeen:'',responded:false};
+        }
+        const v=map[email];
+        if(name&&(!v.name||name.length>v.name.length))v.name=name;
+        if(ts){if(!v.firstSeen||ts<v.firstSeen)v.firstSeen=ts;if(!v.lastSeen||ts>v.lastSeen)v.lastSeen=ts}
+        if(!v.programs.includes(meta.program))v.programs.push(meta.program);
+        if(meta.type==='signup')v.signups.push({program:meta.program,date:ts,sheet:sid});
+        if(meta.type==='done')v.completions.push({program:meta.program,date:ts,sheet:sid});
+        if(responded)v.responded=true;
+      });
+    });
+
+    return Object.values(map).map(v=>{
+      // Determine lifecycle status
+      let status='applied';
+      if(v.completions.length>0)status='completed';
+      else if(v.responded)status='active';
+      else if(v.programs.includes('Chapter'))status='chapter_leader';
+      v.status=status;
+      v.programCount=v.programs.length;
+      return v;
+    });
+  },[JSON.stringify(Object.keys(sheetData))]);
+
+  const statusLabels={applied:'Applied',active:'Active',completed:'Completed',chapter_leader:'Chapter Leader'};
+  const statusColors={applied:'#F59E0B',active:'#3B82F6',completed:'#10B981',chapter_leader:'#8B5CF6'};
+  const programs=[...new Set(volunteers.flatMap(v=>v.programs))].sort();
+
+  // Filter and search
+  const filtered=volunteers.filter(v=>{
+    if(statusFilter!=='all'&&v.status!==statusFilter)return false;
+    if(programFilter!=='all'&&!v.programs.includes(programFilter))return false;
+    if(search){const s=search.toLowerCase();return v.name.toLowerCase().includes(s)||v.email.includes(s)||v.programs.some(p=>p.toLowerCase().includes(s))}
+    return true;
+  }).sort((a,b)=>{
+    if(sortBy==='name')return(a.name||a.email).localeCompare(b.name||b.email);
+    if(sortBy==='programs')return b.programCount-a.programCount;
+    if(sortBy==='recent')return(b.lastSeen||'').localeCompare(a.lastSeen||'');
+    return 0;
+  });
+
+  const counts={all:volunteers.length,...Object.keys(statusLabels).reduce((a,k)=>{a[k]=volunteers.filter(v=>v.status===k).length;return a},{})};
+
+  const fmtDate=d=>{if(!d)return'--';try{const p=new Date(d);return isNaN(p)?d.split(' ')[0]:p.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}catch{return d.split(' ')[0]||'--'}};
+
+  return(<div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:12}}>
+      <div>
+        <div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>{'\uD83D\uDC65'} Volunteer CRM</div>
+        <h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Volunteer Directory</h1>
+      </div>
+      <div style={{fontSize:13,color:C.mt}}>{volunteers.length} total volunteers across {programs.length} programs</div>
+    </div>
+    <hr style={{border:"none",borderTop:"2px solid "+C.fg,margin:"12px 0 22px"}}/>
+
+    {/* Pipeline cards */}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10,marginBottom:20}}>
+      {[['all','All Volunteers',volunteers.length,'#579BFC'],...Object.entries(statusLabels).map(([k,l])=>[k,l,counts[k]||0,statusColors[k]])].map(([k,l,n,col])=>
+        <button key={k} onClick={()=>setStatusFilter(k)} style={{padding:"14px 12px",borderRadius:10,border:"1px solid "+(statusFilter===k?col:C.rl),background:statusFilter===k?col+"10":"#fff",cursor:"pointer",fontFamily:"inherit",textAlign:"center",transition:"all .2s"}}>
+          <div style={{fontSize:28,fontWeight:800,color:statusFilter===k?col:C.fg}}>{n}</div>
+          <div style={{fontSize:11,fontWeight:600,color:statusFilter===k?col:C.mt,marginTop:2}}>{l}</div>
+        </button>
+      )}
+    </div>
+
+    {/* Search + filters */}
+    <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
+      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by name, email, or program..." style={{flex:1,minWidth:200,padding:"10px 14px",border:"1px solid "+C.rl,borderRadius:8,fontSize:13,fontFamily:"inherit",outline:"none"}}/>
+      <Sel value={programFilter} onChange={e=>setProgramFilter(e.target.value)} style={{minWidth:140}}>
+        <option value="all">All Programs</option>
+        {programs.map(p=><option key={p} value={p}>{p}</option>)}
+      </Sel>
+      <Sel value={sortBy} onChange={e=>setSortBy(e.target.value)} style={{minWidth:130}}>
+        <option value="name">Sort: Name</option>
+        <option value="programs">Sort: Most Programs</option>
+        <option value="recent">Sort: Most Recent</option>
+      </Sel>
+      <span style={{fontSize:12,color:C.mt}}>{filtered.length} result{filtered.length!==1?'s':''}</span>
+    </div>
+
+    {/* Volunteer table */}
+    <Card style={{overflow:"hidden"}}>
+      <div style={{overflowX:"auto",maxHeight:"65vh",overflowY:"auto"}}>
+        <table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}>
+          <thead>
+            <tr style={{background:"#F5F6F8"}}>
+              {['Name','Email','Programs','Status','First Seen','Last Seen'].map((h,i)=>
+                <th key={i} style={{padding:"10px 14px",textAlign:"left",borderBottom:"2px solid "+C.rl,fontSize:11,fontWeight:700,letterSpacing:"0.02em",color:"#323338",position:"sticky",top:0,zIndex:2,background:"#F5F6F8"}}>{h}</th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length===0?<tr><td colSpan={6} style={{padding:"40px",textAlign:"center",color:C.mt}}>No volunteers matching filters</td></tr>:
+            filtered.slice(0,500).map(v=>{
+              const sc=statusColors[v.status]||C.mt;
+              const open=expanded===v.email;
+              return<React.Fragment key={v.email}>
+                <tr onClick={()=>setExpanded(open?null:v.email)} style={{cursor:"pointer",background:open?"#F0F7FF":"#fff",borderBottom:"1px solid "+C.bgA,transition:"background .15s"}}>
+                  <td style={{padding:"10px 14px",fontSize:14,fontWeight:600}}>{v.name||<span style={{color:C.mt,fontStyle:"italic"}}>No name</span>}</td>
+                  <td style={{padding:"10px 14px",fontSize:13,color:C.sc,fontFamily:"monospace"}}>{v.email}</td>
+                  <td style={{padding:"10px 14px"}}><div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                    {v.programs.map(p=><span key={p} style={{padding:"2px 8px",borderRadius:4,fontSize:10,fontWeight:600,background:p==='Volunteer'?"#DBEAFE":p==='STEM'?"#FEE2E2":p==='Internship'?"#FEF3C7":p==='E-Card'?"#D1FAE5":p==='Chapter'?"#EDE9FE":"#F3F4F6",color:p==='Volunteer'?"#1E40AF":p==='STEM'?"#991B1B":p==='Internship'?"#92400E":p==='E-Card'?"#065F46":p==='Chapter'?"#5B21B6":"#374151"}}>{p}</span>)}
+                  </div></td>
+                  <td style={{padding:"10px 14px"}}><span style={{padding:"3px 10px",borderRadius:999,fontSize:10,fontWeight:700,background:sc+"15",color:sc,border:"1px solid "+sc+"33"}}>{statusLabels[v.status]}</span></td>
+                  <td style={{padding:"10px 14px",fontSize:12,color:C.mt}}>{fmtDate(v.firstSeen)}</td>
+                  <td style={{padding:"10px 14px",fontSize:12,color:C.mt}}>{fmtDate(v.lastSeen)}</td>
+                </tr>
+                {open&&<tr><td colSpan={6} style={{padding:0,borderBottom:"2px solid "+sc}}>
+                  <div style={{padding:"16px 18px",background:"#FAFBFC"}}>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:12}}>
+                      <div style={{padding:"12px 14px",background:"#fff",borderRadius:8,border:"1px solid "+C.rl}}>
+                        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Contact</div>
+                        <div style={{fontSize:14,fontWeight:600}}>{v.name||'Unknown'}</div>
+                        <a href={"mailto:"+v.email} style={{fontSize:12,color:"#1490B0"}}>{v.email}</a>
+                      </div>
+                      <div style={{padding:"12px 14px",background:"#fff",borderRadius:8,border:"1px solid "+C.rl}}>
+                        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Programs ({v.programs.length})</div>
+                        <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:4}}>
+                          {v.programs.map(p=><span key={p} style={{padding:"3px 10px",borderRadius:6,fontSize:11,fontWeight:600,background:p==='Volunteer'?"#DBEAFE":p==='STEM'?"#FEE2E2":p==='Internship'?"#FEF3C7":p==='E-Card'?"#D1FAE5":"#EDE9FE",color:p==='Volunteer'?"#1E40AF":p==='STEM'?"#991B1B":p==='Internship'?"#92400E":p==='E-Card'?"#065F46":"#5B21B6"}}>{p}</span>)}
+                        </div>
+                      </div>
+                      <div style={{padding:"12px 14px",background:"#fff",borderRadius:8,border:"1px solid "+C.rl}}>
+                        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Status</div>
+                        <div style={{display:"flex",alignItems:"center",gap:8,marginTop:4}}>
+                          <span style={{width:8,height:8,borderRadius:4,background:sc}}/>
+                          <span style={{fontSize:14,fontWeight:600,color:sc}}>{statusLabels[v.status]}</span>
+                        </div>
+                      </div>
+                      <div style={{padding:"12px 14px",background:"#fff",borderRadius:8,border:"1px solid "+C.rl}}>
+                        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Timeline</div>
+                        <div style={{fontSize:12}}>First: {fmtDate(v.firstSeen)}</div>
+                        <div style={{fontSize:12}}>Last: {fmtDate(v.lastSeen)}</div>
+                      </div>
+                    </div>
+                    {v.signups.length>0&&<div style={{marginTop:12}}>
+                      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:C.mt,marginBottom:6}}>Signup History</div>
+                      {v.signups.map((s,i)=><div key={i} style={{padding:"6px 10px",background:"#fff",borderRadius:6,border:"1px solid "+C.rl,marginBottom:4,fontSize:12,display:"flex",justifyContent:"space-between"}}>
+                        <span style={{fontWeight:600}}>{s.program}</span>
+                        <span style={{color:C.mt}}>{fmtDate(s.date)}</span>
+                      </div>)}
+                    </div>}
+                    {v.completions.length>0&&<div style={{marginTop:12}}>
+                      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:C.mt,marginBottom:6}}>Completions</div>
+                      {v.completions.map((s,i)=><div key={i} style={{padding:"6px 10px",background:"#D1FAE5",borderRadius:6,border:"1px solid #A7F3D0",marginBottom:4,fontSize:12,display:"flex",justifyContent:"space-between"}}>
+                        <span style={{fontWeight:600,color:"#065F46"}}>{'\u2705'} {s.program}</span>
+                        <span style={{color:"#065F46"}}>{fmtDate(s.date)}</span>
+                      </div>)}
+                    </div>}
+                  </div>
+                </td></tr>}
+              </React.Fragment>
+            })}
+          </tbody>
+        </table>
+      </div>
+      {filtered.length>500&&<div style={{padding:"10px",textAlign:"center",fontSize:12,color:C.mt,borderTop:"1px solid "+C.rl}}>Showing 500 of {filtered.length} volunteers. Use search to narrow results.</div>}
+    </Card>
+  </div>);
+}
+
 // === ROADMAP ===
 function Roadmap({db,hubData,team,me}){
   const plans=fbToArr(hubData.roadmap||{}).sort((a,b)=>(a.order||99)-(b.order||99));
@@ -2320,13 +2655,14 @@ function App(){
 
   const me=user.id;const isA=team.find(t=>t.id===me)?.admin;const canEmail=canUseEmails(me);
   const safeTab=(tab==='assign'&&!isA)||(tab==='settings'&&!isA)||(tab==='logs'&&me!=='tanmay')||(tab==='emails'&&!canEmail)?'my':tab;
-  const titles={my:'My Work',emails:'Comms',team:'Team Board',assign:'Assign Work',calendar:'Calendar',contacts:'Contacts',sheets:'Sheets',board:'Announcements',settings:'Settings',logs:'Activity Log',roadmap:'Future Plans',partners:'Partnerships'};
+  const titles={my:'My Work',emails:'Comms',team:'Team Board',assign:'Assign Work',calendar:'Calendar',contacts:'Contacts',volunteers:'Volunteers',sheets:'Sheets',board:'Announcements',settings:'Settings',logs:'Activity Log',roadmap:'Future Plans',partners:'Partnerships'};
   const V=()=>{switch(safeTab){
-    case 'my':return<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
+    case 'my':return<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>;
     case 'team':return<TeamBoard db={db} tasks={tasks} team={team} me={me}/>;
     case 'assign':return isA?<Assign db={db} tasks={tasks} team={team} me={me} hubData={hubData}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'calendar':return<Cal db={db} events={events} tasks={tasks} team={team} me={me}/>;
     case 'contacts':return<Contacts db={db} team={team} me={me}/>;
+    case 'volunteers':return<VolunteerCRM hubData={hubData} team={team} me={me}/>;
     case 'sheets':return<Sheets db={db} hubData={hubData} team={team} me={me}/>;
     case 'emails':return canEmail?<Emails db={db} hubData={hubData} team={team} me={me}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me}/>;
     case 'board':return<Board db={db} announcements={announcements} team={team} me={me}/>;
