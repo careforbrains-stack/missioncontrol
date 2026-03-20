@@ -1793,7 +1793,7 @@ function Emails({db,hubData,team,me}){
 
   const downloadCert=async(name,hours,program)=>{
     const svg=generateCertSVG(name,hours||'50',program||'Volunteer',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
-    let pdfB64;try{pdfB64=await svgToPdfBase64(svg)}catch(e){alert('Certificate generation failed for '+name+'. Skipping.');console.error(e);continue}
+    let pdfB64;try{pdfB64=await svgToPdfBase64(svg)}catch(e){alert('Certificate generation failed. Try refreshing the page.');console.error(e);return}
     const byteChars=atob(pdfB64);const byteArr=new Uint8Array(byteChars.length);
     for(let i=0;i<byteChars.length;i++)byteArr[i]=byteChars.charCodeAt(i);
     const blob=new Blob([byteArr],{type:'application/pdf'});
