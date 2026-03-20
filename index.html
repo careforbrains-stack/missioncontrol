@@ -364,7 +364,7 @@ function parseCSV(text){
 }
 
 async function sendSMS(twilioConfig,to,body){
-  if(!twilioConfig||!twilioConfig.sid||!twilioConfig.token||!twilioConfig.from)return;
+  if(!twilioConfig||!twilioConfig.sid||!twilioConfig.token||!twilioConfig.from)throw new Error('Twilio not configured');
   const auth=btoa(twilioConfig.sid+':'+twilioConfig.token);
   const phone=to.startsWith('+')?to:'+1'+to.replace(/\D/g,'');
   const params=new URLSearchParams({To:phone,From:twilioConfig.from,Body:body});
@@ -986,7 +986,7 @@ function Assign({db,tasks,team,me,hubData}){
 
   const doEmail=(to,subj,html)=>{if(to.email&&_gToken)sendGmail(_gToken,to.email,subj,html,'CareForBrains','careforbrains@gmail.com').catch(e=>console.error(e))};
   const sendMsg=async()=>{
-    if(!msgText.trim()||!msgTo)return;
+    if(!msgText.trim()||!msgTo||msgSent)return;
     const m=team.find(t=>t.id===msgTo);if(!m)return;
     const meName=fn(team.find(t=>t.id===me)?.name);
 
@@ -998,7 +998,7 @@ function Assign({db,tasks,team,me,hubData}){
     logEvent(db,'message_sent',{user:me,to:msgTo,toName:fn(m.name),message:msgText.trim().slice(0,50),smsStatus,emailSent:emailSent?'yes':'no'});
     setMsgSent(smsStatus==='sent'&&emailSent?'sent':(smsStatus==='sent'||emailSent)?'partial':'none');setMsgText('');setTimeout(()=>setMsgSent(false),2200);
   };
-  const assign=()=>{if(!form.text.trim())return;const targets=bulk?team.filter(t=>!t.admin).map(t=>t.id):[form.assignee];targets.forEach(a=>{const ref=db.ref('hub/tasks').push();ref.set({id:ref.key,assignee:a,text:form.text.trim(),notes:form.notes.trim(),priority:form.priority,due:form.due,done:false,assignedBy:me,created:new Date().toISOString().split('T')[0]});logEvent(db,'task_assign',{user:me,assignee:a,task:form.text.trim(),priority:form.priority})});setSent(true);setTimeout(()=>{setSent(false);setForm({assignee:'eric',text:'',notes:'',priority:'medium',due:''})},1800)};
+  const assign=()=>{if(!form.text.trim()||sent)return;const targets=bulk?team.filter(t=>!t.admin).map(t=>t.id):[form.assignee];targets.forEach(a=>{const ref=db.ref('hub/tasks').push();ref.set({id:ref.key,assignee:a,text:form.text.trim(),notes:form.notes.trim(),priority:form.priority,due:form.due,done:false,assignedBy:me,created:new Date().toISOString().split('T')[0]});logEvent(db,'task_assign',{user:me,assignee:a,task:form.text.trim(),priority:form.priority})});setSent(true);setTimeout(()=>{setSent(false);setForm({assignee:team[0]?.id||'',text:'',notes:'',priority:'medium',due:''})},1800)};
   const totalOpen=tasks.filter(t=>!t.done).length;const totalDone=tasks.filter(t=>t.done).length;const totalOverdue=tasks.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;
   const pColors={high:'#EF4444',medium:'#F59E0B',low:'#3B82F6'};
   return(<div>
@@ -1195,7 +1195,7 @@ function Cal({db,events,tasks,team,me}){
             {isA&&<button onClick={()=>delEvent(e)} style={{background:"none",border:"none",cursor:"pointer",color:C.rd,fontSize:12,fontFamily:"inherit"}}>Remove</button>}</div>)}
         </>}
       </div></Card>}
-    {modal&&<div style={{position:"fixed",inset:0,background:"rgba(9,26,38,0.45)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1100}} onClick={e=>e.target===e.currentTarget&&setModal(false)}>
+    {modal&&<div style={{position:"fixed",inset:0,background:"rgba(9,26,38,0.45)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1100}} onClick={e=>e.target===e.currentTarget&&setModal(false)} onKeyDown={e=>e.key==='Escape'&&setModal(false)}>
       <div style={{background:C.cd,borderRadius:12,width:460,maxWidth:"92vw",border:"1px solid "+C.cb}}>
         <div style={{padding:"18px 24px",borderBottom:"1px solid "+C.rl}}><h2 style={{fontFamily:F.sf,fontSize:19,fontWeight:400}}>New Event</h2></div>
         <div style={{padding:"18px 24px"}}><div style={{marginBottom:10}}><Lbl>Title</Lbl><Inp value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/></div><div style={{marginBottom:10}}><Lbl>Date</Lbl><input type="date" style={{width:"100%",padding:"9px 12px",border:"1px solid "+C.rl,borderRadius:7,fontSize:13,fontFamily:"inherit"}} value={form.date} onChange={e=>setForm({...form,date:e.target.value})}/></div><div style={{marginBottom:10}}><Lbl>For</Lbl><Sel value={form.assignee} onChange={e=>setForm({...form,assignee:e.target.value})}>{team.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</Sel></div></div>
@@ -1403,7 +1403,7 @@ function Sheets({db,hubData,team,me}){
         </button>
       })}
     </div>
-    {activeSheet&&visibleCols.length>0?<Card style={{overflow:"hidden",maxWidth:"calc(100vw - 312px)"}}>
+    {activeSheet&&visibleCols.length>0?<Card style={{overflow:"hidden",maxWidth:"100%"}}>
       <div style={{padding:"8px 14px",borderBottom:"1px solid "+C.rl,display:"flex",justifyContent:"space-between",alignItems:"center",background:"#F5F6F8"}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <span style={{fontWeight:700,fontSize:13}}>{activeSheet.name}</span>
@@ -1799,7 +1799,7 @@ function Emails({db,hubData,team,me}){
     for(let i=0;i<byteChars.length;i++)byteArr[i]=byteChars.charCodeAt(i);
     const blob=new Blob([byteArr],{type:'application/pdf'});
     const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=url;a.download=`CareForBrains_Certificate_${name.replace(/\s+/g,'_')}.pdf`;a.click();URL.revokeObjectURL(url);
+    const a=document.createElement('a');a.href=url;a.download=`CareForBrains_Certificate_${name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'_')}.pdf`;a.click();URL.revokeObjectURL(url);
   };
 
   const sendEmails=async()=>{
@@ -1833,7 +1833,7 @@ function Emails({db,hubData,team,me}){
           if(template==='stem_done'){certProgram='STEM Exploration';certHours='40'}
           const svg=generateCertSVG(name,certHours,certProgram,new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
           let pdfB64;try{pdfB64=await svgToPdfBase64(svg)}catch(e){alert('Certificate generation failed for '+name+'. Skipping.');console.error(e);continue}
-          pdfAttachment={name:'CareForBrains_Certificate_'+name.replace(/\s+/g,'_')+'.pdf',data:pdfB64};
+          pdfAttachment={name:'CareForBrains_Certificate_'+name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'_')+'.pdf',data:pdfB64};
         }
         const isStem=template==='stem_accept'||template==='stem_done';
         const senderName=isStem?'CareForBrains STEM Exploration':'CareForBrains';
@@ -2714,7 +2714,7 @@ function MyAccount({db,passwords,team,me}){
   const changePw=()=>{
     if(!newPw?.trim()){setMsg('Password cannot be empty');return}
     if(newPw!==confirmPw){setMsg('Passwords do not match');return}
-    if(curPw!==myPw){setMsg('Current password is wrong');return}
+    if(myPw&&curPw!==myPw){setMsg('Current password is wrong');return}
     if(newPw.trim().length<4){setMsg('Password must be at least 4 characters');return}
     db.ref('hub/passwords/'+me).set(newPw.trim());
     setCurPw('');setNewPw('');setConfirmPw('');setMsg('');
@@ -2819,7 +2819,7 @@ function App(){
         if(val)setHubData(val);
         else{setHubData(SEED)}
       });
-    }catch(e){console.error(e);localStorage.removeItem(LK);window.location.reload()}
+    }catch(e){console.error('Firebase init failed:',e)}
     return()=>{if(dbRef.current)dbRef.current.ref('hub').off()};
   },[fbCfg]);
 
@@ -2881,7 +2881,7 @@ function App(){
   
   if(!hubData)return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.sn}}><div style={{textAlign:"center"}}><img src={LOGO} alt="" style={{width:40,height:40,borderRadius:10,marginBottom:10,opacity:0.5}}/><div style={{fontSize:13,color:C.mt}}>Connecting...</div></div></div>);
 
-  const team=hubData.team||TEAM;
+  const team=Array.isArray(hubData.team)?hubData.team:(hubData.team?Object.values(hubData.team):TEAM);
   const tasks=fbToArr(hubData.tasks);
   const events=fbToArr(hubData.events);
   const announcements=fbToArr(hubData.announcements);
@@ -2909,7 +2909,7 @@ function App(){
     case 'logs':return me==='tanmay'?<Logs hubData={hubData} team={team} db={db}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>;
     default:return<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>}};
 
-  const mobileTabs=[['my','Home'],['team','Team'],['assign','Assign'],['calendar','Cal'],['sheets','Sheets'],['contacts','Dir'],['emails','Comms'],['roadmap','Plans'],['partners','CRM'],['board','Posts'],['account','Acct'],...(isA?[['settings','Admin']]:[]),...(me==='tanmay'?[['logs','Logs']]:[])];
+  const mobileTabs=[['my','Home'],['team','Team'],...(isA?[['assign','Assign']]:[]),['calendar','Cal'],['sheets','Sheets'],['contacts','Dir'],['emails','Comms'],['roadmap','Plans'],['partners','CRM'],['board','Posts'],['account','Acct'],...(isA?[['settings','Admin']]:[]),...(me==='tanmay'?[['logs','Logs']]:[])];
   return(<div style={{display:"flex",minHeight:"100vh",fontFamily:F.sn,color:C.fg,background:"#F8FAFC"}}>
     <div className="mobile-nav" style={{flexWrap:'wrap',height:'auto',minHeight:56,paddingTop:4,paddingBottom:4}}>{mobileTabs.map(([id,label])=><button key={id} className={safeTab===id?'mnav-active':''} onClick={()=>setTab(id)}>{label}</button>)}</div>    <Sidebar tab={safeTab} setTab={setTab} me={me} team={team} logout={logout}/>
     <div className="main-bg" className="main-bg main-content" style={{marginLeft:240,flex:1,minHeight:"100vh"}}>
