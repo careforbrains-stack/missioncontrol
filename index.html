@@ -41,7 +41,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .mission-btn:not(.mission-btn-primary){background:#F5F6F8;color:#323338;border:1px solid #E6E9EF}
 .mission-btn:not(.mission-btn-primary):hover{background:#ECEDF5;border-color:#D0D4DC;box-shadow:0 4px 12px rgba(0,0,0,.06)}
 .mission-btn:not(:disabled):active{transform:translateY(0) scale(.96)!important;transition-duration:.1s}
-.mission-btn-primary{background:#1490B0;color:#fff;border:1px solid #4B8AE8;box-shadow:0 4px 14px rgba(20,144,176,.25)}
+.mission-btn-primary{background:#1490B0;color:#fff;border:1px solid #0F7B94;box-shadow:0 4px 14px rgba(20,144,176,.25)}
 .mission-btn-primary:hover{background:#0F7B94;box-shadow:0 4px 16px rgba(20,144,176,.25)}
 
 /* FIELDS */
@@ -86,8 +86,8 @@ button:disabled{opacity:.4;cursor:not-allowed}
 @media(max-width:900px){.sidebar-shell{display:none!important}.main-content{margin-left:0!important;padding-bottom:60px!important}
 .mobile-nav{display:flex!important}
 }
-.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:56px;background:#1C2038;z-index:999;justify-content:space-around;align-items:center;box-shadow:0 -2px 12px rgba(0,0,0,.15);border-top:1px solid rgba(255,255,255,.06)}
-.mobile-nav button{background:none;border:none;color:rgba(255,255,255,.4);font-size:9px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;letter-spacing:.02em;font-weight:600}
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:62px;background:#1C2038;z-index:999;justify-content:space-around;align-items:center;box-shadow:0 -2px 12px rgba(0,0,0,.15);border-top:1px solid rgba(255,255,255,.06)}
+.mobile-nav button{background:none;border:none;color:rgba(255,255,255,.4);font-size:11px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;letter-spacing:.02em;font-weight:600;min-width:48px}
 .mobile-nav button.mnav-active{color:#1490B0}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
@@ -152,7 +152,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
 /* SMOOTH TAB SWITCH */
 .tab-btn{transition:all .2s ease}
-.tab-btn:hover{}
+
 .tab-btn:active{opacity:.9}
 
 /* AVATAR HOVER */
@@ -377,15 +377,17 @@ async function sendSMS(twilioConfig,to,body){
 }
 
 
+let _pendingGoogleCallback=null;
 function globalConnectGoogle(callback){
   if(!window.google?.accounts?.oauth2)return;
+  _pendingGoogleCallback=callback;
   if(!_tokenClient){
     _tokenClient=window.google.accounts.oauth2.initTokenClient({
       client_id:GOOGLE_CLIENT_ID,
       scope:'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/gmail.send openid email',
       callback:resp=>{if(resp.access_token){_gToken=resp.access_token;
         fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{Authorization:'Bearer '+resp.access_token}}).then(r=>r.json()).then(d=>{_gEmail=d.email||null}).catch(()=>{});
-        if(callback)callback(resp.access_token)}}
+        if(_pendingGoogleCallback)_pendingGoogleCallback(resp.access_token)}}
     });
   }
   _tokenClient.requestAccessToken();
@@ -991,7 +993,7 @@ function Assign({db,tasks,team,me,hubData}){
     let smsStatus='none';
     if(m.phone&&hubData?.twilio?.sid)try{await sendSMS(hubData.twilio,m.phone,'[CareForBrains] '+msgText.trim()+' - '+meName);smsStatus='sent'}catch(e){console.error('SMS:',e);smsStatus='failed'}
     let emailSent=false;
-    if(_gToken&&m.email)try{await doEmail(m,'Message from '+meName,'<div style="font-family:sans-serif;padding:20px"><p>'+msgText.trim()+'</p><p style="color:#888;margin-top:16px">- '+meName+'</p></div>');emailSent=true}catch(e){console.error('Email:',e)}
+    if(_gToken&&m.email){try{const r=await sendGmail(_gToken,m.email,'Message from '+meName,'<div style="font-family:sans-serif;padding:20px"><p>'+msgText.trim()+'</p><p style="color:#888;margin-top:16px">- '+meName+'</p></div>',meName);emailSent=true}catch(e){console.error('Email:',e);emailSent=false}}
     logEvent(db,'message_sent',{user:me,to:msgTo,toName:fn(m.name),message:msgText.trim().slice(0,50),smsStatus,emailSent:emailSent?'yes':'no'});
     setMsgSent(smsStatus==='sent'||emailSent?'sent':smsStatus==='failed'?'partial':'none');setMsgText('');setTimeout(()=>setMsgSent(false),2200);
   };
@@ -1791,7 +1793,7 @@ function Emails({db,hubData,team,me}){
 
   const downloadCert=async(name,hours,program)=>{
     const svg=generateCertSVG(name,hours||'50',program||'Volunteer',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
-    let pdfB64;try{pdfB64=await svgToPdfBase64(svg)}catch(e){alert('Certificate generation failed. Try refreshing the page.');console.error(e);return}
+    let pdfB64;try{pdfB64=await svgToPdfBase64(svg)}catch(e){alert('Certificate generation failed for '+name+'. Skipping.');console.error(e);continue}
     const byteChars=atob(pdfB64);const byteArr=new Uint8Array(byteChars.length);
     for(let i=0;i<byteChars.length;i++)byteArr[i]=byteChars.charCodeAt(i);
     const blob=new Blob([byteArr],{type:'application/pdf'});
@@ -1829,7 +1831,7 @@ function Emails({db,hubData,team,me}){
           }
           if(template==='stem_done'){certProgram='STEM Exploration';certHours='40'}
           const svg=generateCertSVG(name,certHours,certProgram,new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
-          let pdfB64;try{pdfB64=await svgToPdfBase64(svg)}catch(e){alert('Certificate generation failed. Try refreshing the page.');console.error(e);return}
+          let pdfB64;try{pdfB64=await svgToPdfBase64(svg)}catch(e){alert('Certificate generation failed for '+name+'. Skipping.');console.error(e);continue}
           pdfAttachment={name:'CareForBrains_Certificate_'+name.replace(/\s+/g,'_')+'.pdf',data:pdfB64};
         }
         const isStem=template==='stem_accept'||template==='stem_done';
@@ -2738,7 +2740,7 @@ function App(){
       db.ref('hub').on('value',snap=>{
         const val=snap.val();
         if(val)setHubData(val);
-        else{db.ref('hub').once('value',s2=>{if(!s2.val()){db.ref('hub').set(SEED);setHubData(SEED)}})}
+        else{setHubData(SEED)}
       });
     }catch(e){console.error(e);localStorage.removeItem(LK);window.location.reload()}
     return()=>{if(dbRef.current)dbRef.current.ref('hub').off()};
@@ -2829,7 +2831,7 @@ function App(){
     case 'logs':return me==='tanmay'?<Logs hubData={hubData} team={team} db={db}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>;
     default:return<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>}};
 
-  const mobileItems=[['my','\u2302','Home'],['team','\u25CB','Team'],['sheets','\u2637','Sheets'],['emails','\u2709','Comms'],['calendar','\u2610','Cal'],['board','\u2709','Posts'],['partners','\u2764','Partners']];
+  const mobileItems=[['my','\u2302','Home'],['sheets','\u2637','Sheets'],['emails','\u2709','Comms'],['calendar','\u2610','Cal'],['partners','\u2764','More']];
   return(<div style={{display:"flex",minHeight:"100vh",fontFamily:F.sn,color:C.fg,background:"#F8FAFC"}}>
     <div className="mobile-nav">{mobileItems.map(([id,icon,label])=><button key={id} className={safeTab===id?'mnav-active':''} onClick={()=>setTab(id)}><span style={{fontSize:18}}>{icon}</span>{label}</button>)}</div>    <Sidebar tab={safeTab} setTab={setTab} me={me} team={team} logout={logout}/>
     <div className="main-bg" className="main-bg main-content" style={{marginLeft:240,flex:1,minHeight:"100vh"}}>
