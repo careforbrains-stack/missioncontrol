@@ -1366,15 +1366,15 @@ function Sheets({db,hubData,team,me}){
     return{background:"#FEF3C7",color:"#92400E"};
   };
 
-  return(<div style={{overflow:"hidden",maxWidth:"100%"}}>
+  return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
-      <div style={{display:"flex",alignItems:"center",gap:10}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
         <span style={{fontWeight:700,fontSize:15}}>{sheets.length} Sheets</span>
         <span style={{fontSize:11,color:C.mt}}>{(()=>{const lt=lastSync?.getTime()||0;const bt=_lastBgSync||0;const best=Math.max(lt,bt);return best?'Synced '+new Date(best).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'—'})()}</span>
         {saving&&<span style={{fontSize:11,color:C.tl,fontWeight:700}}>Saving...</span>}
         {syncing&&<div style={{width:14,height:14,border:"2px solid #D8E8EE",borderTopColor:"#1490B0",borderRadius:"50%",animation:"spin .8s linear infinite"}}/>}
       </div>
-      <div style={{display:"flex",alignItems:"center",gap:8}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
         <Btn onClick={()=>syncAllSheets(true)} disabled={syncing}>Refresh</Btn>
         {!gToken?<Btn onClick={connectGoogle} primary>Connect Google</Btn>:<span style={{fontSize:11,color:C.gn,fontWeight:600}}>&#9679; Connected</span>}
       </div>
@@ -1400,7 +1400,7 @@ function Sheets({db,hubData,team,me}){
         </button>
       })}
     </div>
-    {activeSheet&&visibleCols.length>0?<Card style={{overflow:"hidden"}}>
+    {activeSheet&&visibleCols.length>0?<Card style={{overflow:"hidden",maxWidth:"calc(100vw - 312px)"}}>
       <div style={{padding:"8px 14px",borderBottom:"1px solid "+C.rl,display:"flex",justifyContent:"space-between",alignItems:"center",background:"#F5F6F8"}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <span style={{fontWeight:700,fontSize:13}}>{activeSheet.name}</span>
