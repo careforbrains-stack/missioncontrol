@@ -721,8 +721,10 @@ function Sidebar({tab,setTab,me,team,logout}){
     {id:'roadmap',label:'Future Plans',n:'07',show:true,sec:'STRATEGY'},
     {id:'partners',label:'Partnerships',n:'08',show:true},
     {id:'board',label:'Announcements',n:'09',show:true},
+    // ACCOUNT
+    {id:'account',label:'My Account',n:'\u2699',show:true,sec:'ACCOUNT'},
     // ADMIN
-    {id:'settings',label:'Settings',n:'\u2699',show:isA,sec:'ADMIN'},
+    {id:'settings',label:'Settings',n:'\uD83D\uDD12',show:isA,sec:'ADMIN'},
     {id:'logs',label:'Activity Log',n:'\u25CF',show:me==='tanmay'}
   ];
   return(<div className="sidebar-shell" style={{width:240,position:"fixed",top:0,left:0,bottom:0,display:"flex",flexDirection:"column",zIndex:100}}>
@@ -2702,18 +2704,92 @@ function Logs({hubData,team,db}){
   </div>);
 }
 
+// === MY ACCOUNT ===
+function MyAccount({db,passwords,team,me}){
+  const[curPw,setCurPw]=useState('');
+  const[newPw,setNewPw]=useState('');
+  const[confirmPw,setConfirmPw]=useState('');
+  const[msg,setMsg]=useState('');
+  const myPw=passwords?.[me]||'';
+  const changePw=()=>{
+    if(!newPw?.trim()){setMsg('Password cannot be empty');return}
+    if(newPw!==confirmPw){setMsg('Passwords do not match');return}
+    if(curPw!==myPw){setMsg('Current password is wrong');return}
+    if(newPw.length<4){setMsg('Password must be at least 4 characters');return}
+    db.ref('hub/passwords/'+me).set(newPw.trim());
+    setCurPw('');setNewPw('');setConfirmPw('');setMsg('');
+    alert('Password updated!');
+  };
+  const meData=team.find(t=>t.id===me);
+  return(<div>
+    <div style={{marginBottom:22}}>
+      <div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>Account</div>
+      <h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>My Account</h1>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+      <Card>
+        <CardH>Profile</CardH>
+        <div style={{padding:"18px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16}}>
+            <Av m={meData} s={48}/>
+            <div>
+              <div style={{fontWeight:700,fontSize:16}}>{meData?.name||me}</div>
+              <div style={{fontSize:12,color:C.mt}}>{meData?.role||'Team Member'}</div>
+              <div style={{fontSize:10,fontWeight:700,color:meData?.admin?"#1490B0":"#6B7280",fontFamily:"monospace",marginTop:2}}>{meData?.admin?'ADMIN':'MEMBER'}</div>
+            </div>
+          </div>
+          {meData?.email&&<div style={{fontSize:12,color:C.mt,marginBottom:4}}>Email: {meData.email}</div>}
+          {meData?.phone&&<div style={{fontSize:12,color:C.mt}}>Phone: {meData.phone}</div>}
+        </div>
+      </Card>
+
+      <Card>
+        <CardH>Change Password</CardH>
+        <div style={{padding:"18px"}}>
+          <div style={{marginBottom:12}}><Lbl>Current Password</Lbl><Inp type="password" value={curPw} onChange={e=>setCurPw(e.target.value)} placeholder="Enter current password"/></div>
+          <div style={{marginBottom:12}}><Lbl>New Password</Lbl><Inp type="password" value={newPw} onChange={e=>setNewPw(e.target.value)} placeholder="Enter new password"/></div>
+          <div style={{marginBottom:12}}><Lbl>Confirm New Password</Lbl><Inp type="password" value={confirmPw} onChange={e=>setConfirmPw(e.target.value)} placeholder="Confirm new password" onKeyDown={e=>e.key==='Enter'&&changePw()}/></div>
+          {msg&&<div style={{fontSize:12,color:"#EF4444",marginBottom:8}}>{msg}</div>}
+          <Btn primary onClick={changePw}>Update Password</Btn>
+        </div>
+      </Card>
+    </div>
+  </div>);
+}
+
 // === SETTINGS ===
 function Settings({db,passwords,team,hubData}){
   const[pu,setPu]=useState('tanmay');const[np,setNp]=useState('');
+  const[showPw,setShowPw]=useState({});
   const chPw=()=>{if(!np?.trim())return;db.ref('hub/passwords/'+pu).set(np);setNp('');alert('Updated')};
   const resetFb=()=>{if(!confirm('Sign out everywhere on this device?'))return;localStorage.removeItem(LK);window.location.reload()};
+  const toggleShow=id=>setShowPw(p=>({...p,[id]:!p[id]}));
   return(<div>
     <SectionHeader variant="admin" kicker="Admin" title="Settings" meta={['Passwords','Device reset']}/>
 
-    <Card><CardH>Passwords</CardH><div style={{padding:"14px 18px"}}><div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
+    <Card><CardH>All Team Passwords</CardH><div style={{padding:"14px 18px"}}>
+      <div style={{fontSize:12,color:C.mt,marginBottom:12}}>As admin, you can view and reset any team member's password.</div>
+      <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+        <thead><tr>
+          <th style={{textAlign:"left",padding:"8px 12px",borderBottom:"2px solid "+C.rl,fontSize:11,fontWeight:700,textTransform:"uppercase",color:C.sc}}>Member</th>
+          <th style={{textAlign:"left",padding:"8px 12px",borderBottom:"2px solid "+C.rl,fontSize:11,fontWeight:700,textTransform:"uppercase",color:C.sc}}>Password</th>
+          <th style={{textAlign:"left",padding:"8px 12px",borderBottom:"2px solid "+C.rl,fontSize:11,fontWeight:700,textTransform:"uppercase",color:C.sc}}>Actions</th>
+        </tr></thead>
+        <tbody>{team.map(m=><tr key={m.id} style={{borderBottom:"1px solid "+C.rl}}>
+          <td style={{padding:"10px 12px"}}><div style={{display:"flex",alignItems:"center",gap:8}}><Av m={m} s={24}/><span style={{fontWeight:600}}>{fn(m.name)}</span>{m.admin&&<span style={{fontSize:9,padding:"1px 5px",borderRadius:3,background:"rgba(20,144,176,.1)",color:"#1490B0",fontWeight:700}}>ADMIN</span>}</div></td>
+          <td style={{padding:"10px 12px",fontFamily:"monospace",fontSize:13}}>{showPw[m.id]?(passwords?.[m.id]||'not set'):'••••••••'}</td>
+          <td style={{padding:"10px 12px"}}><div style={{display:"flex",gap:6}}>
+            <button onClick={()=>toggleShow(m.id)} style={{padding:"4px 10px",borderRadius:5,border:"1px solid "+C.rl,background:"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:600,color:C.sc}}>{showPw[m.id]?'Hide':'Show'}</button>
+          </div></td>
+        </tr>)}</tbody>
+      </table>
+    </div></Card>
+
+    <Card><CardH>Reset a Password</CardH><div style={{padding:"14px 18px"}}><div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
       <div><Lbl>Member</Lbl><Sel style={{width:160}} value={pu} onChange={e=>setPu(e.target.value)}>{team.map(m=><option key={m.id} value={m.id}>{fn(m.name)}</option>)}</Sel></div>
-      <div style={{flex:1}}><Lbl>New Password</Lbl><Inp type="password" value={np} onChange={e=>setNp(e.target.value)}/></div>
-      <Btn primary onClick={chPw}>Update</Btn></div></div></Card>
+      <div style={{flex:1}}><Lbl>New Password</Lbl><Inp type="password" value={np} onChange={e=>setNp(e.target.value)} placeholder="Enter new password"/></div>
+      <Btn primary onClick={chPw}>Reset Password</Btn></div></div></Card>
+
     <Card><div style={{padding:"14px 18px"}}>
       <div style={{fontWeight:700,fontSize:14,marginBottom:3,color:C.rd}}>Reset Device</div>
       <div style={{fontSize:12,color:C.mt,marginBottom:8}}>Signs out on this device.</div>
@@ -2816,7 +2892,7 @@ function App(){
 
   const me=user.id;const isA=team.find(t=>t.id===me)?.admin;const canEmail=canUseEmails(me);
   const safeTab=(tab==='assign'&&!isA)||(tab==='settings'&&!isA)||(tab==='logs'&&me!=='tanmay')||(tab==='emails'&&!canEmail)?'my':tab;
-  const titles={my:'Dashboard',emails:'Comms',team:'Team Board',assign:'Assign Work',calendar:'Calendar',contacts:'Contacts',sheets:'Sheets',board:'Announcements',settings:'Settings',logs:'Activity Log',roadmap:'Future Plans',partners:'Partnerships'};
+  const titles={my:'Dashboard',emails:'Comms',team:'Team Board',assign:'Assign Work',calendar:'Calendar',contacts:'Contacts',sheets:'Sheets',board:'Announcements',account:'My Account',settings:'Settings',logs:'Activity Log',roadmap:'Future Plans',partners:'Partnerships'};
   const V=()=>{switch(safeTab){
     case 'my':return<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>;
     case 'team':return<TeamBoard db={db} tasks={tasks} team={team} me={me}/>;
@@ -2826,6 +2902,7 @@ function App(){
     case 'sheets':return<Sheets db={db} hubData={hubData} team={team} me={me}/>;
     case 'emails':return canEmail?<Emails db={db} hubData={hubData} team={team} me={me}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>;
     case 'board':return<Board db={db} announcements={announcements} team={team} me={me}/>;
+    case 'account':return<MyAccount db={db} passwords={passwords} team={team} me={me}/>;
     case 'settings':return isA?<Settings db={db} passwords={passwords} team={team} hubData={hubData}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>;
     case 'roadmap':return<Roadmap db={db} hubData={hubData} team={team} me={me}/>;
     case 'partners':return<Partnerships db={db} hubData={hubData} team={team} me={me}/>;
