@@ -983,10 +983,12 @@ function Assign({db,tasks,team,me,hubData}){
   const[msgTo,setMsgTo]=useState('');
   const[msgText,setMsgText]=useState('');
   const[msgSent,setMsgSent]=useState(false);
+  const[msgSending,setMsgSending]=useState(false);
 
   const doEmail=(to,subj,html)=>{if(to.email&&_gToken)sendGmail(_gToken,to.email,subj,html,'CareForBrains','careforbrains@gmail.com').catch(e=>console.error(e))};
   const sendMsg=async()=>{
-    if(!msgText.trim()||!msgTo||msgSent)return;
+    if(!msgText.trim()||!msgTo||msgSent||msgSending)return;
+    setMsgSending(true);
     const m=team.find(t=>t.id===msgTo);if(!m)return;
     const meName=fn(team.find(t=>t.id===me)?.name);
 
@@ -996,7 +998,7 @@ function Assign({db,tasks,team,me,hubData}){
     let emailSent=false;
     if(_gToken&&m.email){try{const r=await sendGmail(_gToken,m.email,'Message from '+meName,'<div style="font-family:sans-serif;padding:20px"><p>'+msgText.trim()+'</p><p style="color:#888;margin-top:16px">- '+meName+'</p></div>',meName);emailSent=true}catch(e){console.error('Email:',e);emailSent=false}}
     logEvent(db,'message_sent',{user:me,to:msgTo,toName:fn(m.name),message:msgText.trim().slice(0,50),smsStatus,emailSent:emailSent?'yes':'no'});
-    setMsgSent(smsStatus==='sent'&&emailSent?'sent':(smsStatus==='sent'||emailSent)?'partial':'none');setMsgText('');setTimeout(()=>setMsgSent(false),2200);
+    setMsgSending(false);setMsgSent(smsStatus==='sent'&&emailSent?'sent':(smsStatus==='sent'||emailSent)?'partial':'none');setMsgText('');setTimeout(()=>setMsgSent(false),2200);
   };
   const assign=()=>{if(!form.text.trim()||sent)return;const targets=bulk?team.filter(t=>!t.admin).map(t=>t.id):[form.assignee];targets.forEach(a=>{const ref=db.ref('hub/tasks').push();ref.set({id:ref.key,assignee:a,text:form.text.trim(),notes:form.notes.trim(),priority:form.priority,due:form.due,done:false,assignedBy:me,created:new Date().toISOString().split('T')[0]});logEvent(db,'task_assign',{user:me,assignee:a,task:form.text.trim(),priority:form.priority})});setSent(true);setTimeout(()=>{setSent(false);setForm({assignee:team[0]?.id||'',text:'',notes:'',priority:'medium',due:''})},1800)};
   const totalOpen=tasks.filter(t=>!t.done).length;const totalDone=tasks.filter(t=>t.done).length;const totalOverdue=tasks.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;
@@ -1127,7 +1129,7 @@ function Assign({db,tasks,team,me,hubData}){
             </div>)}
           </div>
           <div style={{flex:1}}><Inp value={msgText} onChange={e=>setMsgText(e.target.value)} placeholder="Type a message..." onKeyDown={e=>{if(e.key==='Enter'&&msgText.trim()&&msgTo)sendMsg()}}/></div>
-          <button onClick={sendMsg} disabled={!msgText.trim()||!msgTo} style={{padding:"10px 20px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,color:"#fff",background:msgText.trim()&&msgTo?"linear-gradient(135deg,#10B981,#059669)":"#E6E9EF"}}>Send</button>
+          <button onClick={sendMsg} disabled={!msgText.trim()||!msgTo||msgSending} style={{padding:"10px 20px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,color:"#fff",background:msgText.trim()&&msgTo&&!msgSending?"linear-gradient(135deg,#10B981,#059669)":"#E6E9EF"}}>{msgSending?'Sending...':'Send'}</button>
         </div>
       </div>}
     </Card>
@@ -2802,6 +2804,7 @@ function Settings({db,passwords,team,hubData}){
 function App(){
   const fbCfg=FIREBASE_CONFIG;
   const[hubData,setHubData]=useState(null);
+  const[fbError,setFbError]=useState(null);
   const[user,setUser]=useState(()=>gL());
   const[tab,setTab]=useState('my');
   const dbRef=useRef(null);
@@ -2819,7 +2822,7 @@ function App(){
         if(val)setHubData(val);
         else{setHubData(SEED)}
       });
-    }catch(e){console.error('Firebase init failed:',e)}
+    }catch(e){console.error('Firebase init failed:',e);setFbError(e.message||'Connection failed')}
     return()=>{if(dbRef.current)dbRef.current.ref('hub').off()};
   },[fbCfg]);
 
@@ -2879,7 +2882,7 @@ function App(){
   },[user,tab]);
 
   
-  if(!hubData)return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.sn}}><div style={{textAlign:"center"}}><img src={LOGO} alt="" style={{width:40,height:40,borderRadius:10,marginBottom:10,opacity:0.5}}/><div style={{fontSize:13,color:C.mt}}>Connecting...</div></div></div>);
+  if(!hubData)return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.sn}}><div style={{textAlign:"center"}}><img src={LOGO} alt="" style={{width:40,height:40,borderRadius:10,marginBottom:10,opacity:0.5}}/>{fbError?<div><div style={{fontSize:14,color:"#EF4444",fontWeight:600,marginBottom:6}}>Connection Failed</div><div style={{fontSize:12,color:C.mt,marginBottom:12}}>{fbError}</div><button onClick={()=>window.location.reload()} style={{padding:"8px 16px",borderRadius:8,border:"1px solid #E6E9EF",background:"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600}}>Retry</button></div>:<div style={{fontSize:13,color:C.mt}}>Connecting...</div>}</div></div>);
 
   const team=Array.isArray(hubData.team)?hubData.team:(hubData.team?Object.values(hubData.team):TEAM);
   const tasks=fbToArr(hubData.tasks);
