@@ -2730,6 +2730,7 @@ function App(){
   const[tab,setTab]=useState('my');
   const dbRef=useRef(null);
   const[time,setTime]=useState(new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}));
+  const[mobileMore,setMobileMore]=useState(false);
 
   useEffect(()=>{
     if(!fbCfg)return;
@@ -2832,7 +2833,6 @@ function App(){
     default:return<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>}};
 
   const mobileTabs=[['my','Home'],['team','Team'],['sheets','Sheets'],['emails','Comms'],['calendar','Cal'],['roadmap','Plans'],['partners','CRM'],['board','Posts'],['contacts','Dir']];
-  const[mobileMore,setMobileMore]=useState(false);
   return(<div style={{display:"flex",minHeight:"100vh",fontFamily:F.sn,color:C.fg,background:"#F8FAFC"}}>
     <div className="mobile-nav" style={{flexWrap:'wrap',height:'auto',minHeight:56,paddingTop:4,paddingBottom:4}}>{mobileTabs.map(([id,label])=><button key={id} className={safeTab===id?'mnav-active':''} onClick={()=>setTab(id)} style={{fontSize:10,padding:'6px 8px',minWidth:40}}>{label}</button>)}</div>    <Sidebar tab={safeTab} setTab={setTab} me={me} team={team} logout={logout}/>
     <div className="main-bg" className="main-bg main-content" style={{marginLeft:240,flex:1,minHeight:"100vh"}}>
