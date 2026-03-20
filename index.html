@@ -34,7 +34,6 @@ button:disabled{opacity:.4;cursor:not-allowed}
 /* SURFACES */
 .login-panel{background:#fff;border:1px solid #E6E9EF;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.04),0 24px 60px rgba(0,0,0,.06)}
 .mission-card{background:#fff;border:1px solid #E6E9EF;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.03);transition:all .2s ease}
-.mission-card:hover{border-color:#D0D4DC;box-shadow:0 8px 30px rgba(0,0,0,.06)}
 
 /* BUTTONS */
 .mission-btn{border-radius:8px;font-weight:600;border:none;padding:8px 18px;font-size:12.5px;letter-spacing:-.01em;transition:all .2s ease;transform:translateY(0)}
@@ -135,7 +134,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .table-row-hover:hover{background:rgba(20,144,176,.04)!important}
 
 /* TOPBAR TITLE */
-.topbar-title{color:#1B2838}
+
 
 /* BUTTON RIPPLE */
 .mission-btn-primary{position:relative;overflow:hidden}
@@ -232,7 +231,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .celebration-badge{width:36px;height:36px;border-radius:14px;background:linear-gradient(135deg,rgba(16,185,129,.24),rgba(251,146,60,.28));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 0 10px rgba(16,185,129,.06)}
 @keyframes toastLift{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:1120px){.login-stage,.brief-grid{grid-template-columns:1fr}.login-brand-metrics{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:760px){.section-hero,.morning-brief{padding:22px 20px;border-radius:22px}.hero-title{font-size:27px}.login-brand-metrics{grid-template-columns:1fr}.login-brand-copy,.login-auth-card{padding:24px}.celebration-toast{left:20px;right:20px;top:76px}}
+@media(max-width:760px){.section-hero,.morning-brief{padding:22px 20px;border-radius:22px}.hero-title{font-size:20px}.login-brand-metrics{grid-template-columns:1fr}.login-brand-copy,.login-auth-card{padding:24px}.celebration-toast{left:20px;right:20px;top:76px}}
 </style>
 </head>
 <body>
@@ -426,7 +425,7 @@ async function svgToPdfBase64(svgString){
   document.body.appendChild(wrap);
   await new Promise(r=>setTimeout(r,500));
   const canvas=await html2canvas(wrap,{scale:2,useCORS:true,backgroundColor:'#ffffff',width:1100,height:780});
-  document.body.removeChild(wrap);
+  try{document.body.removeChild(wrap)}catch(e){}
   const imgData=canvas.toDataURL('image/jpeg',0.95);
   const pdf=new jsPDF({orientation:'landscape',unit:'px',format:[1100,780]});
   pdf.addImage(imgData,'JPEG',0,0,1100,780);
@@ -767,7 +766,7 @@ function MyWork({db,tasks,events,team,me,hubData}){
   const sheets=hubData?.sheets?Object.keys(hubData.sheets).filter(k=>k!=='_seed').map(k=>normSheetEntry(hubData.sheets[k])):[];
 
   // Compute KPIs
-  const totalVolunteers=sheets.reduce((s,sh)=>{const d=hubData?.sheetData?.[sh.id];return s+(Array.isArray(d)?Math.max(0,d.length-1):0)},0);
+  const totalVolunteers=(()=>{const emails=new Set();Object.values(hubData?.sheetData||{}).forEach(d=>{if(!Array.isArray(d)||d.length<2)return;const h=d[0]||[];let ei=-1;for(let i=0;i<h.length;i++){if((h[i]||'').toLowerCase().includes('email')&&!(h[i]||'').toLowerCase().includes('school')){ei=i;break}}if(ei<0)return;d.slice(1).forEach(r=>{const e=(r?.[ei]||'').trim().toLowerCase();if(e&&e.includes('@'))emails.add(e)})});return emails.size})();
   const activePartnerships=partnerships.filter(p=>p.status==='in_contact'||p.status==='confirmed').length;
   const stalePtnrs=partnerships.filter(p=>{if(p.status==='confirmed'||p.status==='declined')return false;const notes=Array.isArray(p.notes)?p.notes:[];if(!notes.length)return true;const last=notes[notes.length-1];return last?.date&&(Date.now()-new Date(last.date).getTime())>7*86400000});
   const inProgressPlans=roadmap.filter(r=>r.status==='in_progress').length;
@@ -995,7 +994,7 @@ function Assign({db,tasks,team,me,hubData}){
     let emailSent=false;
     if(_gToken&&m.email){try{const r=await sendGmail(_gToken,m.email,'Message from '+meName,'<div style="font-family:sans-serif;padding:20px"><p>'+msgText.trim()+'</p><p style="color:#888;margin-top:16px">- '+meName+'</p></div>',meName);emailSent=true}catch(e){console.error('Email:',e);emailSent=false}}
     logEvent(db,'message_sent',{user:me,to:msgTo,toName:fn(m.name),message:msgText.trim().slice(0,50),smsStatus,emailSent:emailSent?'yes':'no'});
-    setMsgSent(smsStatus==='sent'||emailSent?'sent':smsStatus==='failed'?'partial':'none');setMsgText('');setTimeout(()=>setMsgSent(false),2200);
+    setMsgSent(smsStatus==='sent'&&emailSent?'sent':(smsStatus==='sent'||emailSent)?'partial':'none');setMsgText('');setTimeout(()=>setMsgSent(false),2200);
   };
   const assign=()=>{if(!form.text.trim())return;const targets=bulk?team.filter(t=>!t.admin).map(t=>t.id):[form.assignee];targets.forEach(a=>{const ref=db.ref('hub/tasks').push();ref.set({id:ref.key,assignee:a,text:form.text.trim(),notes:form.notes.trim(),priority:form.priority,due:form.due,done:false,assignedBy:me,created:new Date().toISOString().split('T')[0]});logEvent(db,'task_assign',{user:me,assignee:a,task:form.text.trim(),priority:form.priority})});setSent(true);setTimeout(()=>{setSent(false);setForm({assignee:'eric',text:'',notes:'',priority:'medium',due:''})},1800)};
   const totalOpen=tasks.filter(t=>!t.done).length;const totalDone=tasks.filter(t=>t.done).length;const totalOverdue=tasks.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;
@@ -1044,7 +1043,7 @@ function Assign({db,tasks,team,me,hubData}){
               {team.map(m=><div key={m.id} onClick={()=>setForm({...form,assignee:m.id})} style={{
                 padding:"10px 8px",borderRadius:10,border:form.assignee===m.id?"2px solid "+(m.color||C.tl):"1px solid "+C.rl,
                 background:form.assignee===m.id?"rgba(20,144,176,.04)":"#fff",cursor:"pointer",textAlign:"center",
-                transition:"all .25s var(--ease-spring)",transform:form.assignee===m.id?"scale(1.03)":"scale(1)"
+                transition:"all .25s var(--ease-spring)",opacity:form.assignee===m.id?1:0.7
               }}>
                 <Av m={m} s={32}/>
                 <div style={{fontSize:11,fontWeight:form.assignee===m.id?700:500,marginTop:6,color:form.assignee===m.id?"#1B2838":"#8A9AAE"}}>{fn(m.name)}</div>
@@ -1073,7 +1072,7 @@ function Assign({db,tasks,team,me,hubData}){
             background:form.text.trim()?"linear-gradient(135deg,#1490B0,#0C6B8E)":"#E6E9EF",
             boxShadow:form.text.trim()?"0 4px 14px rgba(20,144,176,.3)":"none",
             transition:"all .3s var(--ease-spring)",transform:"translateY(0)"
-          }} onMouseEnter={e=>{if(form.text.trim())e.target.style.transform='translateY(-2px)'}} onMouseLeave={e=>e.target.style.transform='translateY(0)'}>
+          }}>
             {bulk?"Deploy to All":"Deploy to "+fn(team.find(t=>t.id===form.assignee)?.name)}
           </button>
         </div>}
@@ -1276,7 +1275,7 @@ function Sheets({db,hubData,team,me}){
         const text=await r.text();
         if(text.trim().startsWith('<!'))continue;
         const rows=parseCSV(text);
-        db.ref('hub/sheetData/'+s.id).set(rows.length>0?rows:null);
+        db.ref('hub/sheetData/'+s.id).set(rows.length>0?rows:[]);
       }catch(e){console.log('Sync skip:',s.name,e)}
     }
     setSyncing(false);setLastSync(new Date());
@@ -1759,7 +1758,7 @@ function Emails({db,hubData,team,me}){
   const sender=emailCfg.profiles[emailCfg.defaultProfile]||emailCfg.profiles.general||{};
   const[gConnected,setGConnected]=useState(!!_gToken);
   const[connectedEmail,setConnectedEmail]=useState(_gEmail||'');
-  const senderReady=!!_gToken||gConnected;
+  const senderReady=!!_gToken;
   const isStemTemplate=template==='stem_accept'||template==='stem_done';
   const wantsStemEmail=isStemTemplate;
   const connectedIsStem=(connectedEmail||'').includes('careforbrainsse');
@@ -1845,7 +1844,8 @@ function Emails({db,hubData,team,me}){
       if(i<validSelected.length-1)await wait(500);
     }
     setSending(false);
-    setSendDone(true);
+    const anySuccess=Object.values(ns).some(v=>v==='sent');
+    if(anySuccess)setSendDone(true);else{alert('All emails failed or were skipped. Check your connection and try again.')}
   };
 
   const previewRow=manualMode?[manualName,manualEmail]:(validSelected[Math.min(previewIdx,Math.max(validSelected.length-1,0))]?.row||[]);
@@ -2133,7 +2133,7 @@ function VolunteerCRM({hubData,team,me}){
         }
         const v=map[email];
         if(name&&(!v.name||name.length>v.name.length))v.name=name;
-        if(ts){if(!v.firstSeen||ts<v.firstSeen)v.firstSeen=ts;if(!v.lastSeen||ts>v.lastSeen)v.lastSeen=ts}
+        if(ts){const tp=new Date(ts).getTime();const fp=new Date(v.firstSeen||'9999').getTime();const lp=new Date(v.lastSeen||'0').getTime();if(!v.firstSeen||tp<fp)v.firstSeen=ts;if(!v.lastSeen||tp>lp)v.lastSeen=ts}
         if(!v.programs.includes(meta.program))v.programs.push(meta.program);
         if(meta.type==='signup')v.signups.push({program:meta.program,date:ts,sheet:sid});
         if(meta.type==='done')v.completions.push({program:meta.program,date:ts,sheet:sid});
@@ -2705,7 +2705,7 @@ function Logs({hubData,team,db}){
 // === SETTINGS ===
 function Settings({db,passwords,team,hubData}){
   const[pu,setPu]=useState('tanmay');const[np,setNp]=useState('');
-  const chPw=()=>{if(!np)return;db.ref('hub/passwords/'+pu).set(np);setNp('');alert('Updated')};
+  const chPw=()=>{if(!np?.trim())return;db.ref('hub/passwords/'+pu).set(np);setNp('');alert('Updated')};
   const resetFb=()=>{if(!confirm('Sign out everywhere on this device?'))return;localStorage.removeItem(LK);window.location.reload()};
   return(<div>
     <SectionHeader variant="admin" kicker="Admin" title="Settings" meta={['Passwords','Device reset']}/>
@@ -2765,15 +2765,15 @@ function App(){
           if(syncHashRef.current[s.id]===hash){_lastBgSync=Date.now();continue}
           syncHashRef.current[s.id]=hash;
           const rows=parseCSV(text);
-          db.ref('hub/sheetData/'+s.id).set(rows.length>0?rows:null);
+          db.ref('hub/sheetData/'+s.id).set(rows.length>0?rows:[]);
           _lastBgSync=Date.now();
-        }catch(e){}
+        }catch(e){console.warn('Sync failed for',s.name,e)}
       }
     };
     syncAll();
     const iv=setInterval(syncAll,30000);
     return()=>clearInterval(iv);
-  },[!!hubData?.sheets]);
+  },[JSON.stringify(Object.keys(hubData?.sheets||{}))]);
 
   const logout=()=>{
     if(dbRef.current&&user)logEvent(dbRef.current,'logout',{user:user.id});
@@ -2831,9 +2831,10 @@ function App(){
     case 'logs':return me==='tanmay'?<Logs hubData={hubData} team={team} db={db}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>;
     default:return<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>}};
 
-  const mobileItems=[['my','\u2302','Home'],['sheets','\u2637','Sheets'],['emails','\u2709','Comms'],['calendar','\u2610','Cal'],['partners','\u2764','More']];
+  const mobileTabs=[['my','Home'],['team','Team'],['sheets','Sheets'],['emails','Comms'],['calendar','Cal'],['roadmap','Plans'],['partners','CRM'],['board','Posts'],['contacts','Dir']];
+  const[mobileMore,setMobileMore]=useState(false);
   return(<div style={{display:"flex",minHeight:"100vh",fontFamily:F.sn,color:C.fg,background:"#F8FAFC"}}>
-    <div className="mobile-nav">{mobileItems.map(([id,icon,label])=><button key={id} className={safeTab===id?'mnav-active':''} onClick={()=>setTab(id)}><span style={{fontSize:18}}>{icon}</span>{label}</button>)}</div>    <Sidebar tab={safeTab} setTab={setTab} me={me} team={team} logout={logout}/>
+    <div className="mobile-nav" style={{flexWrap:'wrap',height:'auto',minHeight:56,paddingTop:4,paddingBottom:4}}>{mobileTabs.map(([id,label])=><button key={id} className={safeTab===id?'mnav-active':''} onClick={()=>setTab(id)} style={{fontSize:10,padding:'6px 8px',minWidth:40}}>{label}</button>)}</div>    <Sidebar tab={safeTab} setTab={setTab} me={me} team={team} logout={logout}/>
     <div className="main-bg" className="main-bg main-content" style={{marginLeft:240,flex:1,minHeight:"100vh"}}>
       <div className="topbar-shell" style={{position:"sticky",top:0,padding:"12px 36px",display:"flex",alignItems:"center",justifyContent:"space-between",zIndex:50}}>
         <span className="topbar-title" style={{fontFamily:F.sf,fontSize:19,fontWeight:400}}>{titles[safeTab]}</span>
