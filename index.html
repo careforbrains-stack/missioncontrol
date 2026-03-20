@@ -82,7 +82,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 @keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.4}}
 
 
-@media(max-width:900px){.sidebar-shell{display:none!important}.main-content{margin-left:0!important;padding-bottom:60px!important}
+@media(max-width:900px){.sidebar-shell{display:none!important}.main-content{margin-left:0!important;padding-bottom:120px!important}
 .mobile-nav{display:flex!important}
 }
 .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:62px;background:#1C2038;z-index:999;justify-content:space-around;align-items:center;box-shadow:0 -2px 12px rgba(0,0,0,.15);border-top:1px solid rgba(255,255,255,.06)}
@@ -2715,7 +2715,7 @@ function MyAccount({db,passwords,team,me}){
     if(!newPw?.trim()){setMsg('Password cannot be empty');return}
     if(newPw!==confirmPw){setMsg('Passwords do not match');return}
     if(curPw!==myPw){setMsg('Current password is wrong');return}
-    if(newPw.length<4){setMsg('Password must be at least 4 characters');return}
+    if(newPw.trim().length<4){setMsg('Password must be at least 4 characters');return}
     db.ref('hub/passwords/'+me).set(newPw.trim());
     setCurPw('');setNewPw('');setConfirmPw('');setMsg('');
     alert('Password updated!');
@@ -2761,7 +2761,7 @@ function MyAccount({db,passwords,team,me}){
 function Settings({db,passwords,team,hubData}){
   const[pu,setPu]=useState('tanmay');const[np,setNp]=useState('');
   const[showPw,setShowPw]=useState({});
-  const chPw=()=>{if(!np?.trim())return;db.ref('hub/passwords/'+pu).set(np);setNp('');alert('Updated')};
+  const chPw=()=>{const pw=np?.trim();if(!pw){alert('Password cannot be empty');return}if(pw.length<4){alert('Password must be at least 4 characters');return}db.ref('hub/passwords/'+pu).set(pw);setNp('');alert('Updated')};
   const resetFb=()=>{if(!confirm('Sign out everywhere on this device?'))return;localStorage.removeItem(LK);window.location.reload()};
   const toggleShow=id=>setShowPw(p=>({...p,[id]:!p[id]}));
   return(<div>
@@ -2909,9 +2909,9 @@ function App(){
     case 'logs':return me==='tanmay'?<Logs hubData={hubData} team={team} db={db}/>:<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>;
     default:return<MyWork db={db} tasks={tasks} events={events} team={team} me={me} hubData={hubData}/>}};
 
-  const mobileTabs=[['my','Home'],['team','Team'],['sheets','Sheets'],['emails','Comms'],['calendar','Cal'],['roadmap','Plans'],['partners','CRM'],['board','Posts'],['contacts','Dir']];
+  const mobileTabs=[['my','Home'],['team','Team'],['assign','Assign'],['calendar','Cal'],['sheets','Sheets'],['contacts','Dir'],['emails','Comms'],['roadmap','Plans'],['partners','CRM'],['board','Posts'],['account','Acct'],...(isA?[['settings','Admin']]:[]),...(me==='tanmay'?[['logs','Logs']]:[])];
   return(<div style={{display:"flex",minHeight:"100vh",fontFamily:F.sn,color:C.fg,background:"#F8FAFC"}}>
-    <div className="mobile-nav" style={{flexWrap:'wrap',height:'auto',minHeight:56,paddingTop:4,paddingBottom:4}}>{mobileTabs.map(([id,label])=><button key={id} className={safeTab===id?'mnav-active':''} onClick={()=>setTab(id)} style={{fontSize:10,padding:'6px 8px',minWidth:40}}>{label}</button>)}</div>    <Sidebar tab={safeTab} setTab={setTab} me={me} team={team} logout={logout}/>
+    <div className="mobile-nav" style={{flexWrap:'wrap',height:'auto',minHeight:56,paddingTop:4,paddingBottom:4}}>{mobileTabs.map(([id,label])=><button key={id} className={safeTab===id?'mnav-active':''} onClick={()=>setTab(id)}>{label}</button>)}</div>    <Sidebar tab={safeTab} setTab={setTab} me={me} team={team} logout={logout}/>
     <div className="main-bg" className="main-bg main-content" style={{marginLeft:240,flex:1,minHeight:"100vh"}}>
       <div className="topbar-shell" style={{position:"sticky",top:0,padding:"12px 36px",display:"flex",alignItems:"center",justifyContent:"space-between",zIndex:50}}>
         <span className="topbar-title" style={{fontFamily:F.sf,fontSize:19,fontWeight:400}}>{titles[safeTab]}</span>
