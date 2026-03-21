@@ -550,7 +550,7 @@ let _geoInfo={};
       const r=await fetch(api.url);if(!r.ok)continue;
       const d=await r.json();if(d.error)continue;
       const g=api.map(d);
-      if(g.ip){_geoInfo={...g,isMobile:'No',isProxy:'No',isHosting:'No',geoSource:'IP'};break}
+      if(g.ip){_geoInfo={...g,isMobile:g.isMobile||'Unknown',isProxy:g.isProxy||g.proxy||'Unknown',isHosting:g.isHosting||g.hosting||'Unknown',geoSource:'IP'};break}
     }catch(e){continue}
   }
   // Try browser GPS for precise coords (overwrites IP lat/lon if allowed)
@@ -627,7 +627,7 @@ function fbToArr(obj){if(!obj)return[];return Object.keys(obj).filter(k=>k!=='_s
 // === LOGIN ===
 function Login({onLogin,passwords,team}){
   const[sel,setSel]=useState(null);const[pass,setPass]=useState('');const[err,setErr]=useState('');
-  const go=()=>{if(passwords?.[sel]&&pass!==passwords[sel]){setErr('Wrong password');setTimeout(()=>setErr(''),2e3);return}sL({id:sel});
+  const go=()=>{if(!pass.trim()){setErr('Enter your password');setTimeout(()=>setErr(''),2e3);return}if(pass!==passwords?.[sel]){setErr('Wrong password');setTimeout(()=>setErr(''),2e3);return}sL({id:sel});
     // Log the login - geo data comes from _geoInfo (fetched on page load)
     if(firebase.apps.length){logEvent(firebase.database(),'login',{user:sel})}
     onLogin(sel)};
@@ -760,7 +760,8 @@ function MyWork({db,tasks,events,team,me,hubData}){
 
   // Dashboard data
   const allOpen=tasks.filter(t=>!t.done);
-  const allOverdue=allOpen.filter(t=>t.due&&new Date(t.due)<new Date());
+  const todayStr=new Date().toISOString().split('T')[0];
+  const allOverdue=allOpen.filter(t=>t.due&&t.due<todayStr);
   const partnerships=fbToArr(hubData?.partnerships||{});
   const roadmap=fbToArr(hubData?.roadmap||{});
   const announcements=fbToArr(hubData?.announcements||{}).sort((a,b)=>(b.ts||0)-(a.ts||0));
@@ -780,7 +781,7 @@ function MyWork({db,tasks,events,team,me,hubData}){
 
   // Upcoming deadlines (next 7 days, all team)
   const soon=new Date();soon.setDate(soon.getDate()+7);
-  const upcoming=[...allOpen.filter(t=>t.due&&new Date(t.due)<=soon).map(t=>({type:'task',date:t.due,text:t.text,who:t.assignee,priority:t.priority,overdue:new Date(t.due)<new Date()})),...events.filter(e=>new Date(e.date)>=new Date()&&new Date(e.date)<=soon).map(e=>({type:'event',date:e.date,text:e.title,who:e.assignee}))].sort((a,b)=>a.date.localeCompare(b.date));
+  const upcoming=[...allOpen.filter(t=>t.due&&new Date(t.due)<=soon).map(t=>({type:'task',date:t.due,text:t.text,who:t.assignee,priority:t.priority,overdue:t.due<todayStr})),...events.filter(e=>new Date(e.date)>=new Date()&&new Date(e.date)<=soon).map(e=>({type:'event',date:e.date,text:e.title,who:e.assignee}))].sort((a,b)=>a.date.localeCompare(b.date));
 
   const getName=id=>{const m=team.find(t=>t.id===id);return m?fn(m.name):id||'?'};
   const priC={high:'#EF4444',medium:'#F59E0B',low:'#3B82F6'};
@@ -859,7 +860,7 @@ function MyWork({db,tasks,events,team,me,hubData}){
                 <div style={{fontWeight:600,fontSize:14}}>{t.text}</div>
                 {t.notes&&<div style={{fontSize:12,color:C.sc,marginTop:2}}>{t.notes.slice(0,60)}</div>}
                 <div style={{display:"flex",alignItems:"center",gap:8,marginTop:4,flexWrap:"wrap"}}>
-                  <Tag t={t.priority}/>{t.due&&<span style={{fontSize:10,fontFamily:"monospace",color:new Date(t.due)<new Date()?C.rd:C.mt}}>Due {t.due}</span>}
+                  <Tag t={t.priority}/>{t.due&&<span style={{fontSize:10,fontFamily:"monospace",color:t.due<new Date().toISOString().split('T')[0]?C.rd:C.mt}}>Due {t.due}</span>}
                 </div></div></div>)})}
           {done.length>0&&<div style={{marginTop:10}}><div style={{fontSize:10,fontFamily:"monospace",color:C.mt,marginBottom:4}}>COMPLETED ({done.length})</div>
             {done.slice(0,3).map(t=><div key={t._fbKey} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 0",opacity:0.35}}>
@@ -953,7 +954,7 @@ function TeamBoard({db,tasks,team,me}){
     <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>02 &#8212; Team Board</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Everyone's Work</h1></div>
     <hr style={{border:"none",borderTop:"1px solid "+C.rl,margin:"12px 0 22px"}}/>
     <div style={{display:"grid",gridTemplateColumns:"repeat("+Math.min(team.length,3)+",1fr)",gap:14,marginBottom:22}}>
-      {team.map((m,idx)=>{const ts=tasks.filter(t=>t.assignee===m.id);const op=ts.filter(t=>!t.done).length;const dn=ts.filter(t=>t.done).length;const od=ts.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;
+      {team.map((m,idx)=>{const ts=tasks.filter(t=>t.assignee===m.id);const op=ts.filter(t=>!t.done).length;const dn=ts.filter(t=>t.done).length;const od=ts.filter(t=>!t.done&&t.due&&t.due<new Date().toISOString().split('T')[0]).length;
         return(<Reveal key={m.id} delay={idx*60} scale><div className="team-tile" onClick={()=>setView(view===m.id?null:m.id)} style={{background:C.cd,border:"1px solid "+(m.id===me?C.tl:view===m.id?C.td:C.cb),boxShadow:m.id===me?"0 0 0 1px "+C.tl:view===m.id?"0 0 0 1px "+C.td:"none",cursor:"pointer",padding:16}}>
           <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}><Av m={m} s={34}/><div><div style={{fontWeight:700,fontSize:13}}>{fn(m.name)}</div><div style={{fontSize:9.5,color:C.mt,fontFamily:"monospace"}}>{m.admin?'ADMIN':fn(m.role.split('of ')[1]||m.role)}</div></div></div>
           <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:22,fontWeight:700,fontFamily:F.sf,color:op>0?C.fg:C.mt}}>{op}</span><span style={{fontSize:10,color:C.mt}}>open</span><span style={{color:C.mt}}>&#183;</span><span style={{fontSize:14,fontWeight:600,color:C.gn}}>{dn}</span><span style={{fontSize:10,color:C.mt}}>done</span>
@@ -976,7 +977,7 @@ function TeamBoard({db,tasks,team,me}){
 
 // === ASSIGN WORK ===
 function Assign({db,tasks,team,me,hubData}){
-  const[form,setForm]=useState({assignee:'eric',text:'',notes:'',priority:'medium',due:''});
+  const[form,setForm]=useState({assignee:team[0]?.id||'',text:'',notes:'',priority:'medium',due:''});
   const[bulk,setBulk]=useState(false);
   const[sent,setSent]=useState(false);
   const[gOk,setGOk]=useState(!!_gToken);
@@ -1000,8 +1001,8 @@ function Assign({db,tasks,team,me,hubData}){
     logEvent(db,'message_sent',{user:me,to:msgTo,toName:fn(m.name),message:msgText.trim().slice(0,50),smsStatus,emailSent:emailSent?'yes':'no'});
     setMsgSending(false);setMsgSent(smsStatus==='sent'&&emailSent?'sent':(smsStatus==='sent'||emailSent)?'partial':'none');setMsgText('');setTimeout(()=>setMsgSent(false),2200);
   };
-  const assign=()=>{if(!form.text.trim()||sent)return;const targets=bulk?team.filter(t=>!t.admin).map(t=>t.id):[form.assignee];targets.forEach(a=>{const ref=db.ref('hub/tasks').push();ref.set({id:ref.key,assignee:a,text:form.text.trim(),notes:form.notes.trim(),priority:form.priority,due:form.due,done:false,assignedBy:me,created:new Date().toISOString().split('T')[0]});logEvent(db,'task_assign',{user:me,assignee:a,task:form.text.trim(),priority:form.priority})});setSent(true);setTimeout(()=>{setSent(false);setForm({assignee:team[0]?.id||'',text:'',notes:'',priority:'medium',due:''})},1800)};
-  const totalOpen=tasks.filter(t=>!t.done).length;const totalDone=tasks.filter(t=>t.done).length;const totalOverdue=tasks.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;
+  const assign=()=>{if(!form.text.trim()||sent)return;const targets=bulk?team.filter(t=>!t.admin).map(t=>t.id):[form.assignee];targets.forEach(a=>{const ref=db.ref('hub/tasks').push();ref.set({id:ref.key,assignee:a,text:form.text.trim(),notes:form.notes.trim(),priority:form.priority,due:form.due,done:false,assignedBy:me,created:new Date().toISOString().split('T')[0]}).catch(e=>console.error('Task write failed:',e));logEvent(db,'task_assign',{user:me,assignee:a,task:form.text.trim(),priority:form.priority})});setSent(true);setTimeout(()=>{setSent(false);setForm({assignee:team[0]?.id||'',text:'',notes:'',priority:'medium',due:''})},1800)};
+  const totalOpen=tasks.filter(t=>!t.done).length;const totalDone=tasks.filter(t=>t.done).length;const totalOverdue=tasks.filter(t=>!t.done&&t.due&&t.due<new Date().toISOString().split('T')[0]).length;
   const pColors={high:'#EF4444',medium:'#F59E0B',low:'#3B82F6'};
   return(<div>
     <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>&#9889; Assign Work</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Assign Work</h1></div>
@@ -1088,7 +1089,7 @@ function Assign({db,tasks,team,me,hubData}){
             <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:"#323338"}}>Team Status</span>
           </div>
           <div style={{padding:"8px 12px"}}>
-            {team.map(m=>{const ts=tasks.filter(t=>t.assignee===m.id);const op=ts.filter(t=>!t.done).length;const dn=ts.filter(t=>t.done).length;const od=ts.filter(t=>!t.done&&t.due&&new Date(t.due)<new Date()).length;const total=op+dn;const pct=total>0?Math.round(dn/total*100):0;
+            {team.map(m=>{const ts=tasks.filter(t=>t.assignee===m.id);const op=ts.filter(t=>!t.done).length;const dn=ts.filter(t=>t.done).length;const od=ts.filter(t=>!t.done&&t.due&&t.due<new Date().toISOString().split('T')[0]).length;const total=op+dn;const pct=total>0?Math.round(dn/total*100):0;
             return(<div key={m.id} style={{padding:"12px 8px",borderBottom:"1px solid "+C.bgA,transition:"all .2s",borderRadius:6}} onMouseEnter={e=>e.currentTarget.style.background='rgba(20,144,176,.03)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
                 <Av m={m} s={28}/>
@@ -1209,7 +1210,7 @@ function Cal({db,events,tasks,team,me}){
 function Contacts({db,team,me}){
   const isA=team.find(t=>t.id===me)?.admin;const[ed,setEd]=useState(null);const[form,setForm]=useState({});
   const startEdit=m=>{setEd(m.id);setForm({phone:m.phone||'',email:m.email||''})};
-  const saveEdit=(id)=>{const idx=team.findIndex(t=>t.id===id);if(idx<0)return;db.ref('hub/team/'+idx+'/phone').set(form.phone||'');db.ref('hub/team/'+idx+'/email').set(form.email||'');setEd(null)};
+  const saveEdit=(id)=>{const idx=team.findIndex(t=>t.id===id);if(idx<0)return;const ph=(form.phone||'').replace(/[^0-9+\-() ]/g,'');const em=(form.email||'').trim();if(em&&!em.includes('@')){alert('Invalid email address');return}db.ref('hub/team/'+idx+'/phone').set(ph);db.ref('hub/team/'+idx+'/email').set(em);setEd(null)};
   return(<div>
     <div><div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",color:C.sc}}>04 &#8212; Contacts</div><h1 style={{fontFamily:F.sf,fontSize:28,fontWeight:400,marginTop:4}}>Team Directory</h1></div>
     <hr style={{border:"none",borderTop:"1px solid "+C.rl,margin:"12px 0 22px"}}/>
@@ -1267,6 +1268,7 @@ function Sheets({db,hubData,team,me}){
   const[lastSync,setLastSync]=useState(null);
 
   const syncAllSheets=async(force)=>{
+    let anyOk=false;
     setSyncing(true);
     for(const s of sheets){
       const sid=getSheetId(s.url);
@@ -1279,10 +1281,10 @@ function Sheets({db,hubData,team,me}){
         const text=await r.text();
         if(text.trim().startsWith('<!'))continue;
         const rows=parseCSV(text);
-        db.ref('hub/sheetData/'+s.id).set(rows.length>0?rows:[]);
+        db.ref('hub/sheetData/'+s.id).set(rows.length>0?rows:[]);anyOk=true;
       }catch(e){console.log('Sync skip:',s.name,e)}
     }
-    setSyncing(false);setLastSync(new Date());
+    setSyncing(false);if(anyOk)setLastSync(new Date());
   };
 
   // Fill empty sheets on mount (App-level sync handles periodic refresh)
@@ -1848,8 +1850,8 @@ function Emails({db,hubData,team,me}){
       if(i<validSelected.length-1)await wait(500);
     }
     setSending(false);
-    const anySuccess=Object.values(ns).some(v=>v==='sent');
-    if(anySuccess)setSendDone(true);else{alert('All emails failed or were skipped. Check your connection and try again.')}
+    const sentCount=Object.values(ns).filter(v=>v==='sent').length;const failCount=Object.values(ns).filter(v=>v==='failed').length;
+    if(sentCount>0){setSendDone(true);if(failCount>0)alert(sentCount+' sent, '+failCount+' failed.')}else{alert('All emails failed or were skipped. Check your connection and try again.')}
   };
 
   const previewRow=manualMode?[manualName,manualEmail]:(validSelected[Math.min(previewIdx,Math.max(validSelected.length-1,0))]?.row||[]);
