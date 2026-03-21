@@ -1249,17 +1249,22 @@ function Sheets({db,hubData,team,me}){
   const tableRef=useRef(null);
   const editRef=useRef(null);
   const scrollRef=useRef(0);
+  const scrollLock=useRef(false);
 
   // Focus edit input without scrolling
   useEffect(()=>{
     if(editRef.current)editRef.current.focus({preventScroll:true});
   },[editCell]);
 
-  // Preserve scroll across re-renders
+  // Preserve scroll across re-renders - ignore scroll-to-0 from DOM recreation
   useEffect(()=>{
     const el=tableRef.current;if(!el)return;
-    el.scrollTop=scrollRef.current;
-    const h=()=>{scrollRef.current=el.scrollTop};
+    if(scrollRef.current>0){
+      scrollLock.current=true;
+      el.scrollTop=scrollRef.current;
+      requestAnimationFrame(()=>{scrollLock.current=false});
+    }
+    const h=()=>{if(!scrollLock.current)scrollRef.current=el.scrollTop};
     el.addEventListener('scroll',h,{passive:true});
     return()=>el.removeEventListener('scroll',h);
   });
@@ -1339,6 +1344,8 @@ function Sheets({db,hubData,team,me}){
     const sid=getSheetId(activeSheet.url);if(!sid)return;
     setSaving(true);
     const scrollPos=tableRef.current?.scrollTop||0;
+    scrollRef.current=scrollPos;
+    scrollLock.current=true;
     try{
       const r=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+sid+'/values/'+colToLetter(realCol)+(rowIdx+2)+'?valueInputOption=USER_ENTERED',{
         method:'PUT',headers:{'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},
@@ -1351,7 +1358,7 @@ function Sheets({db,hubData,team,me}){
       _lastSheetEdit[activeSheet.id]=Date.now();
       logEvent(db,'sheet_edit',{user:me,sheet:activeSheet.name,sheetId:activeSheet.id,cell:colToLetter(realCol)+(rowIdx+2),oldValue:(activeVals[rowIdx+1]||[])[realCol]||'',newValue:value});
       setEditCell(null);
-      requestAnimationFrame(()=>{if(tableRef.current)tableRef.current.scrollTop=scrollPos});
+      requestAnimationFrame(()=>{if(tableRef.current)tableRef.current.scrollTop=scrollPos;scrollLock.current=false});
     }catch(e){
       const msg=String(e);
       if(msg.includes('401')||msg.includes('403')){setGToken(null);alert('Session expired. Please reconnect Google to continue editing.')}
