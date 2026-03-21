@@ -627,7 +627,7 @@ function fbToArr(obj){if(!obj)return[];return Object.keys(obj).filter(k=>k!=='_s
 // === LOGIN ===
 function Login({onLogin,passwords,team}){
   const[sel,setSel]=useState(null);const[pass,setPass]=useState('');const[err,setErr]=useState('');
-  const go=()=>{if(!pass.trim()){setErr('Enter your password');setTimeout(()=>setErr(''),2e3);return}if(pass!==passwords?.[sel]){setErr('Wrong password');setTimeout(()=>setErr(''),2e3);return}sL({id:sel});
+  const go=()=>{const hasPw=passwords&&Object.keys(passwords).length>0;if(hasPw){if(!pass.trim()){setErr('Enter your password');setTimeout(()=>setErr(''),2e3);return}if(pass!==passwords?.[sel]){setErr('Wrong password');setTimeout(()=>setErr(''),2e3);return}}sL({id:sel});
     // Log the login - geo data comes from _geoInfo (fetched on page load)
     if(firebase.apps.length){logEvent(firebase.database(),'login',{user:sel})}
     onLogin(sel)};
@@ -990,7 +990,7 @@ function Assign({db,tasks,team,me,hubData}){
   const sendMsg=async()=>{
     if(!msgText.trim()||!msgTo||msgSent||msgSending)return;
     setMsgSending(true);
-    const m=team.find(t=>t.id===msgTo);if(!m)return;
+    const m=team.find(t=>t.id===msgTo);if(!m){setMsgSending(false);return}
     const meName=fn(team.find(t=>t.id===me)?.name);
 
     // email send moved to await block above
@@ -1001,7 +1001,7 @@ function Assign({db,tasks,team,me,hubData}){
     logEvent(db,'message_sent',{user:me,to:msgTo,toName:fn(m.name),message:msgText.trim().slice(0,50),smsStatus,emailSent:emailSent?'yes':'no'});
     setMsgSending(false);setMsgSent(smsStatus==='sent'&&emailSent?'sent':(smsStatus==='sent'||emailSent)?'partial':'none');setMsgText('');setTimeout(()=>setMsgSent(false),2200);
   };
-  const assign=()=>{if(!form.text.trim()||sent)return;const targets=bulk?team.filter(t=>!t.admin).map(t=>t.id):[form.assignee];targets.forEach(a=>{const ref=db.ref('hub/tasks').push();ref.set({id:ref.key,assignee:a,text:form.text.trim(),notes:form.notes.trim(),priority:form.priority,due:form.due,done:false,assignedBy:me,created:new Date().toISOString().split('T')[0]}).catch(e=>console.error('Task write failed:',e));logEvent(db,'task_assign',{user:me,assignee:a,task:form.text.trim(),priority:form.priority})});setSent(true);setTimeout(()=>{setSent(false);setForm({assignee:team[0]?.id||'',text:'',notes:'',priority:'medium',due:''})},1800)};
+  const assign=async()=>{if(!form.text.trim()||sent)return;setSent('sending');const targets=bulk?team.filter(t=>!t.admin).map(t=>t.id):[form.assignee];let ok=0;for(const a of targets){try{const ref=db.ref('hub/tasks').push();await ref.set({id:ref.key,assignee:a,text:form.text.trim(),notes:form.notes.trim(),priority:form.priority,due:form.due,done:false,assignedBy:me,created:new Date().toISOString().split('T')[0]});logEvent(db,'task_assign',{user:me,assignee:a,task:form.text.trim(),priority:form.priority});ok++}catch(e){console.error('Task write failed:',e)}}if(ok>0){setSent(true);setTimeout(()=>{setSent(false);setForm({assignee:team[0]?.id||'',text:'',notes:'',priority:'medium',due:''})},1800)}else{setSent(false);alert('Failed to create task. Check your connection.')}};
   const totalOpen=tasks.filter(t=>!t.done).length;const totalDone=tasks.filter(t=>t.done).length;const totalOverdue=tasks.filter(t=>!t.done&&t.due&&t.due<new Date().toISOString().split('T')[0]).length;
   const pColors={high:'#EF4444',medium:'#F59E0B',low:'#3B82F6'};
   return(<div>
