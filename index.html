@@ -2761,6 +2761,71 @@ function MyAccount({db,passwords,team,me}){
   </div>);
 }
 
+// === DATA RESET ===
+function DataReset({db,team,hubData}){
+  const[target,setTarget]=useState('all');
+  const[scope,setScope]=useState('completed');
+  const tasks=Object.entries(hubData?.tasks||{}).filter(([k,v])=>v&&typeof v==='object'&&!v._seed).map(([k,v])=>({...v,_fbKey:k}));
+  const events=Object.entries(hubData?.events||{}).filter(([k,v])=>v&&typeof v==='object'&&!v._seed).map(([k,v])=>({...v,_fbKey:k}));
+  const announcements=Object.entries(hubData?.announcements||{}).filter(([k,v])=>v&&typeof v==='object'&&!v._seed).map(([k,v])=>({...v,_fbKey:k}));
+
+  const getAffected=()=>{
+    if(scope==='completed'){
+      const t=tasks.filter(t=>t.done&&(target==='all'||t.assignee===target));
+      return{tasks:t,events:[],announcements:[],label:t.length+' completed tasks'};
+    }
+    if(scope==='all_tasks'){
+      const t=tasks.filter(t=>target==='all'||t.assignee===target);
+      return{tasks:t,events:[],announcements:[],label:t.length+' tasks (open + completed)'};
+    }
+    if(scope==='events'){
+      return{tasks:[],events,announcements:[],label:events.length+' calendar events'};
+    }
+    if(scope==='announcements'){
+      return{tasks:[],events:[],announcements,label:announcements.length+' announcements'};
+    }
+    if(scope==='everything'){
+      const t=tasks.filter(t=>target==='all'||t.assignee===target);
+      return{tasks:t,events,announcements,label:t.length+' tasks, '+events.length+' events, '+announcements.length+' announcements'};
+    }
+    return{tasks:[],events:[],announcements:[],label:'nothing'};
+  };
+
+  const doReset=()=>{
+    const a=getAffected();
+    const msg='This will permanently delete '+a.label+(target!=='all'?' for '+fn(team.find(t=>t.id===target)?.name):'')+'. This cannot be undone.';
+    if(!confirm(msg))return;
+    if(!confirm('Are you absolutely sure?'))return;
+    a.tasks.forEach(t=>db.ref('hub/tasks/'+t._fbKey).remove());
+    a.events.forEach(e=>db.ref('hub/events/'+e._fbKey).remove());
+    a.announcements.forEach(a=>db.ref('hub/announcements/'+a._fbKey).remove());
+    alert('Done. '+a.label+' deleted.');
+  };
+
+  const affected=getAffected();
+
+  return<Card><CardH>Data Management</CardH><div style={{padding:"14px 18px"}}>
+    <div style={{fontSize:12,color:C.mt,marginBottom:14}}>Clear tasks, events, or announcements. Double confirmation required.</div>
+    <div style={{display:"flex",gap:10,alignItems:"flex-end",flexWrap:"wrap",marginBottom:14}}>
+      <div><Lbl>Who</Lbl><Sel style={{width:150}} value={target} onChange={e=>setTarget(e.target.value)}>
+        <option value="all">Everyone</option>
+        {team.map(m=><option key={m.id} value={m.id}>{fn(m.name)}</option>)}
+      </Sel></div>
+      <div><Lbl>What to clear</Lbl><Sel style={{width:200}} value={scope} onChange={e=>setScope(e.target.value)}>
+        <option value="completed">Completed tasks only</option>
+        <option value="all_tasks">All tasks (open + completed)</option>
+        <option value="events">All calendar events</option>
+        <option value="announcements">All announcements</option>
+        <option value="everything">Everything</option>
+      </Sel></div>
+    </div>
+    <div style={{padding:"10px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FECACA",marginBottom:14,fontSize:12}}>
+      <span style={{fontWeight:700,color:"#EF4444"}}>Will delete:</span> {affected.label}{target!=='all'?' for '+fn(team.find(t=>t.id===target)?.name):''}
+    </div>
+    <Btn onClick={doReset} style={{borderColor:"#EF4444",color:"#EF4444"}}>Delete Data</Btn>
+  </div></Card>;
+}
+
 // === SETTINGS ===
 function Settings({db,passwords,team,hubData}){
   const[pu,setPu]=useState('tanmay');const[np,setNp]=useState('');
@@ -2793,6 +2858,8 @@ function Settings({db,passwords,team,hubData}){
       <div><Lbl>Member</Lbl><Sel style={{width:160}} value={pu} onChange={e=>setPu(e.target.value)}>{team.map(m=><option key={m.id} value={m.id}>{fn(m.name)}</option>)}</Sel></div>
       <div style={{flex:1}}><Lbl>New Password</Lbl><Inp type="password" value={np} onChange={e=>setNp(e.target.value)} placeholder="Enter new password"/></div>
       <Btn primary onClick={chPw}>Reset Password</Btn></div></div></Card>
+
+    <DataReset db={db} team={team} hubData={hubData}/>
 
     <Card><div style={{padding:"14px 18px"}}>
       <div style={{fontWeight:700,fontSize:14,marginBottom:3,color:C.rd}}>Reset Device</div>
