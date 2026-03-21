@@ -1373,7 +1373,7 @@ function Sheets({db,hubData,team,me}){
     return{background:"#FEF3C7",color:"#92400E"};
   };
 
-  return(<div>
+  return(<div style={{minWidth:0}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
       <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
         <span style={{fontWeight:700,fontSize:15}}>{sheets.length} Sheets</span>
@@ -2917,7 +2917,7 @@ function App(){
   const mobileTabs=[['my','Home'],['team','Team'],...(isA?[['assign','Assign']]:[]),['calendar','Cal'],['sheets','Sheets'],['contacts','Dir'],['emails','Comms'],['roadmap','Plans'],['partners','CRM'],['board','Posts'],['account','Acct'],...(isA?[['settings','Admin']]:[]),...(me==='tanmay'?[['logs','Logs']]:[])];
   return(<div style={{display:"flex",minHeight:"100vh",fontFamily:F.sn,color:C.fg,background:"#F8FAFC"}}>
     <div className="mobile-nav" style={{flexWrap:'wrap',height:'auto',minHeight:56,paddingTop:4,paddingBottom:4}}>{mobileTabs.map(([id,label])=><button key={id} className={safeTab===id?'mnav-active':''} onClick={()=>setTab(id)}>{label}</button>)}</div>    <Sidebar tab={safeTab} setTab={setTab} me={me} team={team} logout={logout}/>
-    <div className="main-bg" className="main-bg main-content" style={{marginLeft:240,flex:1,minHeight:"100vh"}}>
+    <div className="main-bg" className="main-bg main-content" style={{marginLeft:240,flex:1,minHeight:"100vh",minWidth:0}}>
       <div className="topbar-shell" style={{position:"sticky",top:0,padding:"12px 36px",display:"flex",alignItems:"center",justifyContent:"space-between",zIndex:50}}>
         <span className="topbar-title" style={{fontFamily:F.sf,fontSize:19,fontWeight:400}}>{titles[safeTab]}</span>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
