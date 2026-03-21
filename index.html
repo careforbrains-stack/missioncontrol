@@ -1677,13 +1677,10 @@ const EMAIL_TEMPLATES={
 <p style="font-size:14px;color:#555;margin:0 0 20px;text-align:center">Your certificate is attached to this email.</p>
 <div style="border-top:1px solid #e2e8f0;padding-top:20px">
 <p style="font-size:12px;color:#888;margin:0 0 8px">With gratitude,</p>
-<div style="display:flex">
-<div style="flex:1"><p style="font-size:14px;color:#1C3050;font-weight:700;margin:0">Tanmay Vasudeva</p><p style="font-size:11px;color:#888;margin:2px 0 0">Founder &amp; CEO, CareForBrains</p></div>
-<div style="flex:1;text-align:right"><p style="font-size:14px;color:#1C3050;font-weight:700;margin:0">Zavier Hayat</p><p style="font-size:11px;color:#888;margin:2px 0 0">Director of STEM Exploration</p></div>
-</div>
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:top"><p style="font-size:14px;color:#1C3050;font-weight:700;margin:0">Tanmay Vasudeva</p><p style="font-size:11px;color:#888;margin:2px 0 0">Founder &amp; CEO, CareForBrains</p></td><td style="vertical-align:top;text-align:right"><p style="font-size:14px;color:#1C3050;font-weight:700;margin:0">Zavier Hayat</p><p style="font-size:11px;color:#888;margin:2px 0 0">Director of STEM Exploration</p></td></tr></table>
 </div>
 <div style="margin-top:20px;padding-top:14px;border-top:1px solid #e2e8f0;text-align:center">
-<p style="font-size:10px;color:#aaa;margin:0">\u00A9 2025 CareForBrains | All Rights Reserved | <a href="https://careforbrains.org" style="color:#aaa">www.careforbrains.org</a></p>
+<p style="font-size:10px;color:#aaa;margin:0">\u00A9 2026 CareForBrains | All Rights Reserved | <a href="https://careforbrains.org" style="color:#aaa">www.careforbrains.org</a></p>
 </div>
 `,name)}
   },
@@ -1719,8 +1716,9 @@ function generateCertSVG(name,hours,program,date){
 <text x="550" y="248" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="16" fill="#5A6B7E" letter-spacing="3">This certificate is proudly presented to</text>
 <text x="550" y="340" text-anchor="middle" font-family="Great Vibes,cursive" font-size="${name.length>25?48:name.length>18?58:72}" fill="#1B2838">${name.length>35?name.slice(0,33)+'...':name}</text>
 <line x1="250" y1="360" x2="850" y2="360" stroke="#C9A84C" stroke-width=".8" opacity=".6"/>
-<text x="550" y="410" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="17" fill="#5A6B7E">completing <tspan font-weight="700" fill="#1B2838" font-size="19">${hours} hours</tspan> of raising awareness and making an</text>
-<text x="550" y="438" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="17" fill="#5A6B7E">impact in mental health through the <tspan font-weight="700" fill="#1B2838">${program} Program</tspan></text>
+<text x="550" y="400" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="16" fill="#5A6B7E" letter-spacing="1">for successfully completing</text>
+<text x="550" y="430" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="22" fill="#1B2838" font-weight="700">${hours} Hours of Service</text>
+<text x="550" y="458" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="16" fill="#5A6B7E" letter-spacing="1">in the <tspan font-weight="700" fill="#1B2838">${program} Program</tspan> at CareForBrains</text>
 <text x="550" y="480" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="11" fill="#1B2838" font-weight="500" letter-spacing="2">${date}</text>
 <text x="250" y="575" text-anchor="middle" font-family="Great Vibes,cursive" font-size="30" fill="#1B2838">Tanmay Vasudeva</text>
 <line x1="130" y1="587" x2="370" y2="587" stroke="#1B2838" stroke-width=".8"/>
