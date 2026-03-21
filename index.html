@@ -2384,7 +2384,7 @@ function Roadmap({db,hubData,team,me}){
           <span style={{fontSize:12,color:C.mt,transform:open?"rotate(180deg)":"",transition:"transform .2s"}}>{'\u25BC'}</span>
         </div>
 
-        {open&&<div style={{padding:"0 18px 18px",borderTop:"1px solid "+C.rl}}>
+        {open&&<div onClick={e=>e.stopPropagation()} style={{padding:"0 18px 18px",borderTop:"1px solid "+C.rl}}>
           {p.description&&<div style={{padding:"12px 14px",background:C.bgA,borderRadius:8,marginTop:14,fontSize:13,lineHeight:1.6}}>{p.description}</div>}
 
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginTop:14}}>
@@ -2396,14 +2396,14 @@ function Roadmap({db,hubData,team,me}){
           <div style={{marginTop:14}}>
             <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Status</div>
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-              {Object.entries(statusLabels).map(([k,v])=><button key={k} onClick={()=>updateStatus(p,k)} style={{padding:"5px 12px",borderRadius:6,border:"1px solid "+(p.status===k?statusColors[k]:C.rl),background:p.status===k?statusColors[k]+"15":"#fff",color:p.status===k?statusColors[k]:C.sc,cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:600}}>{statusIcons[k]} {v}</button>)}
+              {Object.entries(statusLabels).map(([k,v])=><button key={k} onClick={e=>{e.stopPropagation();updateStatus(p,k)}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid "+(p.status===k?statusColors[k]:C.rl),background:p.status===k?statusColors[k]+"15":"#fff",color:p.status===k?statusColors[k]:C.sc,cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:600}}>{statusIcons[k]} {v}</button>)}
             </div>
           </div>
 
           <div style={{marginTop:10}}>
             <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Priority</div>
             <div style={{display:"flex",gap:6}}>
-              {[['high','High'],['medium','Medium'],['low','Low']].map(([k,v])=><button key={k} onClick={()=>updatePriority(p,k)} style={{padding:"5px 12px",borderRadius:6,border:"1px solid "+(p.priority===k?priColors[k]:C.rl),background:p.priority===k?priColors[k]+"15":"#fff",color:p.priority===k?priColors[k]:C.sc,cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:600}}>{v}</button>)}
+              {[['high','High'],['medium','Medium'],['low','Low']].map(([k,v])=><button key={k} onClick={e=>{e.stopPropagation();updatePriority(p,k)}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid "+(p.priority===k?priColors[k]:C.rl),background:p.priority===k?priColors[k]+"15":"#fff",color:p.priority===k?priColors[k]:C.sc,cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:600}}>{v}</button>)}
             </div>
           </div>
 
@@ -2508,7 +2508,7 @@ function Partnerships({db,hubData,team,me}){
           <span style={{fontSize:12,color:C.mt,transform:open?"rotate(180deg)":"",transition:"transform .2s"}}>&#9660;</span>
         </div>
 
-        {open&&<div style={{padding:"0 18px 18px",borderTop:"1px solid "+C.rl}}>
+        {open&&<div onClick={e=>e.stopPropagation()} style={{padding:"0 18px 18px",borderTop:"1px solid "+C.rl}}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginTop:14}}>
             <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Contact</div><div style={{fontSize:13}}>{p.contact||'Not set'}</div></div>
             <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Email</div>{p.email?<a href={"mailto:"+p.email} style={{fontSize:13,color:"#1490B0"}}>{p.email}</a>:<span style={{fontSize:13,color:C.mt}}>Not set</span>}</div>
@@ -2518,7 +2518,7 @@ function Partnerships({db,hubData,team,me}){
           <div style={{marginTop:14}}>
             <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Status</div>
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-              {Object.entries(statusLabels).map(([k,v])=><button key={k} onClick={()=>updateStatus(p,k)} style={{padding:"5px 12px",borderRadius:6,border:"1px solid "+(p.status===k?statusColors[k]:C.rl),background:p.status===k?statusColors[k]+"15":"#fff",color:p.status===k?statusColors[k]:C.sc,cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:600}}>{v}</button>)}
+              {Object.entries(statusLabels).map(([k,v])=><button key={k} onClick={e=>{e.stopPropagation();updateStatus(p,k)}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid "+(p.status===k?statusColors[k]:C.rl),background:p.status===k?statusColors[k]+"15":"#fff",color:p.status===k?statusColors[k]:C.sc,cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:600}}>{v}</button>)}
             </div>
           </div>
 
