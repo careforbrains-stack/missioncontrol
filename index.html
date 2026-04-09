@@ -2447,7 +2447,7 @@ function Partnerships({db,hubData,team,me}){
   const[filter,setFilter]=useState('all');
   const statusLabels={reaching_out:'Reaching Out',in_contact:'In Contact',confirmed:'Confirmed',declined:'Declined',paused:'Paused'};
   const statusColors={reaching_out:'#F59E0B',in_contact:'#3B82F6',confirmed:'#10B981',declined:'#EF4444',paused:'#6B7280'};
-  const typeLabels=['Nonprofit','Corporate','School/University','Government','Media','Healthcare','Tech','Other'];
+  const typeLabels=['Nonprofit','Foundation','Grant','Corporate','School/University','Government','Media','Healthcare','Tech','Other'];
   const getName=id=>{const m=team.find(t=>t.id===id);return m?fn(m.name):id||'?'};
   const save=()=>{
     if(!form.name.trim())return;
