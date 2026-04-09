@@ -2397,7 +2397,7 @@ function Roadmap({db,hubData,team,me}){
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginTop:14}}>
             <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Lead</div><div style={{fontSize:13}}>{p.lead?getName(p.lead):'Unassigned'}</div></div>
             <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Target Date</div><div style={{fontSize:13}}>{p.target?(()=>{const[y,m,d]=p.target.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString()})():'Not set'}</div></div>
-            <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Added</div><div style={{fontSize:13}}>{getName(p.addedBy)} {'\u00B7'} {new Date(p.created).toLocaleDateString()}</div></div>
+            <div><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:C.mt,marginBottom:4}}>Added</div><div style={{fontSize:13}}>{new Date(p.created).toLocaleDateString()}</div></div>
           </div>
 
           <div style={{marginTop:14}}>
@@ -2445,6 +2445,7 @@ function Partnerships({db,hubData,team,me}){
   const getNoteText=id=>noteDrafts[id]||'';
   const setNoteText=(id,v)=>setNoteDrafts(d=>({...d,[id]:v}));
   const[filter,setFilter]=useState('all');
+  const[typeFilter,setTypeFilter]=useState('all');
   const statusLabels={reaching_out:'Reaching Out',in_contact:'In Contact',confirmed:'Confirmed',declined:'Declined',paused:'Paused'};
   const statusColors={reaching_out:'#F59E0B',in_contact:'#3B82F6',confirmed:'#10B981',declined:'#EF4444',paused:'#6B7280'};
   const typeLabels=['Nonprofit','Foundation','Grant','Corporate','School/University','Government','Media','Healthcare','Tech','Other'];
@@ -2463,17 +2464,25 @@ function Partnerships({db,hubData,team,me}){
     setNoteText(p._fbKey,'');
   };
   const del=p=>{if(confirm('Delete partnership "'+p.name+'"?'))db.ref('hub/partnerships/'+p._fbKey).remove()};
-  const filtered=filter==='all'?partners:partners.filter(p=>p.status===filter);
+  const filtered=partners.filter(p=>(filter==='all'||p.status===filter)&&(typeFilter==='all'||p.type===typeFilter));
   const counts=Object.keys(statusLabels).reduce((a,k)=>{a[k]=partners.filter(p=>p.status===k).length;return a},{});
+  const typeCounts=typeLabels.reduce((a,t)=>{a[t]=partners.filter(p=>p.type===t).length;return a},{});
 
   return(<div>
     <SectionHeader variant="strategy" kicker="Strategy" title="Partnerships" meta={[`${partners.length} organizations`,`${counts.in_contact||0} in contact`,`${counts.confirmed||0} confirmed`]} actions={<Btn primary onClick={()=>setAdding(!adding)}>{adding?'Cancel':'+ Add Partnership'}</Btn>}/>
 
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:8,marginBottom:18}}>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:8,marginBottom:12}}>
       {[['all','All',partners.length,'#1490B0'],...Object.entries(statusLabels).map(([k,l])=>[k,l,counts[k]||0,statusColors[k]])].map(([k,l,n,col])=>
         <button key={k} onClick={()=>setFilter(k)} style={{padding:"10px 8px",borderRadius:8,border:"1px solid "+(filter===k?col:C.rl),background:filter===k?col+"12":"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600,color:filter===k?col:C.sc,textAlign:"center"}}>
           <div style={{fontSize:20,fontWeight:700,color:filter===k?col:C.fg}}>{n}</div>{l}
         </button>
+      )}
+    </div>
+
+    <div style={{display:"flex",gap:6,marginBottom:18,overflowX:"auto",paddingBottom:4}}>
+      <button onClick={()=>setTypeFilter('all')} style={{padding:"6px 14px",borderRadius:999,border:"1px solid "+(typeFilter==='all'?'#1490B0':C.rl),background:typeFilter==='all'?'rgba(20,144,176,.08)':'#fff',cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:600,color:typeFilter==='all'?'#1490B0':C.sc,whiteSpace:"nowrap",flexShrink:0}}>All Types ({partners.length})</button>
+      {typeLabels.filter(t=>typeCounts[t]>0).map(t=>
+        <button key={t} onClick={()=>setTypeFilter(t)} style={{padding:"6px 14px",borderRadius:999,border:"1px solid "+(typeFilter===t?'#1490B0':C.rl),background:typeFilter===t?'rgba(20,144,176,.08)':'#fff',cursor:"pointer",fontFamily:"inherit",fontSize:11,fontWeight:600,color:typeFilter===t?'#1490B0':C.sc,whiteSpace:"nowrap",flexShrink:0}}>{t} ({typeCounts[t]})</button>
       )}
     </div>
 
@@ -2509,7 +2518,7 @@ function Partnerships({db,hubData,team,me}){
             <div style={{fontSize:12,color:C.mt,marginTop:4}}>
               {p.contact&&<span>{p.contact} · </span>}
               {p.email&&<span>{p.email} · </span>}
-              Added by {getName(p.addedBy)} · {new Date(p.created).toLocaleDateString()}
+              {new Date(p.created).toLocaleDateString()}
             </div>
           </div>
           <span style={{fontSize:12,color:C.mt,transform:open?"rotate(180deg)":"",transition:"transform .2s"}}>&#9660;</span>
